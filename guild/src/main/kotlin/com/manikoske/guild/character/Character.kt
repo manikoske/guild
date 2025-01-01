@@ -1,20 +1,20 @@
 package com.manikoske.guild.character
 
-import com.manikoske.guild.rules.Attribute
-import com.manikoske.guild.rules.Die
-import com.manikoske.guild.rules.Inventory
-import com.manikoske.guild.rules.Level
+import com.manikoske.guild.ability.Effect
+import com.manikoske.guild.inventory.Inventory
+import com.manikoske.guild.rules.*
+import kotlin.math.max
 
 class Character(
     private val innate: Innate,
-    private val current: Current,
+    private var current: Current,
     private val level: Level,
     private val inventory: Inventory,
 ) {
 
 
     // vytihnut do dakeho interface alebo podclassy
-    fun attribute(attributeType: Attribute.Type): Attribute {
+    private fun attribute(attributeType: Attribute.Type): Attribute {
         return when (attributeType) {
             Attribute.Type.strength -> innate.strength
             Attribute.Type.dexterity -> innate.dexterity
@@ -29,7 +29,7 @@ class Character(
         return inventory.armor.armorClass +
                 inventory.armor.dexterityModifierLimit(attribute(Attribute.Type.dexterity).modifier()) +
                 level.modifier() +
-                (inventory.meleeOffHand?.armorClassBonus ?: 0)
+                inventory.arms.armorClassBonus()
     }
 
     fun currentHitPoints(): Int {
@@ -40,12 +40,61 @@ class Character(
         return innate.clazz.baseResources * level.level - current.resourcesSpent
     }
 
-    fun attackRoll(attributeType: Attribute.Type, modifier: Int): Int {
-        return Die.d20.roll(1) + attribute(attributeType).modifier() + level.modifier() + modifier
+    private fun weaponAttackRollAttributeType(): Attribute.Type {
+        return if (arms().isFinesse() && attribute(Attribute.Type.dexterity).modifier() > attribute(Attribute.Type.strength).modifier()) {
+            Attribute.Type.dexterity
+        } else {
+            Attribute.Type.strength
+        }
     }
 
-    fun damageRoll(attributeType: Attribute.Type, rolls: List<() -> Int>): Int {
-        return rolls.sumOf { roll -> roll.invoke() } + attribute(attributeType).modifier() + level.modifier()
+    fun weaponAttackRoll(attackRollBonusModifier: Int): Int {
+        return Die.d20.roll(1) + attribute(weaponAttackRollAttributeType()).modifier() + level.modifier() + attackRollBonusModifier
+    }
+
+    fun weaponDamageRoll(roll: () -> Int, abilityMultiplier : Int): Int {
+        return roll.invoke() * abilityMultiplier + attribute(weaponAttackRollAttributeType()).modifier() + level.modifier()
+    }
+
+    fun attributeRoll(attributeType: Attribute.Type, damageRoll: () -> Int): Int {
+        return damageRoll.invoke() + attribute(attributeType).modifier() + level.modifier()
+    }
+
+    fun difficultyClassRoll(attributeType: Attribute.Type): Int {
+        return Die.d20.roll(1) + attribute(attributeType).modifier() + level.modifier()
+    }
+
+    fun difficultyClassBonus(attributeType: Attribute.Type): Int {
+        return attribute(attributeType).modifier() + level.modifier()
+    }
+
+    fun isClass(): Class {
+        return innate.clazz
+    }
+
+    fun arms(): Inventory.Arms {
+        return inventory.arms
+    }
+
+    fun takeDamage(hitPoints: Int) {
+        current = current.copy(damageTaken = max(0, current.damageTaken + hitPoints))
+    }
+
+    fun heal(hitPoints: Int) {
+        current = current.copy(damageTaken = max(0, current.damageTaken - hitPoints))
+    }
+
+    fun spendResources(amount: Int) {
+        current = current.copy(resourcesSpent =  max(0, current.resourcesSpent + amount))
+    }
+
+    fun gainResources(amount: Int) {
+        current = current.copy(resourcesSpent =  max(0, current.resourcesSpent - amount))
+    }
+
+
+    fun applyEffect(effect: Effect) {
+        current = current.copy(effects = current.effects + effect)
     }
 
 

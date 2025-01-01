@@ -1,8 +1,5 @@
 package com.manikoske.guild.character
 
-import com.manikoske.guild.rules.Attribute
-import com.manikoske.guild.rules.Class
-
 data class Innate(
     // bio
     val name: String,

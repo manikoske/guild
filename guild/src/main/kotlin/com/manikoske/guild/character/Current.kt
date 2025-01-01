@@ -1,10 +1,10 @@
 package com.manikoske.guild.character
 
-import com.manikoske.guild.rules.Effect
+import com.manikoske.guild.ability.Effect
 
 data class Current(
     val damageTaken: Int,
     val resourcesSpent: Int,
-    val effects: List<Effect.CharacterEffect>
+    val effects: List<Effect>
 ) {
 }
