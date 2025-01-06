@@ -1,17 +1,8 @@
 package com.manikoske.guild.ability
 
-sealed interface TargetType {
-    sealed interface Weapon : TargetType
-    data object SingleTargetWeapon : Weapon
-    data class MultiTargetWeapon(val targetCount: Int) : Weapon
-    data object AreaOfEffectWeapon : Weapon
+data class TargetType(val range: Int, val arity: Arity) {
 
-    sealed interface Spell : TargetType {
-        val range: Int
+    enum class Arity {
+        Self, Single, Double, Triple, Area
     }
-    data class SingleRangedSpell(override val range: Int) : Spell
-    data class MultiRangedSpell(val targetCount: Int, override val range: Int) : Spell
-    data class AreaOfEffectRangedSpell(override val range: Int) : Spell
-
-    data object Self : TargetType
 }
