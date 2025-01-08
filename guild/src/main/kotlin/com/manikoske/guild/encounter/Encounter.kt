@@ -70,15 +70,15 @@ class Encounter(
     ) {
         private val attackerPointOfView: PointOfView by lazy {
             PointOfView(
-                friendsAtNodes = charactersAtNodes(attackerContexts),
-                foesAtNodes = charactersAtNodes(defenderContexts),
+                alliesAtNodes = charactersAtNodes(attackerContexts),
+                enemiesAtNodes = charactersAtNodes(defenderContexts),
             )
         }
 
         private val defenderPointOfView: PointOfView by lazy {
             PointOfView(
-                friendsAtNodes = charactersAtNodes(defenderContexts),
-                foesAtNodes = charactersAtNodes(attackerContexts),
+                alliesAtNodes = charactersAtNodes(defenderContexts),
+                enemiesAtNodes = charactersAtNodes(attackerContexts),
             )
         }
 
@@ -118,16 +118,22 @@ class Encounter(
 
             for (possibleTargetNode in possibleTargetNodes) {
 
-                val targets =
-                    if (action.isHarmful()) pointOfView.foesAt(possibleTargetNode)
-                    else pointOfView.friendsAt(possibleTargetNode)
+                val scopedTargets = when (targetType.scope) {
+                    TargetType.Scope.Ally ->  pointOfView.alliesAt(possibleTargetNode)
+                    TargetType.Scope.Enemy ->  pointOfView.enemiesAt(possibleTargetNode)
+                    TargetType.Scope.Self -> listOf(executorCharacterContext)
+                    TargetType.Scope.Everyone -> pointOfView.everyoneAt(possibleTargetNode)
+                }
+//                val targets =
+//                    if (action.isHarmful()) pointOfView.enemiesAt(possibleTargetNode)
+//                    else pointOfView.alliesAt(possibleTargetNode)
 
                 when (targetType.arity) {
-                    TargetType.Arity.Self -> result.add(listOf(executorCharacterContext))
                     TargetType.Arity.Node -> result.add(pointOfView.everyoneAt(possibleTargetNode))
-                    TargetType.Arity.Single -> result.addAll(singleTarget(targets))
-                    TargetType.Arity.Double -> result.addAll(doubleTarget(targets))
-                    TargetType.Arity.Triple -> result.addAll(tripleTarget(targets))
+                    TargetType.Arity.Single -> result.addAll(singleTarget(scopedTargets))
+                    TargetType.Arity.Double -> result.addAll(doubleTarget(scopedTargets))
+                    TargetType.Arity.Triple -> result.addAll(tripleTarget(scopedTargets))
+                    TargetType.Arity.Battleground -> TODO()
                 }
             }
             return result
@@ -175,34 +181,34 @@ class Encounter(
 
 
         data class PointOfView(
-            private val friendsAtNodes: Map<Battleground.Node, List<CharacterContext>>,
-            private val foesAtNodes: Map<Battleground.Node, List<CharacterContext>>,
+            private val alliesAtNodes: Map<Battleground.Node, List<CharacterContext>>,
+            private val enemiesAtNodes: Map<Battleground.Node, List<CharacterContext>>,
         ) {
             fun notPassable(
                 abilityMovement: Movement,
                 from: Battleground.Node,
                 to: Battleground.Node
             ): Boolean {
-                val noCapacityLeft = friendsAt(to).size + foesAt(to).size >= to.capacity
+                val noCapacityLeft = alliesAt(to).size + enemiesAt(to).size >= to.capacity
 
                 val canNotLeave = when (abilityMovement) {
-                    is Movement.NormalMovement -> friendsAt(from).size <= foesAt(from).size
+                    is Movement.NormalMovement -> alliesAt(from).size <= enemiesAt(from).size
                     is Movement.SpecialMovement -> false
                 }
 
                 return noCapacityLeft || canNotLeave
             }
 
-            fun friendsAt(node: Battleground.Node): List<CharacterContext> {
-                return friendsAtNodes.getOrDefault(node, listOf())
+            fun alliesAt(node: Battleground.Node): List<CharacterContext> {
+                return alliesAtNodes.getOrDefault(node, listOf())
             }
 
-            fun foesAt(node: Battleground.Node): List<CharacterContext> {
-                return foesAtNodes.getOrDefault(node, listOf())
+            fun enemiesAt(node: Battleground.Node): List<CharacterContext> {
+                return enemiesAtNodes.getOrDefault(node, listOf())
             }
 
             fun everyoneAt(node: Battleground.Node): List<CharacterContext> {
-                return friendsAtNodes.getOrDefault(node, listOf()) + foesAtNodes.getOrDefault(node, listOf())
+                return alliesAtNodes.getOrDefault(node, listOf()) + enemiesAtNodes.getOrDefault(node, listOf())
             }
         }
     }

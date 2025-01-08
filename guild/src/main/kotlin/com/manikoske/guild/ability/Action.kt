@@ -158,7 +158,7 @@ sealed interface Action {
             SpellAction(
                 name = "Divine heal",
                 resourceCost = 1,
-                targetType = TargetType(range = 1, arity = TargetType.Arity.Single),
+                targetType = TargetType(scope = TargetType.Scope.Ally, range = 1, arity = TargetType.Arity.Single),
                 classRestriction = listOf(Class.Cleric),
                 effect = Effect.Healing(
                     healingRoll = { Die.d8.roll(1) }
@@ -172,7 +172,7 @@ sealed interface Action {
             SpellAction(
                 name = "Mass heal",
                 resourceCost = 2,
-                targetType = TargetType(range = 1, arity = TargetType.Arity.Triple),
+                targetType = TargetType(scope = TargetType.Scope.Ally, range = 1, arity = TargetType.Arity.Triple),
                 classRestriction = listOf(Class.Cleric),
                 effect = Effect.Healing(
                     healingRoll = { Die.d6.roll(1) }
@@ -212,7 +212,7 @@ sealed interface Action {
             SpellAction(
                 name = "Fire bolt",
                 resourceCost = 0,
-                targetType = TargetType(range = 2, arity = TargetType.Arity.Single),
+                targetType = TargetType(scope = TargetType.Scope.Enemy, range = 2, arity = TargetType.Arity.Single),
                 classRestriction = listOf(Class.Wizard),
                 effect =
                 Effect.AvoidableDamage(
@@ -226,7 +226,7 @@ sealed interface Action {
             SpellAction(
                 name = "Fireball",
                 resourceCost = 1,
-                targetType = TargetType(range = 2, arity = TargetType.Arity.Node),
+                targetType = TargetType(scope = TargetType.Scope.Everyone, range = 2, arity = TargetType.Arity.Node),
                 classRestriction = listOf(Class.Wizard),
                 effect =
                 Effect.AvoidableDamage(
@@ -308,10 +308,10 @@ sealed interface Action {
 
         override fun targetType(character: Character): TargetType {
             return when (val arms = character.arms()) {
-                is Inventory.Arms.DualWeapon -> TargetType(range = 0, arity)
-                is Inventory.Arms.OneHandedWeaponAndShield -> TargetType(range = 0, arity)
-                is Inventory.Arms.RangedWeapon -> TargetType(range = arms.bothHands.range, arity)
-                is Inventory.Arms.TwoHandedWeapon -> TargetType(range = 0, arity)
+                is Inventory.Arms.DualWeapon -> TargetType(scope = TargetType.Scope.Enemy, range = 0, arity = arity)
+                is Inventory.Arms.OneHandedWeaponAndShield -> TargetType(scope = TargetType.Scope.Enemy, range = 0, arity = arity)
+                is Inventory.Arms.RangedWeapon -> TargetType(scope = TargetType.Scope.Enemy, range = arms.bothHands.range, arity = arity)
+                is Inventory.Arms.TwoHandedWeapon -> TargetType(scope = TargetType.Scope.Enemy, range = 0, arity = arity)
             }
         }
 
@@ -389,7 +389,7 @@ sealed interface Action {
             get() = null
 
         override fun targetType(character: Character): TargetType {
-            return TargetType(range = 0, arity = TargetType.Arity.Self)
+            return TargetType(scope = TargetType.Scope.Self, range = 0, arity = TargetType.Arity.Single)
         }
 
         override fun isHarmful(): Boolean {
