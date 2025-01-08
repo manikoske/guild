@@ -8,8 +8,6 @@ sealed interface Effect {
 
     val savingThrow: SavingThrow
 
-    fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext)
-
     fun isHarmful() : Boolean
 
 
@@ -20,10 +18,6 @@ sealed interface Effect {
     ) : Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.ArmorClassSavingThrow(attackRollBonusModifier)
-
-        override fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-            targetContext.takeDamage(executorContext.character.weaponDamageRoll(damageRoll, damageRollMultiplier))
-        }
 
         override fun isHarmful() : Boolean {
             return true
@@ -43,10 +37,6 @@ sealed interface Effect {
                 targetAttributeType
             )
 
-        override fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-            targetContext.takeDamage(executorContext.character.attributeRoll(executorAttributeType, damageRoll))
-        }
-
         override fun isHarmful() : Boolean {
             return true
         }
@@ -57,10 +47,6 @@ sealed interface Effect {
     ) : Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
-
-        override fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-            targetContext.takeDamage(damageRoll.invoke())
-        }
 
         override fun isHarmful() : Boolean {
             return true
@@ -73,10 +59,6 @@ sealed interface Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
 
-        override fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-            targetContext.heal(executorContext.character.attributeRoll(Attribute.Type.wisdom, healingRoll))
-        }
-
         override fun isHarmful() : Boolean {
             return false
         }
@@ -87,10 +69,6 @@ sealed interface Effect {
     ) : Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
-
-        override fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-            targetContext.gainResources(amount)
-        }
 
         override fun isHarmful() : Boolean {
             return false
@@ -110,10 +88,6 @@ sealed interface Effect {
                 targetAttributeType
             )
 
-        override fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-            targetContext.applyEffect(status)
-        }
-
         override fun isHarmful() : Boolean {
             return true
         }
@@ -125,10 +99,6 @@ sealed interface Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
 
-        override fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-            targetContext.applyEffect(status)
-        }
-
         override fun isHarmful() : Boolean {
             return false
         }
@@ -137,9 +107,6 @@ sealed interface Effect {
     data object NoEffect : Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
-
-        override fun apply(executorContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-        }
 
         override fun isHarmful() : Boolean {
             return false

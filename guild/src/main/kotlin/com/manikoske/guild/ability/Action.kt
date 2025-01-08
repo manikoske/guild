@@ -3,11 +3,10 @@ package com.manikoske.guild.ability
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Character
 import com.manikoske.guild.character.Class
-import com.manikoske.guild.encounter.Encounter
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.rules.Die
 
-sealed interface Ability {
+sealed interface Action {
 
     object Abilities {
 
@@ -15,26 +14,26 @@ sealed interface Ability {
 
         val abilities = listOf(
 
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Basic Melee Attack",
                 resourceCost = 0,
                 arity = TargetType.Arity.Single,
                 classRestriction = noClassRestriction,
             ),
-            RangedWeaponAbility(
+            RangedWeaponAction(
                 name = "Basic Ranged Attack",
                 resourceCost = 0,
                 arity = TargetType.Arity.Single,
                 classRestriction = noClassRestriction,
             ),
-            SelfAbility(
+            SelfAction(
                 name = "Disengage",
                 resourceCost = 0,
                 movement = Movement.SpecialMovement(nodes = 1),
                 classRestriction = noClassRestriction,
                 effect = Effect.NoEffect
             ),
-            SelfAbility(
+            SelfAction(
                 name = "Dash",
                 resourceCost = 0,
                 movement = Movement.NormalMovement(nodes = 2),
@@ -42,14 +41,14 @@ sealed interface Ability {
                 effect = Effect.NoEffect
             ),
 
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Shield Bash",
                 resourceCost = 1,
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Fighter),
                 armsRestriction = { arms -> arms is Inventory.Arms.OneHandedWeaponAndShield },
                 damageRollMultiplier = 0,
-                onHit = TriggeredAbility.TargetTriggeredAbility(
+                triggeredAction = TriggeredAction.TargetTriggeredAction(
                     effect = Effect.ApplyStatus(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.strength,
@@ -58,7 +57,7 @@ sealed interface Ability {
                     )
                 )
             ),
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Cleave",
                 resourceCost = 1,
                 arity = TargetType.Arity.Double,
@@ -66,7 +65,7 @@ sealed interface Ability {
                 armsRestriction = { arms -> arms is Inventory.Arms.TwoHandedWeapon },
                 attackRollBonusModifier = -2
             ),
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Dual attack",
                 resourceCost = 1,
                 arity = TargetType.Arity.Single,
@@ -74,7 +73,7 @@ sealed interface Ability {
                 armsRestriction = { arms -> arms is Inventory.Arms.DualWeapon },
                 attackRollBonusModifier = 2
             ),
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Heavy Blow",
                 resourceCost = 1,
                 arity = TargetType.Arity.Single,
@@ -82,22 +81,22 @@ sealed interface Ability {
                 attackRollBonusModifier = -2,
                 damageRollMultiplier = 2,
             ),
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Whirlwind",
                 resourceCost = 2,
-                arity = TargetType.Arity.Area,
+                arity = TargetType.Arity.Node,
                 classRestriction = listOf(Class.Fighter),
                 attackRollBonusModifier = -2,
             ),
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Charge",
                 resourceCost = 1,
                 movement = Movement.NormalMovement(nodes = 2),
-                arity = TargetType.Arity.Area,
+                arity = TargetType.Arity.Node,
                 classRestriction = listOf(Class.Fighter),
                 attackRollBonusModifier = -2,
             ),
-            SelfAbility(
+            SelfAction(
                 name = "Second Wind",
                 resourceCost = 1,
                 classRestriction = listOf(Class.Fighter),
@@ -108,12 +107,12 @@ sealed interface Ability {
             ),
 
 
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Rend",
                 resourceCost = 1,
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Rogue),
-                onHit = TriggeredAbility.TargetTriggeredAbility(
+                triggeredAction = TriggeredAction.TargetTriggeredAction(
                     effect = Effect.ApplyStatus(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.dexterity,
@@ -126,18 +125,18 @@ sealed interface Ability {
                     )
                 )
             ),
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Slice and Dice",
                 resourceCost = 1,
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Rogue),
-                onHit = TriggeredAbility.SelfTriggeredAbility(
+                triggeredAction = TriggeredAction.SelfTriggeredAction(
                     effect = Effect.ResourceBoost(
                         amount = 2
                     )
                 )
             ),
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Shadow Step",
                 resourceCost = 2,
                 movement = Movement.SpecialMovement(nodes = 2),
@@ -145,18 +144,18 @@ sealed interface Ability {
                 classRestriction = listOf(Class.Rogue)
             ),
 
-            MeleeWeaponAbility(
+            MeleeWeaponAction(
                 name = "Holy Strike",
                 resourceCost = 1,
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Cleric),
-                onHit = TriggeredAbility.TargetTriggeredAbility(
+                triggeredAction = TriggeredAction.TargetTriggeredAction(
                     effect = Effect.DirectDamage(
                         damageRoll = { Die.d4.roll(1) }
                     )
                 )
             ),
-            SpellAbility(
+            SpellAction(
                 name = "Divine heal",
                 resourceCost = 1,
                 targetType = TargetType(range = 1, arity = TargetType.Arity.Single),
@@ -164,13 +163,13 @@ sealed interface Ability {
                 effect = Effect.Healing(
                     healingRoll = { Die.d8.roll(1) }
                 ),
-                onSuccess = TriggeredAbility.SelfTriggeredAbility(
+                triggeredAction = TriggeredAction.SelfTriggeredAction(
                     effect = Effect.Healing(
                         healingRoll = { Die.d4.roll(1) }
                     )
                 )
             ),
-            SpellAbility(
+            SpellAction(
                 name = "Mass heal",
                 resourceCost = 2,
                 targetType = TargetType(range = 1, arity = TargetType.Arity.Triple),
@@ -181,12 +180,12 @@ sealed interface Ability {
             ),
 
 
-            RangedWeaponAbility(
+            RangedWeaponAction(
                 name = "Entangle Shot",
                 resourceCost = 1,
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Ranger),
-                onHit = TriggeredAbility.TargetTriggeredAbility(
+                triggeredAction = TriggeredAction.TargetTriggeredAction(
                     effect = Effect.ApplyStatus(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.dexterity,
@@ -195,14 +194,14 @@ sealed interface Ability {
                     )
                 )
             ),
-            RangedWeaponAbility(
+            RangedWeaponAction(
                 name = "Volley",
                 resourceCost = 2,
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Ranger),
                 attackRollBonusModifier = -2
             ),
-            RangedWeaponAbility(
+            RangedWeaponAction(
                 name = "Twin Shot",
                 resourceCost = 1,
                 arity = TargetType.Arity.Double,
@@ -210,24 +209,24 @@ sealed interface Ability {
                 attackRollBonusModifier = -2
             ),
 
-            SpellAbility(
+            SpellAction(
                 name = "Fire bolt",
                 resourceCost = 0,
                 targetType = TargetType(range = 2, arity = TargetType.Arity.Single),
                 classRestriction = listOf(Class.Wizard),
                 effect =
-                    Effect.AvoidableDamage(
-                        baseDifficultyClass = 8,
-                        executorAttributeType = Attribute.Type.intelligence,
-                        targetAttributeType = Attribute.Type.dexterity,
-                        damageRoll = { Die.d8.roll(1) }
-                    )
+                Effect.AvoidableDamage(
+                    baseDifficultyClass = 8,
+                    executorAttributeType = Attribute.Type.intelligence,
+                    targetAttributeType = Attribute.Type.dexterity,
+                    damageRoll = { Die.d8.roll(1) }
+                )
 
             ),
-            SpellAbility(
+            SpellAction(
                 name = "Fireball",
                 resourceCost = 1,
-                targetType = TargetType(range = 2, arity = TargetType.Arity.Area),
+                targetType = TargetType(range = 2, arity = TargetType.Arity.Node),
                 classRestriction = listOf(Class.Wizard),
                 effect =
                 Effect.AvoidableDamage(
@@ -237,7 +236,7 @@ sealed interface Ability {
                     damageRoll = { Die.d8.roll(1) }
                 )
             ),
-            SelfAbility(
+            SelfAction(
                 name = "Teleport",
                 resourceCost = 1,
                 movement = Movement.SpecialMovement(nodes = 3),
@@ -245,32 +244,25 @@ sealed interface Ability {
                 effect = Effect.NoEffect
             ),
 
-        )
+            )
     }
 
-    sealed interface ExecutableAbility : Ability {
+    val name: String
+    val movement: Movement
+    val resourceCost: Int
+    val classRestriction: List<Class>
+    val armsRestriction: (arms: Inventory.Arms) -> Boolean
+    val triggeredAction: TriggeredAction?
 
-        val name: String
-        val movement: Movement
-        val resourceCost: Int
-        val classRestriction: List<Class>
-        val armsRestriction: (arms: Inventory.Arms) -> Boolean
-
-        fun targetType(character: Character): TargetType
-        fun isHarmful(): Boolean
-        fun effects(character: Character): List<Effect>
-        fun onSuccessEffect(): Effect
+    fun targetType(character: Character): TargetType
+    fun isHarmful(): Boolean
+    fun effects(character: Character): List<Effect>
 
 
-
-    }
-
-
-    sealed interface WeaponAbility : ExecutableAbility {
+    sealed interface WeaponAction : Action {
         val arity: TargetType.Arity
         val attackRollBonusModifier: Int
         val damageRollMultiplier: Int
-        val onHit: TriggeredAbility?
 
         override fun effects(character: Character): List<Effect> {
             return when (val arms = character.arms()) {
@@ -287,7 +279,6 @@ sealed interface Ability {
                             damageRollMultiplier = damageRollMultiplier
                         ),
                     )
-
                 is Inventory.Arms.OneHandedWeaponAndShield ->
                     listOf(
                         Effect.WeaponDamage(
@@ -296,7 +287,6 @@ sealed interface Ability {
                             damageRollMultiplier = damageRollMultiplier
                         )
                     )
-
                 is Inventory.Arms.TwoHandedWeapon ->
                     listOf(
                         Effect.WeaponDamage(
@@ -305,7 +295,6 @@ sealed interface Ability {
                             damageRollMultiplier = damageRollMultiplier
                         )
                     )
-
                 is Inventory.Arms.RangedWeapon ->
                     listOf(
                         Effect.WeaponDamage(
@@ -315,10 +304,6 @@ sealed interface Ability {
                         )
                     )
             }
-        }
-
-        override fun onSuccessEffect(): Effect {
-            TODO("Not yet implemented")
         }
 
         override fun targetType(character: Character): TargetType {
@@ -336,7 +321,7 @@ sealed interface Ability {
 
     }
 
-    data class MeleeWeaponAbility(
+    data class MeleeWeaponAction(
         override val name: String,
         override val resourceCost: Int,
         override val movement: Movement = Movement.NormalMovement(1),
@@ -345,10 +330,10 @@ sealed interface Ability {
         override val armsRestriction: (arms: Inventory.Arms) -> Boolean = { arms -> arms !is Inventory.Arms.RangedWeapon },
         override val attackRollBonusModifier: Int = 0,
         override val damageRollMultiplier: Int = 1,
-        override val onHit: TriggeredAbility? = null
-    ) : WeaponAbility
+        override val triggeredAction: TriggeredAction? = null
+    ) : WeaponAction
 
-    data class RangedWeaponAbility(
+    data class RangedWeaponAction(
         override val name: String,
         override val resourceCost: Int,
         override val movement: Movement = Movement.NormalMovement(1),
@@ -356,26 +341,31 @@ sealed interface Ability {
         override val classRestriction: List<Class>,
         override val attackRollBonusModifier: Int = 0,
         override val damageRollMultiplier: Int = 1,
-        override val onHit: TriggeredAbility? = null
-    ) : WeaponAbility {
+        override val triggeredAction: TriggeredAction? = null
+    ) : WeaponAction {
 
         override val armsRestriction: (arms: Inventory.Arms) -> Boolean
             get() = { arms -> arms is Inventory.Arms.RangedWeapon }
     }
 
-    data class SpellAbility(
+    data class SpellAction(
         override val name: String,
         override val resourceCost: Int,
         override val movement: Movement = Movement.NormalMovement(1),
         val targetType: TargetType,
         override val classRestriction: List<Class>,
         val effect: Effect,
-        val onSuccess: TriggeredAbility? = null
-    ) : ExecutableAbility {
+        override val triggeredAction: TriggeredAction? = null
+    ) : Action {
 
-        override fun isHarmful() : Boolean {
+        override fun isHarmful(): Boolean {
             return effect.isHarmful()
         }
+
+        override fun effects(character: Character): List<Effect> {
+            return listOf(effect)
+        }
+
         override val armsRestriction: (arms: Inventory.Arms) -> Boolean
             get() = { true }
 
@@ -385,16 +375,18 @@ sealed interface Ability {
 
     }
 
-    data class SelfAbility(
+    data class SelfAction(
         override val name: String,
         override val resourceCost: Int,
         override val movement: Movement = Movement.NormalMovement(1),
         override val classRestriction: List<Class>,
         val effect: Effect
-    ) : ExecutableAbility {
+    ) : Action {
 
         override val armsRestriction: (arms: Inventory.Arms) -> Boolean
             get() = { true }
+        override val triggeredAction: TriggeredAction?
+            get() = null
 
         override fun targetType(character: Character): TargetType {
             return TargetType(range = 0, arity = TargetType.Arity.Self)
@@ -403,23 +395,11 @@ sealed interface Ability {
         override fun isHarmful(): Boolean {
             return effect.isHarmful()
         }
-    }
 
-    sealed interface TriggeredAbility : Ability {
-        data class SelfTriggeredAbility(
-            val effect: Effect
-        ) : TriggeredAbility {
-            fun trigger(triggererContext: Encounter.CharacterContext) {
-                effect.throwSave(triggererContext, triggererContext)
-            }
-        }
-
-        data class TargetTriggeredAbility(
-            val effect: Effect
-        ) : TriggeredAbility {
-            fun trigger(triggererContext: Encounter.CharacterContext, targetContext: Encounter.CharacterContext) {
-                effect.throwSave(triggererContext, targetContext)
-            }
+        override fun effects(character: Character): List<Effect> {
+            return listOf(effect)
         }
     }
+
+
 }

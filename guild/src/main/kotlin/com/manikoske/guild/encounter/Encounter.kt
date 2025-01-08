@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.ability.*
+import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Character
 import kotlin.math.max
 
@@ -26,7 +27,7 @@ class Encounter(
 
         val currentCharacterContext = encounterContext.characterContext(currentCharacter)
 
-        val executableAbilities = Ability.Abilities.abilities
+        val executableAbilities = Action.Abilities.abilities
             .filter { ability -> currentCharacterContext.canExecuteAbility(ability) }
 
         executableAbilities.forEach { executableAbility ->
@@ -42,7 +43,7 @@ class Encounter(
                     battleground = battleground,
                     executorCharacterContext = currentCharacterContext,
                     executorPosition = possibleMovementNode,
-                    ability = executableAbility
+                    action = executableAbility
                 )
 
                 possibleTargets.forEach { possibleTarget ->
@@ -50,7 +51,7 @@ class Encounter(
                         battleground = battleground,
                         executorCharacterContext = currentCharacterContext,
                         executorPosition = possibleMovementNode,
-                        ability = executableAbility,
+                        action = executableAbility,
                         targets = possibleTarget
                     )
                 }
@@ -107,25 +108,25 @@ class Encounter(
             battleground: Battleground,
             executorCharacterContext: CharacterContext,
             executorPosition: Battleground.Node,
-            ability: Ability.ExecutableAbility
+            action: Action
         ): List<List<CharacterContext>> {
 
             val pointOfView: PointOfView = pointOfView(executorCharacterContext.character)
-            val targetType = ability.targetType(executorCharacterContext.character)
+            val targetType = action.targetType(executorCharacterContext.character)
             val result: MutableList<List<CharacterContext>> = mutableListOf()
             val possibleTargetNodes = battleground.nodesInRange(executorPosition, targetType.range)
 
             for (possibleTargetNode in possibleTargetNodes) {
 
                 val targets =
-                    if (ability.isHarmful()) pointOfView.foesAt(possibleTargetNode)
+                    if (action.isHarmful()) pointOfView.foesAt(possibleTargetNode)
                     else pointOfView.friendsAt(possibleTargetNode)
 
                 when (targetType.arity) {
                     TargetType.Arity.Self -> result.add(listOf(executorCharacterContext))
-                    TargetType.Arity.Area -> result.add(pointOfView.everyoneAt(possibleTargetNode))
-                    TargetType.Arity.Single -> result.addAll(targets.chunked(1))
-                    TargetType.Arity.Double -> result.addAll(doubleTargets(targets))
+                    TargetType.Arity.Node -> result.add(pointOfView.everyoneAt(possibleTargetNode))
+                    TargetType.Arity.Single -> result.addAll(singleTarget(targets))
+                    TargetType.Arity.Double -> result.addAll(doubleTarget(targets))
                     TargetType.Arity.Triple -> result.addAll(tripleTarget(targets))
                 }
             }
@@ -136,21 +137,19 @@ class Encounter(
             battleground: Battleground,
             executorCharacterContext: CharacterContext,
             executorPosition: Battleground.Node,
-            ability: Ability.ExecutableAbility,
+            action: Action,
             targets: List<CharacterContext>
         ) : EncounterContext {
 
-            ability
-
-            when (ability) {
-                is Ability.SelfAbility -> TODO()
-                is Ability.SpellAbility -> TODO()
-                is Ability.MeleeWeaponAbility -> TODO()
-                is Ability.RangedWeaponAbility -> TODO()
-            }
+            action.effects(executorCharacterContext.character).
         }
 
-        private fun doubleTargets(targets: List<CharacterContext>): List<List<CharacterContext>> {
+
+        private fun singleTarget(targets: List<CharacterContext>): List<List<CharacterContext>> {
+            return targets.chunked(1)
+        }
+
+        private fun doubleTarget(targets: List<CharacterContext>): List<List<CharacterContext>> {
 
             val result: MutableList<List<CharacterContext>> = mutableListOf()
             for (i in 1..targets.size) {
@@ -216,47 +215,59 @@ class Encounter(
         val resourcesSpent: Int,
         val statuses: List<Status>
     ) {
-        fun takeDamage(hitPoints: Int): CharacterContext {
+        private fun takeDamage(hitPoints: Int): CharacterContext {
             return this.copy(damageTaken = max(0, damageTaken + hitPoints))
         }
 
-        fun heal(hitPoints: Int): CharacterContext {
+        private fun heal(hitPoints: Int): CharacterContext {
             return this.copy(damageTaken = max(0, damageTaken - hitPoints))
         }
 
-        fun spendResources(amount: Int): CharacterContext {
+        private fun spendResources(amount: Int): CharacterContext {
             return this.copy(resourcesSpent = max(0, resourcesSpent + amount))
         }
 
-        fun gainResources(amount: Int): CharacterContext {
+        private fun gainResources(amount: Int): CharacterContext {
             return this.copy(resourcesSpent = max(0, resourcesSpent - amount))
         }
 
-        fun applyEffect(status: Status): CharacterContext {
+        private fun applyEffect(status: Status): CharacterContext {
             return this.copy(statuses = statuses + status)
         }
 
-        fun moveTo(newPosition: Battleground.Node): CharacterContext {
+        private fun moveTo(newPosition: Battleground.Node): CharacterContext {
             return this.copy(position = newPosition)
         }
 
-        fun canExecuteAbility(executableAbility: Ability.ExecutableAbility): Boolean {
-            val classRestriction = executableAbility.classRestriction.contains(character.clazz())
-            val resourceRestriction = executableAbility.resourceCost < character.maxResources() - resourcesSpent
-            val armsRestriction = executableAbility.armsRestriction.invoke(character.arms())
+        fun canExecuteAbility(executableAction: Action): Boolean {
+            val classRestriction = executableAction.classRestriction.contains(character.clazz())
+            val resourceRestriction = executableAction.resourceCost < character.maxResources() - resourcesSpent
+            val armsRestriction = executableAction.armsRestriction.invoke(character.arms())
             return classRestriction && resourceRestriction && armsRestriction
         }
 
-        fun resolveEffect(effect: Effect) : CharacterContext {
-            when (effect) {
-                is Effect.ApplyBuffStatus -> TODO()
-                is Effect.ApplyStatus -> TODO()
-                is Effect.AvoidableDamage -> TODO()
-                is Effect.DirectDamage -> TODO()
-                is Effect.Healing -> TODO()
-                Effect.NoEffect -> TODO()
-                is Effect.ResourceBoost -> TODO()
-                is Effect.WeaponDamage -> TODO()
+        fun resolveEffect(
+            effect: Effect,
+            executorContext: CharacterContext,
+            targetContext: CharacterContext,
+        ) : CharacterContext {
+            return when (effect) {
+                is Effect.ApplyBuffStatus ->
+                    targetContext.applyEffect(effect.status)
+                is Effect.ApplyStatus ->
+                    targetContext.applyEffect(effect.status)
+                is Effect.AvoidableDamage ->
+                    targetContext.takeDamage(executorContext.character.attributeRoll(effect.executorAttributeType, effect.damageRoll))
+                is Effect.DirectDamage ->
+                    targetContext.takeDamage(effect.damageRoll.invoke())
+                is Effect.Healing ->
+                    targetContext.heal(executorContext.character.attributeRoll(Attribute.Type.wisdom, effect.healingRoll))
+                Effect.NoEffect ->
+                    targetContext
+                is Effect.ResourceBoost ->
+                    targetContext.gainResources(effect.amount)
+                is Effect.WeaponDamage ->
+                    targetContext.takeDamage(executorContext.character.weaponDamageRoll(effect.damageRoll, effect.damageRollMultiplier))
             }
         }
     }
