@@ -5,5 +5,8 @@ add advantage/disadvantage to nodesInRange
 add critical hits
 add status handling
 add death saves
+add weapon damage type
+add spell damage type
+add resistance status to types of damage
 
 ? randomized actions ?
