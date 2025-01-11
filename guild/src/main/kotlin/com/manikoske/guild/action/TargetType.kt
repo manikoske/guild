@@ -1,4 +1,4 @@
-package com.manikoske.guild.ability
+package com.manikoske.guild.action
 
 data class TargetType(val scope: Scope, val range: Int, val arity: Arity) {
 
@@ -7,7 +7,7 @@ data class TargetType(val scope: Scope, val range: Int, val arity: Arity) {
     }
 
     enum class Scope {
-        Ally, Enemy, Self, Everyone
+        Ally, Enemy, Self, Everyone, EveryoneElse
     }
 
 }

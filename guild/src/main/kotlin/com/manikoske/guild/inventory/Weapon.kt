@@ -12,6 +12,12 @@ sealed interface Weapon {
             properties = listOf()
         )
 
+        val axe = MeleeWeapon(
+            name = "Axe",
+            damageRoll = { Die.d8.roll(1) },
+            properties = listOf()
+        )
+
         val shortSword = MeleeWeapon(
             name = "Short Sword",
             damageRoll = { Die.d6.roll(1) },

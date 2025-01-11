@@ -1,6 +1,6 @@
 package com.manikoske.guild.character
 
-data class Innate(
+data class Bio(
     // bio
     val name: String,
     // attributes

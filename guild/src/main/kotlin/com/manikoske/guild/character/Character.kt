@@ -2,23 +2,22 @@ package com.manikoske.guild.character
 
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.rules.*
-import java.util.*
 
 class Character(
     val id: Int,
-    private val innate: Innate,
+    private val bio: Bio,
     private val level: Level,
     private val inventory: Inventory,
 ) {
 
     private fun attribute(attributeType: Attribute.Type): Attribute {
         return when (attributeType) {
-            Attribute.Type.strength -> innate.strength
-            Attribute.Type.dexterity -> innate.dexterity
-            Attribute.Type.constitution -> innate.constitution
-            Attribute.Type.wisdom -> innate.wisdom
-            Attribute.Type.intelligence -> innate.intelligence
-            Attribute.Type.charisma -> innate.charisma
+            Attribute.Type.strength -> bio.strength
+            Attribute.Type.dexterity -> bio.dexterity
+            Attribute.Type.constitution -> bio.constitution
+            Attribute.Type.wisdom -> bio.wisdom
+            Attribute.Type.intelligence -> bio.intelligence
+            Attribute.Type.charisma -> bio.charisma
         }
     }
 
@@ -30,11 +29,11 @@ class Character(
     }
 
     fun maxHp(): Int {
-        return (innate.clazz.hpDie.sides + attribute(Attribute.Type.constitution).modifier()) * level.level
+        return (bio.clazz.hpDie.sides + attribute(Attribute.Type.constitution).modifier()) * level.level
     }
 
     fun maxResources(): Int {
-        return innate.clazz.baseResources * level.level
+        return bio.clazz.baseResources * level.level
     }
 
     private fun weaponAttackRollAttributeType(): Attribute.Type {
@@ -70,7 +69,7 @@ class Character(
     }
 
     fun clazz(): Class {
-        return innate.clazz
+        return bio.clazz
     }
 
     fun arms(): Inventory.Arms {

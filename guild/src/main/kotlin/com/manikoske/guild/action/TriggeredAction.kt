@@ -1,6 +1,6 @@
-package com.manikoske.guild.ability
+package com.manikoske.guild.action
 
-interface TriggeredAction {
+sealed interface TriggeredAction {
 
     data class SelfTriggeredAction(
         val effect: Effect

@@ -1,4 +1,4 @@
-package com.manikoske.guild.ability
+package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Character
@@ -8,11 +8,11 @@ import com.manikoske.guild.rules.Die
 
 sealed interface Action {
 
-    object Abilities {
+    object Actions {
 
         private val noClassRestriction = listOf(Class.Fighter, Class.Rogue, Class.Ranger, Class.Cleric, Class.Wizard)
 
-        val abilities = listOf(
+        val actions = listOf(
 
             MeleeWeaponAction(
                 name = "Basic Melee Attack",
@@ -85,6 +85,7 @@ sealed interface Action {
                 name = "Whirlwind",
                 resourceCost = 2,
                 arity = TargetType.Arity.Node,
+                scope = TargetType.Scope.EveryoneElse,
                 classRestriction = listOf(Class.Fighter),
                 attackRollBonusModifier = -2,
             ),
@@ -92,7 +93,7 @@ sealed interface Action {
                 name = "Charge",
                 resourceCost = 1,
                 movement = Movement.NormalMovement(nodes = 2),
-                arity = TargetType.Arity.Node,
+                arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Fighter),
                 attackRollBonusModifier = -2,
             ),
@@ -198,6 +199,7 @@ sealed interface Action {
                 name = "Volley",
                 resourceCost = 2,
                 arity = TargetType.Arity.Single,
+                scope = TargetType.Scope.Everyone,
                 classRestriction = listOf(Class.Ranger),
                 attackRollBonusModifier = -2
             ),
@@ -261,6 +263,7 @@ sealed interface Action {
 
     sealed interface WeaponAction : Action {
         val arity: TargetType.Arity
+        val scope: TargetType.Scope
         val attackRollBonusModifier: Int
         val damageRollMultiplier: Int
 
@@ -308,10 +311,10 @@ sealed interface Action {
 
         override fun targetType(character: Character): TargetType {
             return when (val arms = character.arms()) {
-                is Inventory.Arms.DualWeapon -> TargetType(scope = TargetType.Scope.Enemy, range = 0, arity = arity)
-                is Inventory.Arms.OneHandedWeaponAndShield -> TargetType(scope = TargetType.Scope.Enemy, range = 0, arity = arity)
-                is Inventory.Arms.RangedWeapon -> TargetType(scope = TargetType.Scope.Enemy, range = arms.bothHands.range, arity = arity)
-                is Inventory.Arms.TwoHandedWeapon -> TargetType(scope = TargetType.Scope.Enemy, range = 0, arity = arity)
+                is Inventory.Arms.DualWeapon -> TargetType(scope = scope, range = 0, arity = arity)
+                is Inventory.Arms.OneHandedWeaponAndShield -> TargetType(scope = scope, range = 0, arity = arity)
+                is Inventory.Arms.RangedWeapon -> TargetType(scope = scope, range = arms.bothHands.range, arity = arity)
+                is Inventory.Arms.TwoHandedWeapon -> TargetType(scope = scope, range = 0, arity = arity)
             }
         }
 
@@ -326,6 +329,7 @@ sealed interface Action {
         override val resourceCost: Int,
         override val movement: Movement = Movement.NormalMovement(1),
         override val arity: TargetType.Arity,
+        override val scope: TargetType.Scope = TargetType.Scope.Enemy,
         override val classRestriction: List<Class>,
         override val armsRestriction: (arms: Inventory.Arms) -> Boolean = { arms -> arms !is Inventory.Arms.RangedWeapon },
         override val attackRollBonusModifier: Int = 0,
@@ -338,6 +342,7 @@ sealed interface Action {
         override val resourceCost: Int,
         override val movement: Movement = Movement.NormalMovement(1),
         override val arity: TargetType.Arity,
+        override val scope: TargetType.Scope = TargetType.Scope.Enemy,
         override val classRestriction: List<Class>,
         override val attackRollBonusModifier: Int = 0,
         override val damageRollMultiplier: Int = 1,

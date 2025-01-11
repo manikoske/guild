@@ -1,6 +1,6 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.ability.Movement
+import com.manikoske.guild.action.Movement
 
 class Battleground(
     private val nodes: Set<Node>,
@@ -10,19 +10,23 @@ class Battleground(
         val id: Int,
         val capacity: Int,
         val edges: List<Edge>
-    ) {
-    }
+    )
 
     class Edge(
         val cost: Int,
-        val from: Node,
-        val to: Node,
+        val fromNodeId: Int,
+        val toNodeId: Int,
     )
 
-    fun nodesInRange(startNode: Node, maxRange: Int): Set<Node> {
+    private fun nodeBy(id: Int) : Node {
+        return nodes.first { it.id == id }
+    }
+
+    fun nodesInRange(startNodeId: Int, maxRange: Int): List<Int> {
         val distances = mutableMapOf<Node, Int>()
         val visited = mutableSetOf<Node>()
         val queue = ArrayDeque<Node>()
+        val startNode = nodeBy(startNodeId)
 
         // Initialize
         distances[startNode] = 0
@@ -36,7 +40,7 @@ class Battleground(
             // Explore neighbors
             for (edge in current.edges) {
 
-                val neighbor = edge.to
+                val neighbor = nodeBy(edge.toNodeId)
                 if (neighbor !in visited) {
                     visited += neighbor
                     distances[neighbor] = currentDist + 1
@@ -45,7 +49,7 @@ class Battleground(
             }
         }
 
-        return distances.filterValues{ it <= maxRange }.keys
+        return distances.filterValues { it <= maxRange }.keys.map { it.id }
     }
 
     /**
@@ -53,17 +57,19 @@ class Battleground(
      * (sum of edge costs) from `startNode` to every other node in `map`.
      * If a node is unreachable, it won't appear in the returned map.
      */
-    fun getAccessibleNodes(
-        startNode: Node,
-        abilityMovement: Movement,
-        pointOfView: Encounter.EncounterContext.PointOfView
-    ): Set<Node> {
+    fun getAccessibleNodesIds(
+        startNodeId: Int,
+        encounterContext: Encounter.EncounterContext,
+        pointOfView: Encounter.EncounterContext.PointOfView,
+        actionMovement: Movement
+    ): List<Int> {
         // We'll store the minimal known cost to reach each node
         val dist = mutableMapOf<Node, Int>()
         // Start with infinite distances
         for (node in nodes) {
             dist[node] = Int.MAX_VALUE
         }
+        val startNode = nodeBy(startNodeId)
         dist[startNode] = 0
 
         // Use a priority queue (min-heap) of (cost, Node)
@@ -83,8 +89,14 @@ class Battleground(
 
             // Explore neighbors
             for (edge in currentNode.edges) {
-                if (pointOfView.notPassable(abilityMovement, edge.from, edge.to)) continue
-                val neighbor = edge.to
+                if (encounterContext.notPassable(
+                        pointOfView = pointOfView,
+                        actionMovement = actionMovement,
+                        edge = edge,
+                        toCapacity = nodeBy(edge.toNodeId).capacity
+                    )
+                ) continue
+                val neighbor = nodeBy(edge.toNodeId)
                 // cost so far + edge cost
                 val newCost = currentCost + edge.cost
                 if (newCost < dist.getValue(neighbor)) {
@@ -96,7 +108,7 @@ class Battleground(
 
         // dist now holds the minimal cost from startNode to every reachable node
         // If dist[node] == Int.MAX_VALUE, it was unreachable
-        return dist.filterValues { it <= abilityMovement.nodes }.keys
+        return dist.filterValues { it <= actionMovement.nodes }.keys.map { it.id }
     }
 
 }

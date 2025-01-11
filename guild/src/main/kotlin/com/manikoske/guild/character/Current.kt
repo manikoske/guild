@@ -1,6 +1,6 @@
 package com.manikoske.guild.character
 
-import com.manikoske.guild.ability.Status
+import com.manikoske.guild.action.Status
 
 data class Current(
     val damageTaken: Int,

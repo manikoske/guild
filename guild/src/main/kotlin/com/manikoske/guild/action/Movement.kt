@@ -1,4 +1,4 @@
-package com.manikoske.guild.ability
+package com.manikoske.guild.action
 
 sealed interface Movement {
     val nodes: Int

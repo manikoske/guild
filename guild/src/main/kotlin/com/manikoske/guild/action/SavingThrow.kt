@@ -1,4 +1,4 @@
-package com.manikoske.guild.ability
+package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Character
 import com.manikoske.guild.character.Attribute
