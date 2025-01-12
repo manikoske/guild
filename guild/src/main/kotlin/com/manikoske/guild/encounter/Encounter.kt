@@ -298,7 +298,7 @@ class Encounter(
             val result: MutableList<List<CharacterContext>> = mutableListOf()
             if (targets.isNotEmpty()) {
                 for (i in targets.indices) {
-                    for (j in i..<targets.size) {
+                    for (j in i+1..<targets.size) {
                         result.add(listOf(targets[i], targets[j]))
                     }
                 }
@@ -310,8 +310,8 @@ class Encounter(
             val result: MutableList<List<CharacterContext>> = mutableListOf()
             if (targets.isNotEmpty()) {
                 for (i in targets.indices) {
-                    for (j in i..<targets.size) {
-                        for (k in j..<targets.size) {
+                    for (j in i+1..<targets.size) {
+                        for (k in j+1..<targets.size) {
                             result.add(listOf(targets[i], targets[j], targets[k]))
                         }
                     }
@@ -356,7 +356,7 @@ class Encounter(
         }
 
         fun applyEffect(status: Status) {
-            this.statuses + status
+            this.statuses += status
         }
 
         fun moveTo(newPositionNodeIde: Int) {
