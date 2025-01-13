@@ -29,14 +29,14 @@ sealed interface Action {
             SelfAction(
                 name = "Disengage",
                 resourceCost = 0,
-                movement = Movement.SpecialMovement(nodes = 1),
+                movement = Movement(type = Movement.Type.Normal, nodes = 1),
                 classRestriction = noClassRestriction,
                 effect = Effect.NoEffect
             ),
             SelfAction(
                 name = "Dash",
                 resourceCost = 0,
-                movement = Movement.NormalMovement(nodes = 2),
+                movement = Movement(type = Movement.Type.Normal, nodes = 2),
                 classRestriction = noClassRestriction,
                 effect = Effect.NoEffect
             ),
@@ -92,7 +92,7 @@ sealed interface Action {
             MeleeWeaponAction(
                 name = "Charge",
                 resourceCost = 1,
-                movement = Movement.NormalMovement(nodes = 2),
+                movement = Movement(type = Movement.Type.Normal, nodes = 2),
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Fighter),
                 attackRollBonusModifier = -2,
@@ -140,7 +140,7 @@ sealed interface Action {
             MeleeWeaponAction(
                 name = "Shadow Step",
                 resourceCost = 2,
-                movement = Movement.SpecialMovement(nodes = 2),
+                movement = Movement(type = Movement.Type.Special, nodes = 2),
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Rogue)
             ),
@@ -241,7 +241,7 @@ sealed interface Action {
             SelfAction(
                 name = "Teleport",
                 resourceCost = 1,
-                movement = Movement.SpecialMovement(nodes = 3),
+                movement = Movement(type = Movement.Type.Special, nodes = 3),
                 classRestriction = listOf(Class.Wizard),
                 effect = Effect.NoEffect
             ),
@@ -327,7 +327,7 @@ sealed interface Action {
     data class MeleeWeaponAction(
         override val name: String,
         override val resourceCost: Int,
-        override val movement: Movement = Movement.NormalMovement(1),
+        override val movement : Movement = Movement(type = Movement.Type.Normal, nodes = 1),
         override val arity: TargetType.Arity,
         override val scope: TargetType.Scope = TargetType.Scope.Enemy,
         override val classRestriction: List<Class>,
@@ -340,7 +340,7 @@ sealed interface Action {
     data class RangedWeaponAction(
         override val name: String,
         override val resourceCost: Int,
-        override val movement: Movement = Movement.NormalMovement(1),
+        override val movement : Movement = Movement(type = Movement.Type.Normal, nodes = 1),
         override val arity: TargetType.Arity,
         override val scope: TargetType.Scope = TargetType.Scope.Enemy,
         override val classRestriction: List<Class>,
@@ -356,7 +356,7 @@ sealed interface Action {
     data class SpellAction(
         override val name: String,
         override val resourceCost: Int,
-        override val movement: Movement = Movement.NormalMovement(1),
+        override val movement : Movement = Movement(type = Movement.Type.Normal, nodes = 1),
         val targetType: TargetType,
         override val classRestriction: List<Class>,
         val effect: Effect,
@@ -383,7 +383,7 @@ sealed interface Action {
     data class SelfAction(
         override val name: String,
         override val resourceCost: Int,
-        override val movement: Movement = Movement.NormalMovement(1),
+        override val movement : Movement = Movement(type = Movement.Type.Normal, nodes = 1),
         override val classRestriction: List<Class>,
         val effect: Effect
     ) : Action {

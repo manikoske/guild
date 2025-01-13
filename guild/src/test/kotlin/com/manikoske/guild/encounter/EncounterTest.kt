@@ -19,158 +19,162 @@ class EncounterTest {
                 Battleground.Node(
                     id = 1,
                     capacity = 5,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 1,
-                            toNodeId = 2
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 1,
-                            toNodeId = 4
-                        ),
-                    ),
                 ),
                 Battleground.Node(
                     id = 2,
                     capacity = 2,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 2,
-                            toNodeId = 1
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 2,
-                            toNodeId = 3
-                        ),
-                    ),
                 ),
                 Battleground.Node(
                     id = 3,
                     capacity = 5,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 3,
-                            toNodeId = 2
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 3,
-                            toNodeId = 6
-                        ),
-                    ),
                 ),
                 Battleground.Node(
                     id = 4,
                     capacity = 5,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 4,
-                            toNodeId = 1
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 4,
-                            toNodeId = 5
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 4,
-                            toNodeId = 7
-                        ),
-                    ),
                 ),
                 Battleground.Node(
                     id = 5,
                     capacity = 5,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 5,
-                            toNodeId = 4
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 5,
-                            toNodeId = 6
-                        ),
-                    ),
                 ),
                 Battleground.Node(
                     id = 6,
                     capacity = 5,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 6,
-                            toNodeId = 3
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 6,
-                            toNodeId = 5
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 6,
-                            toNodeId = 9
-                        ),
-                    ),
                 ),
                 Battleground.Node(
                     id = 7,
                     capacity = 5,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 7,
-                            toNodeId = 4
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 7,
-                            toNodeId = 8
-                        ),
-                    ),
                 ),
                 Battleground.Node(
                     id = 8,
                     capacity = 2,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 8,
-                            toNodeId = 7
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 8,
-                            toNodeId = 9
-                        ),
-                    ),
                 ),
                 Battleground.Node(
                     id = 9,
                     capacity = 5,
-                    edges = listOf(
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 9,
-                            toNodeId = 6
-                        ),
-                        Battleground.Edge(
-                            cost = 1,
-                            fromNodeId = 9,
-                            toNodeId = 8
-                        ),
-                    ),
                 ),
-            )
+            ),
+            edges = setOf(
+                Battleground.Edge(
+                    id = 1,
+                    cost = 1,
+                    fromNodeId = 1,
+                    toNodeId = 2
+                ),
+                Battleground.Edge(
+                    id = 2,
+                    cost = 1,
+                    fromNodeId = 1,
+                    toNodeId = 4
+                ),
+                Battleground.Edge(
+                    id = 3,
+                    cost = 1,
+                    fromNodeId = 2,
+                    toNodeId = 1
+                ),
+                Battleground.Edge(
+                    id = 4,
+                    cost = 1,
+                    fromNodeId = 2,
+                    toNodeId = 3
+                ),
+                Battleground.Edge(
+                    id = 5,
+                    cost = 1,
+                    fromNodeId = 3,
+                    toNodeId = 2
+                ),
+                Battleground.Edge(
+                    id = 6,
+                    cost = 1,
+                    fromNodeId = 3,
+                    toNodeId = 6
+                ),
+                Battleground.Edge(
+                    id = 7,
+                    cost = 1,
+                    fromNodeId = 4,
+                    toNodeId = 1
+                ),
+                Battleground.Edge(
+                    id = 8,
+                    cost = 1,
+                    fromNodeId = 4,
+                    toNodeId = 5
+                ),
+                Battleground.Edge(
+                    id = 9,
+                    cost = 1,
+                    fromNodeId = 4,
+                    toNodeId = 7
+                ),
+                Battleground.Edge(
+                    id = 10,
+                    cost = 1,
+                    fromNodeId = 5,
+                    toNodeId = 4
+                ),
+                Battleground.Edge(
+                    id = 11,
+                    cost = 1,
+                    fromNodeId = 5,
+                    toNodeId = 6
+                ),
+                Battleground.Edge(
+                    id = 12,
+                    cost = 1,
+                    fromNodeId = 6,
+                    toNodeId = 3
+                ),
+                Battleground.Edge(
+                    id = 13,
+                    cost = 1,
+                    fromNodeId = 6,
+                    toNodeId = 5
+                ),
+                Battleground.Edge(
+                    id = 14,
+                    cost = 1,
+                    fromNodeId = 6,
+                    toNodeId = 9
+                ),
+                Battleground.Edge(
+                    id = 15,
+                    cost = 1,
+                    fromNodeId = 7,
+                    toNodeId = 4
+                ),
+                Battleground.Edge(
+                    id = 16,
+                    cost = 1,
+                    fromNodeId = 7,
+                    toNodeId = 8
+                ),
+                Battleground.Edge(
+                    id = 17,
+                    cost = 1,
+                    fromNodeId = 8,
+                    toNodeId = 7
+                ),
+                Battleground.Edge(
+                    id = 18,
+                    cost = 1,
+                    fromNodeId = 8,
+                    toNodeId = 9
+                ),
+                Battleground.Edge(
+                    id = 19,
+                    cost = 1,
+                    fromNodeId = 9,
+                    toNodeId = 6
+                ),
+                Battleground.Edge(
+                    id = 20,
+                    cost = 1,
+                    fromNodeId = 9,
+                    toNodeId = 8
+                ),
+            ),
         )
 
         val khalid = Character(
