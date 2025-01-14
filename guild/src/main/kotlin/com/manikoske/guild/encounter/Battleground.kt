@@ -89,7 +89,7 @@ class Battleground(
      * (sum of edge costs) from `startNodeId` to every other nodeId in `map`.
      */
 
-    fun getRequiredNodeMovements(
+    fun getAllNodeMovementRequirements(
         startNodeId: Int,
         allyCountPerNode: Map<Int, Int>,
         enemyCountPerNode: Map<Int, Int>,

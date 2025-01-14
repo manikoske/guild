@@ -79,7 +79,7 @@ class BattlegroundTest {
         val allyCount = mapOf(1 to 2, 2 to 1, 3 to 1, 4 to 0, 5 to 0)
         val enemyCount = mapOf(1 to 1, 2 to 0, 3 to 0, 4 to 1, 5 to 1)
 
-        val result = battleground.getRequiredNodeMovements(
+        val result = battleground.getAllNodeMovementRequirements(
             startNodeId = 1,
             allyCountPerNode = allyCount,
             enemyCountPerNode = enemyCount,
@@ -108,7 +108,7 @@ class BattlegroundTest {
         // Node2 has capacity=2 => but there's 1 enemy, so 1 slot left.
         // We start from node1 => cost=0 => we can leave node1 since movement=Special => canNotLeaveFrom= false
 
-        val result = battleground.getRequiredNodeMovements(
+        val result = battleground.getAllNodeMovementRequirements(
             startNodeId = 1,
             allyCountPerNode = allyCount,
             enemyCountPerNode = enemyCount,

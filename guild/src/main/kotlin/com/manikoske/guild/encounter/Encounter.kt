@@ -76,6 +76,7 @@ class Encounter(
 
     private fun simulateTurn(takerCharacterId: Int) {
 
+        // TODO dako premistnit view do encounterState aby bol raz inicializovany self a PoW spravit ako suchotinu len strukturu
         val takerPointOfView = encounterState.viewFrom(takerCharacterId, battleground)
 
         val possibleActions = Action.Actions.actions.filter { action -> takerPointOfView.self.canExecuteAction(action) }
@@ -88,7 +89,7 @@ class Encounter(
                 possibleMovementAndVision ->
 
                 val possibleTargets = takerPointOfView.possibleTargets(
-                    movementAndVision = possibleMovementAndVision,
+                    vantageNode = possibleMovementAndVision,
                     targetType = possibleAction.targetType(takerPointOfView.self.character)
                 )
 

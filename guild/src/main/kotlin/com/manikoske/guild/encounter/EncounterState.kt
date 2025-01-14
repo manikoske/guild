@@ -14,10 +14,6 @@ data class EncounterState(
         return EncounterState(this.characterStates.values.associateBy({ it.character.id }, { it.copy() }))
     }
 
-    private fun characterState(characterId: Int): CharacterState {
-        return characterStates.getValue(characterId)
-    }
-
     fun resolveEnding(
         executorCharacterId: Int,
         newPositionNodeId: Int,
@@ -36,10 +32,12 @@ data class EncounterState(
                 val targetState = possibleEnding.characterState(target)
                 if (resolveEffect(effect, self, targetState)) {
                     when (val triggeredAction = action.triggeredAction) {
+
                         is TriggeredAction.SelfTriggeredAction -> resolveEffect(
                             effect = triggeredAction.effect,
                             executorState = self,
-                            targetState = self)
+                            targetState = self
+                        )
                         is TriggeredAction.TargetTriggeredAction -> resolveEffect(
                             effect = triggeredAction.effect,
                             executorState = self,
@@ -107,23 +105,23 @@ data class EncounterState(
         characterId: Int,
         battleground: Battleground
     ) : PointOfView {
-        val self = characterStates.values.first { it.character.id == characterId }
-        val allies = characterStates.values.filter { characterState -> characterState.allegiance == self.allegiance }
-        val enemies = characterStates.values.filter { characterState -> characterState.allegiance != self.allegiance }
-        val everyoneElse =
-            characterStates.values.filter { characterState -> characterState.character.id != self.character.id }
+        val self = characterStates.getValue(characterId)
+        val allies = characterStates.values.filter { it.allegiance == self.allegiance }
+        val enemies = characterStates.values.filter { it.allegiance != self.allegiance }
+        val everyoneElse = characterStates.values.filter { it.character.id != self.character.id }
+        val everyone = characterStates.values.toList()
 
         val allyCountPerNode = characterCountPerNode(allies)
         val enemyCountPerNode = characterCountPerNode(enemies)
 
-        val requiredNodeNormalMovements = battleground.getRequiredNodeMovements(
+        val requiredNodeNormalMovements = battleground.getAllNodeMovementRequirements(
             startNodeId = self.positionNodeId,
             allyCountPerNode = allyCountPerNode,
             enemyCountPerNode = enemyCountPerNode,
             movementType = Movement.Type.Normal
         )
 
-        val requiredNodeSpecialMovements = battleground.getRequiredNodeMovements(
+        val requiredNodeSpecialMovements = battleground.getAllNodeMovementRequirements(
             startNodeId = self.positionNodeId,
             allyCountPerNode = allyCountPerNode,
             enemyCountPerNode = enemyCountPerNode,
@@ -134,14 +132,20 @@ data class EncounterState(
             self = self,
             enemies = enemies,
             allies = allies,
-            everyone = characterStates.values.toList(),
+            everyone = everyone,
             everyoneElse = everyoneElse,
-            nodeMovementAndVision = requiredNodeNormalMovements.keys.map {
-                PointOfView.MovementAndVision(
-                    nodeId = it,
-                    normalMovementRequired = requiredNodeNormalMovements.getValue(it),
-                    specialMovementRequired = requiredNodeSpecialMovements.getValue(it),
-                    nodeToRanges = battleground.nodeIdsInRange(it)
+            vantageNodes = requiredNodeNormalMovements.keys.map { nodeId ->
+                PointOfView.VantageNode(
+                    nodeId = nodeId,
+                    requiredNormalMovement = requiredNodeNormalMovements.getValue(nodeId),
+                    requiredSpecialMovement = requiredNodeSpecialMovements.getValue(nodeId),
+                    targetNodes = battleground.nodeIdsInRange(nodeId).map {
+                        PointOfView.TargetNode(
+                            nodeId = it.key,
+                            characterIds = charactersAt(it.key),
+                            range = it.value
+                        )
+                    }
                 )
             }
         )
@@ -149,6 +153,14 @@ data class EncounterState(
 
     private fun characterCountPerNode(characterStates: List<CharacterState>): Map<Int, Int> {
         return characterStates.groupingBy { it.positionNodeId }.eachCount()
+    }
+
+    private fun charactersAt(nodeId: Int): List<Int> {
+        return characterStates.filterValues { it.positionNodeId == nodeId }.values.map { it.character.id }
+    }
+
+    private fun characterState(characterId: Int): CharacterState {
+        return characterStates.getValue(characterId)
     }
 
 }

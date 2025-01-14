@@ -9,32 +9,36 @@ data class PointOfView(
     private val allies: List<CharacterState>,
     private val everyone: List<CharacterState>,
     private val everyoneElse: List<CharacterState>,
-    private val nodeMovementAndVision: List<MovementAndVision>,
+    private val vantageNodes: List<VantageNode>,
 ) {
 
-    data class MovementAndVision(
+    data class VantageNode(
         val nodeId: Int,
-        val normalMovementRequired: Int,
-        val specialMovementRequired: Int,
-        val nodeToRanges: Map<Int, Int>,
+        val requiredNormalMovement: Int,
+        val requiredSpecialMovement: Int,
+        val targetNodes: List<TargetNode>,
     )
 
-    fun allPossibleMovements(actionMovement : Movement) : List<MovementAndVision> {
+    data class TargetNode(
+        val nodeId: Int,
+        val characterIds: List<Int>,
+        val range: Int,
+
+    )
+
+    fun allPossibleMovements(actionMovement : Movement) : List<VantageNode> {
         return if (actionMovement.type == Movement.Type.Normal) {
-            nodeMovementAndVision.filter { it.normalMovementRequired <= actionMovement.nodes }
+            vantageNodes.filter { it.requiredNormalMovement <= actionMovement.nodes }
         } else {
-            nodeMovementAndVision.filter { it.specialMovementRequired <= actionMovement.nodes }
+            vantageNodes.filter { it.requiredSpecialMovement <= actionMovement.nodes }
         }
     }
 
-    private fun atNode(characterStates: List<CharacterState>, nodeId: Int): List<CharacterState> {
-        return characterStates.filter { it.positionNodeId == nodeId }
-    }
-
-    fun possibleTargets(movementAndVision: MovementAndVision, targetType : TargetType) : List<List<Int>> {
+    // TODO mozno cele premiestnit naspat do encountercontextu a tu nechat len gettre na priatelov etc. (cez idcka)
+    fun possibleTargets(vantageNode: VantageNode, targetType : TargetType) : List<List<Int>> {
         val result: MutableList<List<CharacterState>> = mutableListOf()
 
-        for (possibleTargetNodeId in movementAndVision.nodeToRanges.filterValues { it <= targetType.range }.keys ) {
+        for (possibleTargetNodeId in vantageNode.targetNodes.filter { it.range <= targetType.range } ) {
 
             val scopedTargets = when (targetType.scope) {
                 TargetType.Scope.Ally -> allies
@@ -86,6 +90,5 @@ data class PointOfView(
         }
         return result
     }
-
 
 }
