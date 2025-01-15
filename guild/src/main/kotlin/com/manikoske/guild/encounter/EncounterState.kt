@@ -101,6 +101,40 @@ data class EncounterState(
         }
     }
 
+    fun possibleTargets(pointOfView: PointOfView, vantageNode: PointOfView.VantageNode, targetType : TargetType) : List<List<Int>> {
+        val result: MutableList<List<Int>> = mutableListOf()
+
+        for (possibleTargetNodeId in vantageNode.targetNodes.filter { it.range <= targetType.range } ) {
+
+            val scopedTargets = when (targetType.scope) {
+                TargetType.Scope.Ally -> allies
+                TargetType.Scope.Enemy -> enemies
+                TargetType.Scope.Self -> listOf(self)
+                TargetType.Scope.Everyone -> everyone
+                TargetType.Scope.EveryoneElse -> everyoneElse
+            }
+
+            val scopedTargetsAtPossibleTargetNode = atNode(scopedTargets, possibleTargetNodeId)
+
+            when (targetType.arity) {
+                TargetType.Arity.Node -> result.add(scopedTargetsAtPossibleTargetNode)
+                TargetType.Arity.Single -> result.addAll(singleTarget(scopedTargetsAtPossibleTargetNode))
+                TargetType.Arity.Double -> result.addAll(doubleTarget(scopedTargetsAtPossibleTargetNode))
+                TargetType.Arity.Triple -> result.addAll(tripleTarget(scopedTargetsAtPossibleTargetNode))
+                TargetType.Arity.Battleground -> result.addAll(listOf(scopedTargets))
+            }
+        }
+        return result.map { targets -> targets.map { target -> target.character.id } }
+    }
+
+    fun allAccessibleVantageNodes(actionMovement : Movement) : List<PointOfView.VantageNode> {
+        return if (actionMovement.type == Movement.Type.Normal) {
+            vantageNodes.filter { it.requiredNormalMovement <= actionMovement.nodes }
+        } else {
+            vantageNodes.filter { it.requiredSpecialMovement <= actionMovement.nodes }
+        }
+    }
+
     fun viewFrom(
         characterId: Int,
         battleground: Battleground
@@ -130,10 +164,10 @@ data class EncounterState(
 
         return PointOfView(
             self = self,
-            enemies = enemies,
-            allies = allies,
-            everyone = everyone,
-            everyoneElse = everyoneElse,
+            enemies = enemies.map { it.character.id },
+            allies = allies.map { it.character.id },
+            everyone = everyone.map { it.character.id },
+            everyoneElse = everyoneElse.map { it.character.id },
             vantageNodes = requiredNodeNormalMovements.keys.map { nodeId ->
                 PointOfView.VantageNode(
                     nodeId = nodeId,
@@ -161,6 +195,36 @@ data class EncounterState(
 
     private fun characterState(characterId: Int): CharacterState {
         return characterStates.getValue(characterId)
+    }
+
+    private fun singleTarget(targets: List<Int>): List<List<Int>> {
+        return targets.chunked(1)
+    }
+
+    private fun doubleTarget(targets: List<Int>): List<List<Int>> {
+        val result: MutableList<List<Int>> = mutableListOf()
+        if (targets.isNotEmpty()) {
+            for (i in targets.indices) {
+                for (j in i+1..<targets.size) {
+                    result.add(listOf(targets[i], targets[j]))
+                }
+            }
+        }
+        return result
+    }
+
+    private fun tripleTarget(targets: List<Int>): List<List<Int>> {
+        val result: MutableList<List<Int>> = mutableListOf()
+        if (targets.isNotEmpty()) {
+            for (i in targets.indices) {
+                for (j in i+1..<targets.size) {
+                    for (k in j+1..<targets.size) {
+                        result.add(listOf(targets[i], targets[j], targets[k]))
+                    }
+                }
+            }
+        }
+        return result
     }
 
 }
