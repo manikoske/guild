@@ -26,7 +26,7 @@ data class PointOfView(
 
     )
 
-    fun allPossibleMovements(actionMovement : Movement) : List<VantageNode> {
+    fun allAccessibleVantageNodes(actionMovement : Movement) : List<VantageNode> {
         return if (actionMovement.type == Movement.Type.Normal) {
             vantageNodes.filter { it.requiredNormalMovement <= actionMovement.nodes }
         } else {
