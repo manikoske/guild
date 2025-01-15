@@ -85,11 +85,11 @@ class Encounter(
 
         possibleActions.forEach { possibleAction ->
 
-            takerPointOfView.allPossibleMovements(possibleAction.movement).forEach {
-                possibleMovementAndVision ->
+            takerPointOfView.allAccessibleVantageNodes(possibleAction.movement).forEach {
+                eventualVantageNode ->
 
                 val possibleTargets = takerPointOfView.possibleTargets(
-                    vantageNode = possibleMovementAndVision,
+                    vantageNode = eventualVantageNode,
                     targetType = possibleAction.targetType(takerPointOfView.self.character)
                 )
 
@@ -97,7 +97,7 @@ class Encounter(
                     possibleEndings.add(
                         encounterState.resolveEnding(
                             executorCharacterId = takerCharacterId,
-                            newPositionNodeId = possibleMovementAndVision.nodeId,
+                            newPositionNodeId = eventualVantageNode.nodeId,
                             action = possibleAction,
                             targets = targets
                         )
