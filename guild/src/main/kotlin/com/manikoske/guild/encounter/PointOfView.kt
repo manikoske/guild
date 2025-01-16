@@ -1,10 +1,7 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.action.Movement
-import com.manikoske.guild.action.TargetType
-
 data class PointOfView(
-    val self: CharacterState,
+    val self: Int,
     val enemies: List<Int>,
     val allies: List<Int>,
     val everyone: List<Int>,

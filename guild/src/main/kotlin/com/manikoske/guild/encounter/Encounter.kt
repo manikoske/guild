@@ -1,6 +1,5 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.action.*
 import com.manikoske.guild.character.Character
 
 class Encounter(
@@ -76,38 +75,29 @@ class Encounter(
 
     private fun simulateTurn(takerCharacterId: Int) {
 
-        // TODO dako premistnit view do encounterState aby bol raz inicializovany self a PoW spravit ako suchotinu len strukturu
         val takerPointOfView = encounterState.viewFrom(takerCharacterId, battleground)
 
-        // TODO encounterState.allPossibleActions(takerPointOfView)
-        val possibleActions = Action.Actions.actions.filter { action -> takerPointOfView.self.canExecuteAction(action) }
+        val eventualActions = encounterState.allEventualActions(takerPointOfView)
 
-        val possibleEndings: MutableList<EncounterState> = mutableListOf()
+        val eventualEndings: MutableList<EncounterState> = mutableListOf()
 
-        possibleActions.forEach { possibleAction ->
+        eventualActions.forEach { eventualAction ->
 
-            // TODO encounterState.allAccessibleVantageNodes(takerPointOfView, possibleAction.movement)
-            encounterState.allAccessibleVantageNodes(possibleAction.movement).forEach {
+            encounterState.allAccessibleVantageNodes(takerPointOfView, eventualAction.movement).forEach {
                 eventualVantageNode ->
 
-                // TODO encounterState.possibleActionTargets(takerPointOfView, eventualVantageNode, possibleAction)
-                val possibleTargets = takerPointOfView.allAccessibleVantageNodes(
-                    vantageNode = eventualVantageNode,
-                    targetType = possibleAction.targetType(takerPointOfView.self.character)
-                )
-
-                possibleTargets.forEach { targets ->
-                    possibleEndings.add(
+                encounterState.eventualActionTargets(takerPointOfView, eventualVantageNode, eventualAction).forEach { eventualActionTargets ->
+                    eventualEndings.add(
                         encounterState.resolveEnding(
                             executorCharacterId = takerCharacterId,
                             newPositionNodeId = eventualVantageNode.nodeId,
-                            action = possibleAction,
-                            targets = targets
+                            action = eventualAction,
+                            actionTargets = eventualActionTargets
                         )
                     )
                 }
             }
         }
-        this.encounterState = possibleEndings.sortedByDescending { it.utility() }.take(3).random()
+        this.encounterState = eventualEndings.sortedByDescending { it.utility() }.take(3).random()
     }
 }

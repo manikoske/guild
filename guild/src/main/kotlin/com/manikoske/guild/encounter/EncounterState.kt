@@ -2,6 +2,7 @@ package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.*
 import com.manikoske.guild.character.Attribute
+import com.manikoske.guild.character.Character
 
 data class EncounterState(
     private val characterStates: Map<Int, CharacterState>,
@@ -18,66 +19,66 @@ data class EncounterState(
         executorCharacterId: Int,
         newPositionNodeId: Int,
         action: Action,
-        targets: List<Int>
+        actionTargets: List<Int>
     ): EncounterState {
 
-        val possibleEnding = this.copy()
-        val self = possibleEnding.characterState(executorCharacterId)
+        val ending = this.copy()
+        val executor = ending.characterState(executorCharacterId)
 
-        self.moveTo(newPositionNodeId)
-        self.spendResources(action.resourceCost)
+        executor.moveTo(newPositionNodeId)
+        executor.spendResources(action.resourceCost)
 
-        targets.forEach { target ->
-            action.effects(self.character).forEach { effect ->
-                val targetState = possibleEnding.characterState(target)
-                if (resolveEffect(effect, self, targetState)) {
+        actionTargets.forEach { actionTarget ->
+            action.effects(executor.character).forEach { effect ->
+                val target = ending.characterState(actionTarget)
+                if (resolveEffect(effect, executor, target)) {
                     when (val triggeredAction = action.triggeredAction) {
 
                         is TriggeredAction.SelfTriggeredAction -> resolveEffect(
                             effect = triggeredAction.effect,
-                            executorState = self,
-                            targetState = self
+                            executor = executor,
+                            target = executor
                         )
                         is TriggeredAction.TargetTriggeredAction -> resolveEffect(
                             effect = triggeredAction.effect,
-                            executorState = self,
-                            targetState = targetState
+                            executor = executor,
+                            target = target
                         )
                         null -> Unit
                     }
                 }
             }
         }
-        return possibleEnding
+        return ending
     }
 
     private fun resolveEffect(
         effect: Effect,
-        executorState: CharacterState,
-        targetState: CharacterState,
+        executor: CharacterState,
+        target: CharacterState,
     ): Boolean {
-        if (!effect.savingThrow.saved(executorState.character, targetState.character)) {
+        if (!effect.savingThrow.saved(executor.character, target.character)) {
             when (effect) {
                 is Effect.ApplyBuffStatus ->
-                    targetState.applyEffect(effect.status)
+                    target.applyEffect(effect.status)
 
                 is Effect.ApplyStatus ->
-                    targetState.applyEffect(effect.status)
+                    target.applyEffect(effect.status)
 
                 is Effect.AvoidableDamage ->
-                    targetState.takeDamage(
-                        executorState.character.attributeRoll(
+                    target.takeDamage(
+                        executor.character.attributeRoll(
                             effect.executorAttributeType,
                             effect.damageRoll
                         )
                     )
 
                 is Effect.DirectDamage ->
-                    targetState.takeDamage(effect.damageRoll.invoke())
+                    target.takeDamage(effect.damageRoll.invoke())
 
                 is Effect.Healing ->
-                    targetState.heal(
-                        executorState.character.attributeRoll(
+                    target.heal(
+                        executor.character.attributeRoll(
                             Attribute.Type.wisdom,
                             effect.healingRoll
                         )
@@ -85,11 +86,11 @@ data class EncounterState(
 
                 Effect.NoEffect -> Unit
                 is Effect.ResourceBoost ->
-                    targetState.gainResources(effect.amount)
+                    target.gainResources(effect.amount)
 
                 is Effect.WeaponDamage ->
-                    targetState.takeDamage(
-                        executorState.character.weaponDamageRoll(
+                    target.takeDamage(
+                        executor.character.weaponDamageRoll(
                             effect.damageRoll,
                             effect.damageRollMultiplier
                         )
@@ -101,20 +102,23 @@ data class EncounterState(
         }
     }
 
-    fun possibleTargets(pointOfView: PointOfView, vantageNode: PointOfView.VantageNode, targetType : TargetType) : List<List<Int>> {
+    fun eventualActionTargets(pointOfView: PointOfView, vantageNode: PointOfView.VantageNode, action: Action) : List<List<Int>> {
+
         val result: MutableList<List<Int>> = mutableListOf()
 
-        for (possibleTargetNodeId in vantageNode.targetNodes.filter { it.range <= targetType.range } ) {
+        val targetType = action.targetType(character(pointOfView.self))
+
+        for (eventualActionTargetNodeId in vantageNode.targetNodes.filter { it.range <= targetType.range } ) {
 
             val scopedTargets = when (targetType.scope) {
-                TargetType.Scope.Ally -> allies
-                TargetType.Scope.Enemy -> enemies
-                TargetType.Scope.Self -> listOf(self)
-                TargetType.Scope.Everyone -> everyone
-                TargetType.Scope.EveryoneElse -> everyoneElse
+                TargetType.Scope.Ally -> pointOfView.allies
+                TargetType.Scope.Enemy -> pointOfView.enemies
+                TargetType.Scope.Self -> listOf(pointOfView.self)
+                TargetType.Scope.Everyone -> pointOfView.everyone
+                TargetType.Scope.EveryoneElse -> pointOfView.everyoneElse
             }
 
-            val scopedTargetsAtPossibleTargetNode = atNode(scopedTargets, possibleTargetNodeId)
+            val scopedTargetsAtPossibleTargetNode = scopedTargets.union(eventualActionTargetNodeId.characterIds).toList()
 
             when (targetType.arity) {
                 TargetType.Arity.Node -> result.add(scopedTargetsAtPossibleTargetNode)
@@ -124,15 +128,19 @@ data class EncounterState(
                 TargetType.Arity.Battleground -> result.addAll(listOf(scopedTargets))
             }
         }
-        return result.map { targets -> targets.map { target -> target.character.id } }
+        return result
     }
 
-    fun allAccessibleVantageNodes(actionMovement : Movement) : List<PointOfView.VantageNode> {
+    fun allAccessibleVantageNodes(pointOfView: PointOfView, actionMovement : Movement) : List<PointOfView.VantageNode> {
         return if (actionMovement.type == Movement.Type.Normal) {
-            vantageNodes.filter { it.requiredNormalMovement <= actionMovement.nodes }
+            pointOfView.vantageNodes.filter { it.requiredNormalMovement <= actionMovement.nodes }
         } else {
-            vantageNodes.filter { it.requiredSpecialMovement <= actionMovement.nodes }
+            pointOfView.vantageNodes.filter { it.requiredSpecialMovement <= actionMovement.nodes }
         }
+    }
+
+    fun allEventualActions(pointOfView: PointOfView): List<Action> {
+        return Action.Actions.actions.filter { characterState(pointOfView.self).canExecuteAction(it) }
     }
 
     fun viewFrom(
@@ -142,7 +150,7 @@ data class EncounterState(
         val self = characterStates.getValue(characterId)
         val allies = characterStates.values.filter { it.allegiance == self.allegiance }
         val enemies = characterStates.values.filter { it.allegiance != self.allegiance }
-        val everyoneElse = characterStates.values.filter { it.character.id != self.character.id }
+        val everyoneElse = characterStates.values.filter { it.character.id != characterId }
         val everyone = characterStates.values.toList()
 
         val allyCountPerNode = characterCountPerNode(allies)
@@ -163,7 +171,7 @@ data class EncounterState(
         )
 
         return PointOfView(
-            self = self,
+            self = characterId,
             enemies = enemies.map { it.character.id },
             allies = allies.map { it.character.id },
             everyone = everyone.map { it.character.id },
@@ -195,6 +203,10 @@ data class EncounterState(
 
     private fun characterState(characterId: Int): CharacterState {
         return characterStates.getValue(characterId)
+    }
+
+    private fun character(characterId: Int): Character {
+        return characterStates.getValue(characterId).character
     }
 
     private fun singleTarget(targets: List<Int>): List<List<Int>> {
