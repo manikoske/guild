@@ -86,10 +86,11 @@ class Encounter(
 
         possibleActions.forEach { possibleAction ->
 
+            // TODO encounterState.allAccessibleVantageNodes(takerPointOfView, possibleAction.movement)
             encounterState.allAccessibleVantageNodes(possibleAction.movement).forEach {
                 eventualVantageNode ->
 
-                eventualVantageNode.targetNodes.
+                // TODO encounterState.possibleActionTargets(takerPointOfView, eventualVantageNode, possibleAction)
                 val possibleTargets = takerPointOfView.allAccessibleVantageNodes(
                     vantageNode = eventualVantageNode,
                     targetType = possibleAction.targetType(takerPointOfView.self.character)
