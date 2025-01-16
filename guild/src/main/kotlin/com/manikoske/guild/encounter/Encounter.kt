@@ -79,6 +79,7 @@ class Encounter(
         // TODO dako premistnit view do encounterState aby bol raz inicializovany self a PoW spravit ako suchotinu len strukturu
         val takerPointOfView = encounterState.viewFrom(takerCharacterId, battleground)
 
+        // TODO encounterState.allPossibleActions(takerPointOfView)
         val possibleActions = Action.Actions.actions.filter { action -> takerPointOfView.self.canExecuteAction(action) }
 
         val possibleEndings: MutableList<EncounterState> = mutableListOf()
