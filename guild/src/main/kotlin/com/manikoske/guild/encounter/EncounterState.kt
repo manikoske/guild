@@ -39,11 +39,13 @@ data class EncounterState(
                             executor = executor,
                             target = executor
                         )
+
                         is TriggeredAction.TargetTriggeredAction -> resolveEffect(
                             effect = triggeredAction.effect,
                             executor = executor,
                             target = target
                         )
+
                         null -> Unit
                     }
                 }
@@ -102,13 +104,18 @@ data class EncounterState(
         }
     }
 
-    fun eventualActionTargets(pointOfView: PointOfView, vantageNode: PointOfView.VantageNode, action: Action) : List<List<Int>> {
+    fun eventualActionTargets(
+        pointOfView: PointOfView,
+        vantageNode: PointOfView.VantageNode,
+        action: Action
+    ): List<List<Int>> {
 
+        // TODO when range > 0 and enemycount from vangate node > 1 then disadvantage
         val result: MutableList<List<Int>> = mutableListOf()
 
         val targetType = action.targetType(character(pointOfView.self))
 
-        for (eventualActionTargetNodeId in vantageNode.targetNodes.filter { it.range <= targetType.range } ) {
+        for (eventualActionTargetNodeId in vantageNode.targetNodes.filter { it.range <= targetType.range }) {
 
             val scopedTargets = when (targetType.scope) {
                 TargetType.Scope.Ally -> pointOfView.allies
@@ -118,7 +125,8 @@ data class EncounterState(
                 TargetType.Scope.EveryoneElse -> pointOfView.everyoneElse
             }
 
-            val scopedTargetsAtPossibleTargetNode = scopedTargets.union(eventualActionTargetNodeId.characterIds).toList()
+            val scopedTargetsAtPossibleTargetNode =
+                scopedTargets.intersect(eventualActionTargetNodeId.characterIds.toSet()).toList()
 
             when (targetType.arity) {
                 TargetType.Arity.Node -> result.add(scopedTargetsAtPossibleTargetNode)
@@ -131,11 +139,13 @@ data class EncounterState(
         return result
     }
 
-    fun allAccessibleVantageNodes(pointOfView: PointOfView, actionMovement : Movement) : List<PointOfView.VantageNode> {
-        return if (actionMovement.type == Movement.Type.Normal) {
-            pointOfView.vantageNodes.filter { it.requiredNormalMovement <= actionMovement.nodes }
-        } else {
-            pointOfView.vantageNodes.filter { it.requiredSpecialMovement <= actionMovement.nodes }
+    fun allAccessibleVantageNodes(pointOfView: PointOfView, actionMovement: Movement): List<PointOfView.VantageNode> {
+        val characterMovement = characterState(pointOfView.self).canMoveBy(actionMovement)
+        return pointOfView.vantageNodes.filter {
+            when (characterMovement.type) {
+                Movement.Type.Normal -> it.requiredNormalMovement <= characterMovement.amount
+                Movement.Type.Special -> it.requiredSpecialMovement <= characterMovement.amount
+            }
         }
     }
 
@@ -143,10 +153,11 @@ data class EncounterState(
         return Action.Actions.actions.filter { characterState(pointOfView.self).canExecuteAction(it) }
     }
 
+
     fun viewFrom(
         characterId: Int,
         battleground: Battleground
-    ) : PointOfView {
+    ): PointOfView {
         val self = characterStates.getValue(characterId)
         val allies = characterStates.values.filter { it.allegiance == self.allegiance }
         val enemies = characterStates.values.filter { it.allegiance != self.allegiance }
@@ -156,18 +167,16 @@ data class EncounterState(
         val allyCountPerNode = characterCountPerNode(allies)
         val enemyCountPerNode = characterCountPerNode(enemies)
 
-        val requiredNodeNormalMovements = battleground.getAllNodeMovementRequirements(
+        val requiredNodeNormalMovements = battleground.getAllNodeNormalMovementRequirements(
             startNodeId = self.positionNodeId,
             allyCountPerNode = allyCountPerNode,
             enemyCountPerNode = enemyCountPerNode,
-            movementType = Movement.Type.Normal
         )
 
-        val requiredNodeSpecialMovements = battleground.getAllNodeMovementRequirements(
+        val requiredNodeSpecialMovements = battleground.getAllNodeSpecialMovementRequirements(
             startNodeId = self.positionNodeId,
             allyCountPerNode = allyCountPerNode,
-            enemyCountPerNode = enemyCountPerNode,
-            movementType = Movement.Type.Special
+            enemyCountPerNode = enemyCountPerNode
         )
 
         return PointOfView(
@@ -176,16 +185,17 @@ data class EncounterState(
             allies = allies.map { it.character.id },
             everyone = everyone.map { it.character.id },
             everyoneElse = everyoneElse.map { it.character.id },
-            vantageNodes = requiredNodeNormalMovements.keys.map { nodeId ->
+            vantageNodes = battleground.allBattlegroundNodes().map { node ->
                 PointOfView.VantageNode(
-                    nodeId = nodeId,
-                    requiredNormalMovement = requiredNodeNormalMovements.getValue(nodeId),
-                    requiredSpecialMovement = requiredNodeSpecialMovements.getValue(nodeId),
-                    targetNodes = battleground.nodeIdsInRange(nodeId).map {
+                    nodeId = node.id,
+                    hasEnemiesPresent = enemyCountPerNode.getOrDefault(node.id, 0) > 0,
+                    requiredNormalMovement = requiredNodeNormalMovements.getValue(node.id),
+                    requiredSpecialMovement = requiredNodeSpecialMovements.getOrDefault(node.id, Int.MAX_VALUE),
+                    targetNodes = node.lineOfSight.map {
                         PointOfView.TargetNode(
-                            nodeId = it.key,
-                            characterIds = charactersAt(it.key),
-                            range = it.value
+                            nodeId = it.toNodeId,
+                            characterIds = charactersAt(it.toNodeId),
+                            range = it.range
                         )
                     }
                 )
@@ -217,7 +227,7 @@ data class EncounterState(
         val result: MutableList<List<Int>> = mutableListOf()
         if (targets.isNotEmpty()) {
             for (i in targets.indices) {
-                for (j in i+1..<targets.size) {
+                for (j in i + 1..<targets.size) {
                     result.add(listOf(targets[i], targets[j]))
                 }
             }
@@ -229,8 +239,8 @@ data class EncounterState(
         val result: MutableList<List<Int>> = mutableListOf()
         if (targets.isNotEmpty()) {
             for (i in targets.indices) {
-                for (j in i+1..<targets.size) {
-                    for (k in j+1..<targets.size) {
+                for (j in i + 1..<targets.size) {
+                    for (k in j + 1..<targets.size) {
                         result.add(listOf(targets[i], targets[j], targets[k]))
                     }
                 }

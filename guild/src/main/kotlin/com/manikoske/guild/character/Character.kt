@@ -3,7 +3,7 @@ package com.manikoske.guild.character
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.rules.*
 
-class Character(
+data class Character(
     val id: Int,
     private val bio: Bio,
     private val level: Level,

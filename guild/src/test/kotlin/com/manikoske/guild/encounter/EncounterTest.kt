@@ -1,182 +1,31 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.character.*
+import com.manikoske.guild.character.Attribute
+import com.manikoske.guild.character.Bio
+import com.manikoske.guild.character.Character
+import com.manikoske.guild.character.Class
+import com.manikoske.guild.character.Level
+import com.manikoske.guild.encounter.EncounterTest.Characters.anomen
+import com.manikoske.guild.encounter.EncounterTest.Characters.dorn
+import com.manikoske.guild.encounter.EncounterTest.Characters.edwin
+import com.manikoske.guild.encounter.EncounterTest.Characters.imoen
+import com.manikoske.guild.encounter.EncounterTest.Characters.khalid
+import com.manikoske.guild.encounter.EncounterTest.Characters.kivan
+import com.manikoske.guild.encounter.EncounterTest.Characters.valygar
+import com.manikoske.guild.encounter.EncounterTest.Characters.viconia
+import com.manikoske.guild.encounter.EncounterTest.Characters.xan
+import com.manikoske.guild.encounter.EncounterTest.Characters.yoshimo
+import com.manikoske.guild.encounter.TestingCommons.bigBattleground
 import com.manikoske.guild.inventory.Armor
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.inventory.Shield
 import com.manikoske.guild.inventory.Weapon
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-
-import org.junit.jupiter.api.Assertions.*
 
 class EncounterTest {
 
-    @Test
-    fun simulateEncounter() {
-
-        val battleground = Battleground(
-            nodes = setOf(
-                Battleground.Node(
-                    id = 1,
-                    capacity = 5,
-                ),
-                Battleground.Node(
-                    id = 2,
-                    capacity = 2,
-                ),
-                Battleground.Node(
-                    id = 3,
-                    capacity = 5,
-                ),
-                Battleground.Node(
-                    id = 4,
-                    capacity = 5,
-                ),
-                Battleground.Node(
-                    id = 5,
-                    capacity = 5,
-                ),
-                Battleground.Node(
-                    id = 6,
-                    capacity = 5,
-                ),
-                Battleground.Node(
-                    id = 7,
-                    capacity = 5,
-                ),
-                Battleground.Node(
-                    id = 8,
-                    capacity = 2,
-                ),
-                Battleground.Node(
-                    id = 9,
-                    capacity = 5,
-                ),
-            ),
-            edges = setOf(
-                Battleground.Edge(
-                    id = 1,
-                    cost = 1,
-                    fromNodeId = 1,
-                    toNodeId = 2
-                ),
-                Battleground.Edge(
-                    id = 2,
-                    cost = 1,
-                    fromNodeId = 1,
-                    toNodeId = 4
-                ),
-                Battleground.Edge(
-                    id = 3,
-                    cost = 1,
-                    fromNodeId = 2,
-                    toNodeId = 1
-                ),
-                Battleground.Edge(
-                    id = 4,
-                    cost = 1,
-                    fromNodeId = 2,
-                    toNodeId = 3
-                ),
-                Battleground.Edge(
-                    id = 5,
-                    cost = 1,
-                    fromNodeId = 3,
-                    toNodeId = 2
-                ),
-                Battleground.Edge(
-                    id = 6,
-                    cost = 1,
-                    fromNodeId = 3,
-                    toNodeId = 6
-                ),
-                Battleground.Edge(
-                    id = 7,
-                    cost = 1,
-                    fromNodeId = 4,
-                    toNodeId = 1
-                ),
-                Battleground.Edge(
-                    id = 8,
-                    cost = 1,
-                    fromNodeId = 4,
-                    toNodeId = 5
-                ),
-                Battleground.Edge(
-                    id = 9,
-                    cost = 1,
-                    fromNodeId = 4,
-                    toNodeId = 7
-                ),
-                Battleground.Edge(
-                    id = 10,
-                    cost = 1,
-                    fromNodeId = 5,
-                    toNodeId = 4
-                ),
-                Battleground.Edge(
-                    id = 11,
-                    cost = 1,
-                    fromNodeId = 5,
-                    toNodeId = 6
-                ),
-                Battleground.Edge(
-                    id = 12,
-                    cost = 1,
-                    fromNodeId = 6,
-                    toNodeId = 3
-                ),
-                Battleground.Edge(
-                    id = 13,
-                    cost = 1,
-                    fromNodeId = 6,
-                    toNodeId = 5
-                ),
-                Battleground.Edge(
-                    id = 14,
-                    cost = 1,
-                    fromNodeId = 6,
-                    toNodeId = 9
-                ),
-                Battleground.Edge(
-                    id = 15,
-                    cost = 1,
-                    fromNodeId = 7,
-                    toNodeId = 4
-                ),
-                Battleground.Edge(
-                    id = 16,
-                    cost = 1,
-                    fromNodeId = 7,
-                    toNodeId = 8
-                ),
-                Battleground.Edge(
-                    id = 17,
-                    cost = 1,
-                    fromNodeId = 8,
-                    toNodeId = 7
-                ),
-                Battleground.Edge(
-                    id = 18,
-                    cost = 1,
-                    fromNodeId = 8,
-                    toNodeId = 9
-                ),
-                Battleground.Edge(
-                    id = 19,
-                    cost = 1,
-                    fromNodeId = 9,
-                    toNodeId = 6
-                ),
-                Battleground.Edge(
-                    id = 20,
-                    cost = 1,
-                    fromNodeId = 9,
-                    toNodeId = 8
-                ),
-            ),
-        )
-
+    object Characters {
         val khalid = Character(
             id = 1,
             bio = Bio(
@@ -391,17 +240,59 @@ class EncounterTest {
                 )
             )
         )
+    }
+
+
+    @Test
+    fun createEncounter() {
 
         val encounter = Encounter.Encounters.create(
-            battleground = battleground,
+            battleground = bigBattleground,
             attackersStartingNodeId = 4,
             defendersStartingNodeId = 6,
             attackers = setOf(khalid, kivan, anomen, imoen, xan),
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin)
         )
 
-        encounter.simulateEncounter()
-
-
+        val expectedEncounter = Encounter(
+            battleground = bigBattleground,
+            attackers = setOf(khalid, kivan, anomen, imoen, xan),
+            defenders = setOf(dorn, valygar, viconia, yoshimo, edwin),
+            encounterState = EncounterState(
+                characterStates = mapOf(
+                    khalid.id to characterStateOf(khalid, 4, CharacterState.Allegiance.Attacker),
+                    kivan.id to characterStateOf(kivan, 4, CharacterState.Allegiance.Attacker),
+                    anomen.id to characterStateOf(anomen, 4, CharacterState.Allegiance.Attacker),
+                    imoen.id to characterStateOf(imoen, 4, CharacterState.Allegiance.Attacker),
+                    xan.id to characterStateOf(xan, 4, CharacterState.Allegiance.Attacker),
+                    dorn.id to characterStateOf(dorn, 6, CharacterState.Allegiance.Defender),
+                    valygar.id to characterStateOf(valygar, 6, CharacterState.Allegiance.Defender),
+                    viconia.id to characterStateOf(viconia, 6, CharacterState.Allegiance.Defender),
+                    yoshimo.id to characterStateOf(yoshimo, 6, CharacterState.Allegiance.Defender),
+                    edwin.id to characterStateOf(edwin, 6, CharacterState.Allegiance.Defender),
+                )
+            )
+        )
+        assertThat(encounter)
+            .usingRecursiveComparison()
+            .ignoringCollectionOrder()
+            .isEqualTo(expectedEncounter)
     }
+
+    private fun characterStateOf(
+        character: Character,
+        positionNodeId: Int,
+        allegiance: CharacterState.Allegiance
+    ) : CharacterState {
+        return CharacterState(
+            character = character,
+            positionNodeId = positionNodeId,
+            allegiance = allegiance,
+            damageTaken = 0,
+            resourcesSpent = 0,
+            statuses = listOf()
+        )
+    }
+
 }
+

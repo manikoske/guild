@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
+import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Status
 import com.manikoske.guild.character.Character
 import kotlin.math.max
@@ -30,6 +31,7 @@ data class CharacterState(
     }
 
     fun applyEffect(status: Status) {
+        // TODO replace same effects with prolonged roundsleft
         this.statuses += status
     }
 
@@ -37,11 +39,23 @@ data class CharacterState(
         this.positionNodeId = newPositionNodeIde
     }
 
-    fun canExecuteAction(executableAction: Action): Boolean {
-        val classRestriction = executableAction.classRestriction.contains(character.clazz())
-        val resourceRestriction = executableAction.resourceCost < character.maxResources() - resourcesSpent
-        val armsRestriction = executableAction.armsRestriction.invoke(character.arms())
-        return classRestriction && resourceRestriction && armsRestriction
+    fun canExecuteAction(eventualAction: Action): Boolean {
+        val noStatusExecutionProhibition = statuses.none { it.limitsActionExecution(eventualAction)}
+        val classRestriction = eventualAction.classRestriction.contains(character.clazz())
+        val resourceRestriction = eventualAction.resourceCost < character.maxResources() - resourcesSpent
+        val armsRestriction = eventualAction.armsRestriction.invoke(character.arms())
+        return noStatusExecutionProhibition && classRestriction && resourceRestriction && armsRestriction
+    }
+
+    fun canMoveBy(actionMovement: Movement): Movement {
+        val movementProhibitingStatuses = statuses.filterIsInstance<Status.MovementProhibitingStatus>()
+        val movementAlteringStatuses = statuses.filterIsInstance<Status.MovementAlteringStatus>()
+
+        val finalMovement = movementProhibitingStatuses
+            .fold(actionMovement){ a, b -> b.prohibitsActionMovement(a)}
+            .let { if (it.amount > 0) movementAlteringStatuses.fold(it) { a, b -> b.altersActionMovement(a) } else it }
+
+        return finalMovement
     }
 
     enum class Allegiance {

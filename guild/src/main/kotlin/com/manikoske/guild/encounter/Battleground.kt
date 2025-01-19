@@ -1,34 +1,30 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.action.Movement
+import javax.sound.sampled.Line
 
 class Battleground(
     private val nodes: Set<Node>,
-    private val edges: Set<Edge>
 ) {
 
     class Node(
         val id: Int,
         val capacity: Int,
+        val paths: Set<Path>,
+        val lineOfSight: Set<LineOfSight>
     )
 
-    class Edge(
-        val id: Int,
+    class Path(
         val cost: Int,
-        val fromNodeId: Int,
         val toNodeId: Int,
+    )
+
+    class LineOfSight(
+        val toNodeId: Int,
+        val range: Int
     )
 
     private fun nodeBy(id: Int): Node {
         return nodes.first { it.id == id }
-    }
-
-    private fun neighborsFrom(nodeId: Int): List<Int> {
-        return edges.filter { edge -> edge.fromNodeId == nodeId }.map { edge -> edge.toNodeId }
-    }
-
-    private fun edgesFrom(nodeId: Int): List<Edge> {
-        return edges.filter { edge -> edge.fromNodeId == nodeId }
     }
 
     private fun hasNoCapacityLeft(
@@ -43,45 +39,14 @@ class Battleground(
 
     private fun canNotLeaveFrom(
         nodeId: Int,
-        movementType: Movement.Type,
         allyCountPerNode: Map<Int, Int>,
         enemyCountPerNode: Map<Int, Int>
     ): Boolean {
-        if (movementType == Movement.Type.Normal) {
-            return allyCountPerNode.getOrDefault(nodeId, 0) <= enemyCountPerNode.getOrDefault(nodeId, 0)
-        }
-        if (movementType == Movement.Type.Special){
-            return false
-        }
-        return false
+        return allyCountPerNode.getOrDefault(nodeId, 0) <= enemyCountPerNode.getOrDefault(nodeId, 0)
     }
 
-    fun nodeIdsInRange(startNodeId: Int): Map<Int, Int> {
-        val distances = mutableMapOf<Int, Int>()
-        val visited = mutableSetOf<Int>()
-        val queue = ArrayDeque<Int>()
-
-        // Initialize
-        distances[startNodeId] = 0
-        visited += startNodeId
-        queue += startNodeId
-
-        while (queue.isNotEmpty()) {
-            val current = queue.removeFirst()
-            val currentDist = distances[current] ?: 0
-
-            // Explore neighbors
-            for (neighbor in neighborsFrom(current)) {
-
-                if (neighbor !in visited) {
-                    visited += neighbor
-                    distances[neighbor] = currentDist + 1
-                    queue += neighbor
-                }
-            }
-        }
-
-        return distances
+    fun allBattlegroundNodes() : Set<Node> {
+        return nodes
     }
 
     /**
@@ -89,14 +54,13 @@ class Battleground(
      * (sum of edge costs) from `startNodeId` to every other nodeId in `map`.
      */
 
-    fun getAllNodeMovementRequirements(
+    fun getAllNodeNormalMovementRequirements(
         startNodeId: Int,
         allyCountPerNode: Map<Int, Int>,
         enemyCountPerNode: Map<Int, Int>,
-        movementType: Movement.Type
     ): Map<Int, Int> {
         // We'll store the minimal known cost to reach each node
-         val dist = mutableMapOf<Int, Int>()
+        val dist = mutableMapOf<Int, Int>()
         // Start with infinite distances
         for (node in nodes) {
             dist[node.id] = Int.MAX_VALUE
@@ -104,32 +68,33 @@ class Battleground(
         dist[startNodeId] = 0
 
         // Use a priority queue (min-heap) of (cost, Node)
-        val pq = java.util.PriorityQueue<Pair<Int, Int>>(compareBy { it.first })
+        val pq = java.util.PriorityQueue<Pair<Int, Node>>(compareBy { it.first })
         // Initialize with (0, startNode)
-        pq.add(0 to startNodeId)
+        pq.add(0 to nodeBy(startNodeId))
 
         // Track visited if needed, or we can rely on checking better costs
         val visited = mutableSetOf<Int>()
 
         while (pq.isNotEmpty()) {
-            val (currentCost, currentNodeId) = pq.poll()
+            val (currentCost, currentNode) = pq.poll()
 
             // If we've already visited with a better cost, skip
-            if (currentNodeId in visited) continue
-            visited += currentNodeId
+            if (currentNode.id in visited) continue
+            visited += currentNode.id
 
             // Explore neighbors
-            for (edge in edgesFrom(currentNodeId)) {
-                val neighbor = edge.toNodeId
+            for (path in currentNode.paths) {
+                val neighbor = nodeBy(path.toNodeId)
                 if (
-                    hasNoCapacityLeft(neighbor, allyCountPerNode, enemyCountPerNode) ||
-                    canNotLeaveFrom(currentNodeId, movementType, allyCountPerNode, enemyCountPerNode)
+                    hasNoCapacityLeft(neighbor.id, allyCountPerNode, enemyCountPerNode) ||
+                    canNotLeaveFrom(currentNode.id, allyCountPerNode, enemyCountPerNode)
+
                 ) continue
 
                 // cost so far + edge cost
-                val newCost = currentCost + edge.cost
-                if (newCost < dist.getValue(neighbor)) {
-                    dist[neighbor] = newCost
+                val newCost = currentCost + path.cost
+                if (newCost < dist.getValue(neighbor.id)) {
+                    dist[neighbor.id] = newCost
                     pq.add(newCost to neighbor)
                 }
             }
@@ -138,6 +103,17 @@ class Battleground(
         // dist now holds the minimal cost from startNodeId to every reachable nodeId
         // If dist[nodeId] == Int.MAX_VALUE, it was unreachable
         return dist
+    }
+
+    fun getAllNodeSpecialMovementRequirements(
+        startNodeId: Int,
+        allyCountPerNode: Map<Int, Int>,
+        enemyCountPerNode: Map<Int, Int>,
+    ): Map<Int, Int> {
+        return nodeBy(startNodeId).lineOfSight.associateBy(
+            { it.toNodeId },
+            { if (startNodeId != it.toNodeId && hasNoCapacityLeft(it.toNodeId, allyCountPerNode, enemyCountPerNode)) Int.MAX_VALUE else it.range}
+        )
     }
 
 }

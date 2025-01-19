@@ -75,7 +75,9 @@ class Encounter(
 
     private fun simulateTurn(takerCharacterId: Int) {
 
+
         val takerPointOfView = encounterState.viewFrom(takerCharacterId, battleground)
+        // TODO resolve death (apply dot damage)
 
         val eventualActions = encounterState.allEventualActions(takerPointOfView)
 
@@ -99,5 +101,6 @@ class Encounter(
             }
         }
         this.encounterState = eventualEndings.sortedByDescending { it.utility() }.take(3).random()
+        // TODO fight status and decrement rounds left
     }
 }

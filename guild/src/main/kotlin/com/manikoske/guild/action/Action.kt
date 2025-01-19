@@ -29,14 +29,14 @@ sealed interface Action {
             SelfAction(
                 name = "Disengage",
                 resourceCost = 0,
-                movement = Movement(type = Movement.Type.Normal, nodes = 1),
+                movement = Movement(type = Movement.Type.Special, amount = 1),
                 classRestriction = noClassRestriction,
                 effect = Effect.NoEffect
             ),
             SelfAction(
                 name = "Dash",
                 resourceCost = 0,
-                movement = Movement(type = Movement.Type.Normal, nodes = 2),
+                movement = Movement(type = Movement.Type.Normal, amount = 2),
                 classRestriction = noClassRestriction,
                 effect = Effect.NoEffect
             ),
@@ -53,7 +53,7 @@ sealed interface Action {
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.strength,
                         targetAttributeType = Attribute.Type.constitution,
-                        status = Status.Stunned(roundsLeft = 1)
+                        status = Status.Stun(roundsLeft = 1)
                     )
                 )
             ),
@@ -92,7 +92,7 @@ sealed interface Action {
             MeleeWeaponAction(
                 name = "Charge",
                 resourceCost = 1,
-                movement = Movement(type = Movement.Type.Normal, nodes = 2),
+                movement = Movement(type = Movement.Type.Normal, amount = 2),
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Fighter),
                 attackRollBonusModifier = -2,
@@ -140,7 +140,7 @@ sealed interface Action {
             MeleeWeaponAction(
                 name = "Shadow Step",
                 resourceCost = 2,
-                movement = Movement(type = Movement.Type.Special, nodes = 2),
+                movement = Movement(type = Movement.Type.Special, amount = 2),
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Rogue)
             ),
@@ -238,10 +238,30 @@ sealed interface Action {
                     damageRoll = { Die.d8.roll(1) }
                 )
             ),
-            SelfAction(
+            SpellAction(
+                name = "Vampiric Touch",
+                resourceCost = 1,
+                targetType = TargetType(scope = TargetType.Scope.Enemy, range = 0, arity = TargetType.Arity.Single),
+                classRestriction = listOf(Class.Wizard),
+                effect =
+                Effect.AvoidableDamage(
+                    baseDifficultyClass = 8,
+                    executorAttributeType = Attribute.Type.intelligence,
+                    targetAttributeType = Attribute.Type.constitution,
+                    damageRoll = { Die.d6.roll(1) }
+                ),
+                triggeredAction = TriggeredAction.SelfTriggeredAction(
+                    effect = Effect.Healing(
+                        healingRoll = { Die.d4.roll(1) }
+                    )
+                )
+
+            ),
+            SpellAction(
                 name = "Teleport",
                 resourceCost = 1,
-                movement = Movement(type = Movement.Type.Special, nodes = 3),
+                movement = Movement(type = Movement.Type.Special, amount = 3),
+                targetType = TargetType.TargetTypes.self,
                 classRestriction = listOf(Class.Wizard),
                 effect = Effect.NoEffect
             ),
@@ -257,7 +277,6 @@ sealed interface Action {
     val triggeredAction: TriggeredAction?
 
     fun targetType(character: Character): TargetType
-    fun isHarmful(): Boolean
     fun effects(character: Character): List<Effect>
 
 
@@ -282,6 +301,7 @@ sealed interface Action {
                             damageRollMultiplier = damageRollMultiplier
                         ),
                     )
+
                 is Inventory.Arms.OneHandedWeaponAndShield ->
                     listOf(
                         Effect.WeaponDamage(
@@ -290,6 +310,7 @@ sealed interface Action {
                             damageRollMultiplier = damageRollMultiplier
                         )
                     )
+
                 is Inventory.Arms.TwoHandedWeapon ->
                     listOf(
                         Effect.WeaponDamage(
@@ -298,6 +319,7 @@ sealed interface Action {
                             damageRollMultiplier = damageRollMultiplier
                         )
                     )
+
                 is Inventory.Arms.RangedWeapon ->
                     listOf(
                         Effect.WeaponDamage(
@@ -317,17 +339,12 @@ sealed interface Action {
                 is Inventory.Arms.TwoHandedWeapon -> TargetType(scope = scope, range = 0, arity = arity)
             }
         }
-
-        override fun isHarmful(): Boolean {
-            return true
-        }
-
     }
 
     data class MeleeWeaponAction(
         override val name: String,
         override val resourceCost: Int,
-        override val movement : Movement = Movement(type = Movement.Type.Normal, nodes = 1),
+        override val movement: Movement = Movement(type = Movement.Type.Normal, amount = 1),
         override val arity: TargetType.Arity,
         override val scope: TargetType.Scope = TargetType.Scope.Enemy,
         override val classRestriction: List<Class>,
@@ -340,7 +357,7 @@ sealed interface Action {
     data class RangedWeaponAction(
         override val name: String,
         override val resourceCost: Int,
-        override val movement : Movement = Movement(type = Movement.Type.Normal, nodes = 1),
+        override val movement: Movement = Movement(type = Movement.Type.Normal, amount = 1),
         override val arity: TargetType.Arity,
         override val scope: TargetType.Scope = TargetType.Scope.Enemy,
         override val classRestriction: List<Class>,
@@ -356,16 +373,12 @@ sealed interface Action {
     data class SpellAction(
         override val name: String,
         override val resourceCost: Int,
-        override val movement : Movement = Movement(type = Movement.Type.Normal, nodes = 1),
+        override val movement: Movement = Movement(type = Movement.Type.Normal, amount = 1),
         val targetType: TargetType,
         override val classRestriction: List<Class>,
         val effect: Effect,
         override val triggeredAction: TriggeredAction? = null
     ) : Action {
-
-        override fun isHarmful(): Boolean {
-            return effect.isHarmful()
-        }
 
         override fun effects(character: Character): List<Effect> {
             return listOf(effect)
@@ -383,7 +396,7 @@ sealed interface Action {
     data class SelfAction(
         override val name: String,
         override val resourceCost: Int,
-        override val movement : Movement = Movement(type = Movement.Type.Normal, nodes = 1),
+        override val movement: Movement = Movement(type = Movement.Type.Normal, amount = 1),
         override val classRestriction: List<Class>,
         val effect: Effect
     ) : Action {
@@ -395,10 +408,6 @@ sealed interface Action {
 
         override fun targetType(character: Character): TargetType {
             return TargetType(scope = TargetType.Scope.Self, range = 0, arity = TargetType.Arity.Single)
-        }
-
-        override fun isHarmful(): Boolean {
-            return effect.isHarmful()
         }
 
         override fun effects(character: Character): List<Effect> {

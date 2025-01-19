@@ -11,6 +11,7 @@ data class PointOfView(
 
     data class VantageNode(
         val nodeId: Int,
+        val hasEnemiesPresent: Boolean,
         val requiredNormalMovement: Int,
         val requiredSpecialMovement: Int,
         val targetNodes: List<TargetNode>,
