@@ -277,7 +277,7 @@ sealed interface Action {
     val triggeredAction: TriggeredAction?
 
     fun targetType(character: Character): TargetType
-    fun effects(character: Character): List<Effect>
+    fun effect(character: Character): Effect
 
 
     sealed interface WeaponAction : Action {
@@ -286,47 +286,33 @@ sealed interface Action {
         val attackRollBonusModifier: Int
         val damageRollMultiplier: Int
 
-        override fun effects(character: Character): List<Effect> {
+        override fun effect(character: Character): Effect {
             return when (val arms = character.arms()) {
                 is Inventory.Arms.DualWeapon ->
-                    listOf(
-                        Effect.WeaponDamage(
-                            damageRoll = arms.mainHand.damageRoll,
-                            attackRollBonusModifier = attackRollBonusModifier - 2,
-                            damageRollMultiplier = damageRollMultiplier
-                        ),
-                        Effect.WeaponDamage(
-                            damageRoll = arms.offHand.damageRoll,
-                            attackRollBonusModifier = attackRollBonusModifier - 4,
-                            damageRollMultiplier = damageRollMultiplier
-                        ),
+                    Effect.WeaponDamage(
+                        damageRoll = { arms.mainHand.damageRoll.invoke() + arms.offHand.damageRoll.invoke() },
+                        attackRollBonusModifier = attackRollBonusModifier - 2,
+                        damageRollMultiplier = damageRollMultiplier
                     )
-
                 is Inventory.Arms.OneHandedWeaponAndShield ->
-                    listOf(
-                        Effect.WeaponDamage(
-                            damageRoll = arms.mainHand.damageRoll,
-                            attackRollBonusModifier = attackRollBonusModifier,
-                            damageRollMultiplier = damageRollMultiplier
-                        )
+                    Effect.WeaponDamage(
+                        damageRoll = arms.mainHand.damageRoll,
+                        attackRollBonusModifier = attackRollBonusModifier,
+                        damageRollMultiplier = damageRollMultiplier
                     )
 
                 is Inventory.Arms.TwoHandedWeapon ->
-                    listOf(
-                        Effect.WeaponDamage(
-                            damageRoll = arms.bothHands.damageRoll,
-                            attackRollBonusModifier = attackRollBonusModifier,
-                            damageRollMultiplier = damageRollMultiplier
-                        )
+                    Effect.WeaponDamage(
+                        damageRoll = arms.bothHands.damageRoll,
+                        attackRollBonusModifier = attackRollBonusModifier,
+                        damageRollMultiplier = damageRollMultiplier
                     )
 
                 is Inventory.Arms.RangedWeapon ->
-                    listOf(
-                        Effect.WeaponDamage(
-                            damageRoll = arms.bothHands.damageRoll,
-                            attackRollBonusModifier = attackRollBonusModifier,
-                            damageRollMultiplier = damageRollMultiplier
-                        )
+                    Effect.WeaponDamage(
+                        damageRoll = arms.bothHands.damageRoll,
+                        attackRollBonusModifier = attackRollBonusModifier,
+                        damageRollMultiplier = damageRollMultiplier
                     )
             }
         }
@@ -380,8 +366,8 @@ sealed interface Action {
         override val triggeredAction: TriggeredAction? = null
     ) : Action {
 
-        override fun effects(character: Character): List<Effect> {
-            return listOf(effect)
+        override fun effect(character: Character): Effect {
+            return effect
         }
 
         override val armsRestriction: (arms: Inventory.Arms) -> Boolean
@@ -410,8 +396,8 @@ sealed interface Action {
             return TargetType(scope = TargetType.Scope.Self, range = 0, arity = TargetType.Arity.Single)
         }
 
-        override fun effects(character: Character): List<Effect> {
-            return listOf(effect)
+        override fun effect(character: Character): Effect {
+            return effect
         }
     }
 

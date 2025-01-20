@@ -18,20 +18,13 @@ sealed interface Status {
 
     }
 
-    fun limitsActionExecution(action: Action): Boolean {
-        return false
+    sealed interface ActionLimitingStatus : Status {
+        fun limitsActionExecution(action: Action): Boolean
     }
-
-    enum class ApplicationPriority {
-        High, Mid, Low
-    }
-
-
-
 
     data class Stun(
         override val roundsLeft: Int
-    ) : Status {
+    ) : ActionLimitingStatus {
         override val name: String
             get() = "Stun"
 
@@ -42,7 +35,7 @@ sealed interface Status {
 
     data class Disarmed(
         override val roundsLeft: Int
-    ) : Status {
+    ) : ActionLimitingStatus {
         override val name: String
             get() = "Disarmed"
 
@@ -53,7 +46,7 @@ sealed interface Status {
 
     data class Silence(
         override val roundsLeft: Int
-    ) : Status {
+    ) : ActionLimitingStatus {
         override val name: String
             get() = "Silence"
 

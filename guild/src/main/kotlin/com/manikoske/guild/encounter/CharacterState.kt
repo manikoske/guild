@@ -30,9 +30,13 @@ data class CharacterState(
         this.resourcesSpent = max(0, resourcesSpent - amount)
     }
 
-    fun applyEffect(status: Status) {
+    fun applyStatus(status: Status) {
         // TODO replace same effects with prolonged roundsleft
         this.statuses += status
+    }
+
+    fun removeStatus(status: Status) {
+        this.statuses -= status
     }
 
     fun moveTo(newPositionNodeIde: Int) {

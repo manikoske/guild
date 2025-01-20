@@ -6,9 +6,6 @@ sealed interface Effect {
 
     val savingThrow: SavingThrow
 
-    fun isHarmful() : Boolean
-
-
     data class WeaponDamage(
         val damageRoll: () -> Int,
         val attackRollBonusModifier: Int,
@@ -17,9 +14,6 @@ sealed interface Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.ArmorClassSavingThrow(attackRollBonusModifier)
 
-        override fun isHarmful() : Boolean {
-            return true
-        }
     }
 
     data class AvoidableDamage(
@@ -34,10 +28,6 @@ sealed interface Effect {
                 executorAttributeType,
                 targetAttributeType
             )
-
-        override fun isHarmful() : Boolean {
-            return true
-        }
     }
 
     data class DirectDamage(
@@ -46,9 +36,6 @@ sealed interface Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
 
-        override fun isHarmful() : Boolean {
-            return true
-        }
     }
 
     data class Healing(
@@ -56,10 +43,6 @@ sealed interface Effect {
     ) : Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
-
-        override fun isHarmful() : Boolean {
-            return false
-        }
     }
 
     data class ResourceBoost(
@@ -68,9 +51,6 @@ sealed interface Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
 
-        override fun isHarmful() : Boolean {
-            return false
-        }
     }
 
     data class ApplyStatus(
@@ -85,10 +65,13 @@ sealed interface Effect {
                 executorAttributeType,
                 targetAttributeType
             )
+    }
 
-        override fun isHarmful() : Boolean {
-            return true
-        }
+    data class RemoveStatus(
+        val status: Status
+    ) : Effect {
+        override val savingThrow: SavingThrow
+            get() = SavingThrow.NoSave
     }
 
     data class ApplyBuffStatus(
@@ -96,19 +79,11 @@ sealed interface Effect {
     ) : Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
-
-        override fun isHarmful() : Boolean {
-            return false
-        }
     }
 
     data object NoEffect : Effect {
         override val savingThrow: SavingThrow
             get() = SavingThrow.NoSave
-
-        override fun isHarmful() : Boolean {
-            return false
-        }
     }
 
 }

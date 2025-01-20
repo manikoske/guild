@@ -29,7 +29,7 @@ data class EncounterState(
         executor.spendResources(action.resourceCost)
 
         actionTargets.forEach { actionTarget ->
-            action.effects(executor.character).forEach { effect ->
+            action.effect(executor.character).forEach { effect ->
                 val target = ending.characterState(actionTarget)
                 if (resolveEffect(effect, executor, target)) {
                     when (val triggeredAction = action.triggeredAction) {
@@ -62,10 +62,10 @@ data class EncounterState(
         if (!effect.savingThrow.saved(executor.character, target.character)) {
             when (effect) {
                 is Effect.ApplyBuffStatus ->
-                    target.applyEffect(effect.status)
+                    target.applyStatus(effect.status)
 
                 is Effect.ApplyStatus ->
-                    target.applyEffect(effect.status)
+                    target.applyStatus(effect.status)
 
                 is Effect.AvoidableDamage ->
                     target.takeDamage(
@@ -97,6 +97,9 @@ data class EncounterState(
                             effect.damageRollMultiplier
                         )
                     )
+
+                is Effect.RemoveStatus ->
+                    target.removeStatus(effect.status)
             }
             return true
         } else {

@@ -87,7 +87,6 @@ class Encounter(
 
             encounterState.allAccessibleVantageNodes(takerPointOfView, eventualAction.movement).forEach {
                 eventualVantageNode ->
-
                 encounterState.eventualActionTargets(takerPointOfView, eventualVantageNode, eventualAction).forEach { eventualActionTargets ->
                     eventualEndings.add(
                         encounterState.resolveEnding(
@@ -100,6 +99,7 @@ class Encounter(
                 }
             }
         }
+        // TODO can be empty
         this.encounterState = eventualEndings.sortedByDescending { it.utility() }.take(3).random()
         // TODO fight status and decrement rounds left
     }
