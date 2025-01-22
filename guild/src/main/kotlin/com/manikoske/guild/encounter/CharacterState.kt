@@ -44,7 +44,7 @@ data class CharacterState(
     }
 
     fun canExecuteAction(eventualAction: Action): Boolean {
-        val noStatusExecutionProhibition = statuses.none { it.limitsActionExecution(eventualAction)}
+        val noStatusExecutionProhibition = statuses.filterIsInstance<Status.ActionLimitingStatus>().none { it.limitsActionExecution(eventualAction)}
         val classRestriction = eventualAction.classRestriction.contains(character.clazz())
         val resourceRestriction = eventualAction.resourceCost < character.maxResources() - resourcesSpent
         val armsRestriction = eventualAction.armsRestriction.invoke(character.arms())

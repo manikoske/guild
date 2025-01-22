@@ -29,25 +29,24 @@ data class EncounterState(
         executor.spendResources(action.resourceCost)
 
         actionTargets.forEach { actionTarget ->
-            action.effect(executor.character).forEach { effect ->
-                val target = ending.characterState(actionTarget)
-                if (resolveEffect(effect, executor, target)) {
-                    when (val triggeredAction = action.triggeredAction) {
+            val target = ending.characterState(actionTarget)
 
-                        is TriggeredAction.SelfTriggeredAction -> resolveEffect(
-                            effect = triggeredAction.effect,
-                            executor = executor,
-                            target = executor
-                        )
+            if (resolveEffect(action.effect(executor.character), executor, target)) {
+                when (val triggeredAction = action.triggeredAction) {
 
-                        is TriggeredAction.TargetTriggeredAction -> resolveEffect(
-                            effect = triggeredAction.effect,
-                            executor = executor,
-                            target = target
-                        )
+                    is TriggeredAction.SelfTriggeredAction -> resolveEffect(
+                        effect = triggeredAction.effect,
+                        executor = executor,
+                        target = executor
+                    )
 
-                        null -> Unit
-                    }
+                    is TriggeredAction.TargetTriggeredAction -> resolveEffect(
+                        effect = triggeredAction.effect,
+                        executor = executor,
+                        target = target
+                    )
+
+                    null -> Unit
                 }
             }
         }

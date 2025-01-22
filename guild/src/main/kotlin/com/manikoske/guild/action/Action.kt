@@ -198,7 +198,7 @@ sealed interface Action {
             RangedWeaponAction(
                 name = "Volley",
                 resourceCost = 2,
-                arity = TargetType.Arity.Single,
+                arity = TargetType.Arity.Node,
                 scope = TargetType.Scope.Everyone,
                 classRestriction = listOf(Class.Ranger),
                 attackRollBonusModifier = -2
