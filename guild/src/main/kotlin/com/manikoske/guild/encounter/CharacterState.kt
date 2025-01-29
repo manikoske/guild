@@ -14,12 +14,16 @@ data class CharacterState(
     var resourcesSpent: Int,
     var statuses: List<Status>,
 ) {
-    fun takeDamage(hitPoints: Int) {
-        this.damageTaken = max(0, damageTaken + hitPoints)
+    fun takeDamage(hitPointDamage: Int) {
+        this.damageTaken = max(0, damageTaken + hitPointDamage)
+        if (damageTaken >= character.maxHitPoints()) {
+            addStatus(Status.Dying(tries = 3))
+        }
+        this.statuses = this.statuses.filter { it !is Status.RemovedOnDamageTakenStatus }
     }
 
-    fun heal(hitPoints: Int) {
-        this.damageTaken = max(0, damageTaken - hitPoints)
+    fun heal(hitPointHeal: Int) {
+        this.damageTaken = max(0, damageTaken - hitPointHeal)
     }
 
     fun spendResources(amount: Int) {
@@ -30,17 +34,21 @@ data class CharacterState(
         this.resourcesSpent = max(0, resourcesSpent - amount)
     }
 
-    fun applyStatus(status: Status) {
-        // TODO replace same effects with prolonged roundsleft
-        this.statuses += status
+    fun addStatus(status: Status) {
+        this.statuses = this.statuses.map { if (it.category == status.category) status else it }
     }
 
     fun removeStatus(status: Status) {
-        this.statuses -= status
+        this.statuses = this.statuses.filter { it.category != status.category }
     }
 
     fun moveTo(newPositionNodeIde: Int) {
         this.positionNodeId = newPositionNodeIde
+    }
+
+    fun applyOverTimeStatuses() {
+        heal(statuses.filterIsInstance<Status.HealOverTime>().sumOf { it.healRoll.invoke() })
+        takeDamage(statuses.filterIsInstance<Status.DamageOverTimeStatus>().sumOf { it.damageRoll().invoke() })
     }
 
     fun canExecuteAction(eventualAction: Action): Boolean {
@@ -52,12 +60,11 @@ data class CharacterState(
     }
 
     fun canMoveBy(actionMovement: Movement): Movement {
-        val movementProhibitingStatuses = statuses.filterIsInstance<Status.MovementProhibitingStatus>()
-        val movementAlteringStatuses = statuses.filterIsInstance<Status.MovementAlteringStatus>()
+        val movementProhibitingStatus = statuses.filterIsInstance<Status.MovementProhibitingStatus>().firstOrNull()
+        val movementAlteringStatus = statuses.filterIsInstance<Status.MovementAlteringStatus>().firstOrNull()
 
-        val finalMovement = movementProhibitingStatuses
-            .fold(actionMovement){ a, b -> b.prohibitsActionMovement(a)}
-            .let { if (it.amount > 0) movementAlteringStatuses.fold(it) { a, b -> b.altersActionMovement(a) } else it }
+        val finalMovement = (movementProhibitingStatus?.prohibitsActionMovement(actionMovement) ?: actionMovement)
+            .let { if (it.amount > 0) movementAlteringStatus?.altersActionMovement(it) ?: it else it }
 
         return finalMovement
     }

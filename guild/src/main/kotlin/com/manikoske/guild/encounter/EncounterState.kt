@@ -3,12 +3,13 @@ package com.manikoske.guild.encounter
 import com.manikoske.guild.action.*
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Character
+import kotlin.random.Random
 
 data class EncounterState(
     private val characterStates: Map<Int, CharacterState>,
 ) {
     fun utility(): Int {
-        return 1
+        return Random.nextInt(1,10)
     }
 
     private fun copy(): EncounterState {
@@ -50,6 +51,8 @@ data class EncounterState(
                 }
             }
         }
+        executor.applyOverTimeStatuses()
+        // todo decrement rounds left and fight status dc
         return ending
     }
 
@@ -60,11 +63,11 @@ data class EncounterState(
     ): Boolean {
         if (!effect.savingThrow.saved(executor.character, target.character)) {
             when (effect) {
-                is Effect.ApplyBuffStatus ->
-                    target.applyStatus(effect.status)
+                is Effect.AddBuffStatus ->
+                    target.addStatus(effect.status)
 
-                is Effect.ApplyStatus ->
-                    target.applyStatus(effect.status)
+                is Effect.AddStatus ->
+                    target.addStatus(effect.status)
 
                 is Effect.AvoidableDamage ->
                     target.takeDamage(

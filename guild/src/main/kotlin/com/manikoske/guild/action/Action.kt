@@ -10,10 +10,11 @@ sealed interface Action {
 
     object Actions {
 
-        private val noClassRestriction = listOf(Class.Fighter, Class.Rogue, Class.Ranger, Class.Cleric, Class.Wizard)
+        val noClassRestriction = listOf(Class.Fighter, Class.Rogue, Class.Ranger, Class.Cleric, Class.Wizard)
 
         val actions = listOf(
-
+            NoAction,
+            FightForLife,
             MeleeWeaponAction(
                 name = "Basic Melee Attack",
                 resourceCost = 0,
@@ -41,6 +42,14 @@ sealed interface Action {
                 effect = Effect.NoEffect
             ),
 
+            SelfAction(
+                name = "No Action",
+                resourceCost = 0,
+                movement = Movement(type = Movement.Type.Normal, amount = 0),
+                classRestriction = noClassRestriction,
+                effect = Effect.NoEffect
+            ),
+
             MeleeWeaponAction(
                 name = "Shield Bash",
                 resourceCost = 1,
@@ -49,7 +58,7 @@ sealed interface Action {
                 armsRestriction = { arms -> arms is Inventory.Arms.OneHandedWeaponAndShield },
                 damageRollMultiplier = 0,
                 triggeredAction = TriggeredAction.TargetTriggeredAction(
-                    effect = Effect.ApplyStatus(
+                    effect = Effect.AddStatus(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.strength,
                         targetAttributeType = Attribute.Type.constitution,
@@ -114,12 +123,12 @@ sealed interface Action {
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Rogue),
                 triggeredAction = TriggeredAction.TargetTriggeredAction(
-                    effect = Effect.ApplyStatus(
+                    effect = Effect.AddStatus(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.dexterity,
                         targetAttributeType = Attribute.Type.constitution,
-                        status = Status.DamageOverTime(
-                            name = "Bleeding",
+                        status = Status.Bleed(
+                            name = "Rend",
                             roundsLeft = 3,
                             damageRoll = { Die.d4.roll(1) }
                         )
@@ -187,7 +196,7 @@ sealed interface Action {
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Ranger),
                 triggeredAction = TriggeredAction.TargetTriggeredAction(
-                    effect = Effect.ApplyStatus(
+                    effect = Effect.AddStatus(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.dexterity,
                         targetAttributeType = Attribute.Type.strength,
@@ -279,6 +288,9 @@ sealed interface Action {
     fun targetType(character: Character): TargetType
     fun effect(character: Character): Effect
 
+    fun requiredStatus() : List<Status> {
+        return listOf()
+    }
 
     sealed interface WeaponAction : Action {
         val arity: TargetType.Arity
@@ -401,5 +413,52 @@ sealed interface Action {
         }
     }
 
+
+    data object NoAction : Action {
+        override val name: String
+            get() = "No Action"
+        override val movement: Movement
+            get() = Movement(type = Movement.Type.Normal, amount = 0)
+        override val resourceCost: Int
+            get() = 0
+        override val classRestriction: List<Class>
+            get() = Actions.noClassRestriction
+        override val armsRestriction: (arms: Inventory.Arms) -> Boolean
+            get() = { true }
+        override val triggeredAction: TriggeredAction?
+            get() = null
+        override fun targetType(character: Character): TargetType {
+            return TargetType.TargetTypes.self
+        }
+        override fun effect(character: Character): Effect {
+            return Effect.NoEffect
+        }
+
+        override fun requiredStatus(): List<Status> {
+            return listOf(Status.Stun)
+        }
+    }
+
+
+    data object FightForLife : Action {
+        override val name: String
+            get() = "Fight For Life"
+        override val movement: Movement
+            get() = Movement(type = Movement.Type.Normal, amount = 0)
+        override val resourceCost: Int
+            get() = 0
+        override val classRestriction: List<Class>
+            get() = Actions.noClassRestriction
+        override val armsRestriction: (arms: Inventory.Arms) -> Boolean
+            get() = { true }
+        override val triggeredAction: TriggeredAction?
+            get() = null
+        override fun targetType(character: Character): TargetType {
+            return TargetType.TargetTypes.self
+        }
+        override fun effect(character: Character): Effect {
+            return Effect.NoEffect
+        }
+    }
 
 }

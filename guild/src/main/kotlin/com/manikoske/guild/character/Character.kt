@@ -28,7 +28,7 @@ data class Character(
                 inventory.arms.armorClassBonus()
     }
 
-    fun maxHp(): Int {
+    fun maxHitPoints(): Int {
         return (bio.clazz.hpDie.sides + attribute(Attribute.Type.constitution).modifier()) * level.level
     }
 

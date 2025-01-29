@@ -53,7 +53,7 @@ sealed interface Effect {
 
     }
 
-    data class ApplyStatus(
+    data class AddStatus(
         val baseDifficultyClass: Int,
         val executorAttributeType: Attribute.Type,
         val targetAttributeType: Attribute.Type,
@@ -74,7 +74,7 @@ sealed interface Effect {
             get() = SavingThrow.NoSave
     }
 
-    data class ApplyBuffStatus(
+    data class AddBuffStatus(
         val status: Status
     ) : Effect {
         override val savingThrow: SavingThrow
