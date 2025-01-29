@@ -13,8 +13,6 @@ sealed interface Action {
         val noClassRestriction = listOf(Class.Fighter, Class.Rogue, Class.Ranger, Class.Cleric, Class.Wizard)
 
         val actions = listOf(
-            NoAction,
-            FightForLife,
             MeleeWeaponAction(
                 name = "Basic Melee Attack",
                 resourceCost = 0,
@@ -62,7 +60,7 @@ sealed interface Action {
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.strength,
                         targetAttributeType = Attribute.Type.constitution,
-                        status = Status.Stun(roundsLeft = 1)
+                        status = Status.ActionForcingStatus.Stun(roundsLeft = 1)
                     )
                 )
             ),
@@ -288,10 +286,6 @@ sealed interface Action {
     fun targetType(character: Character): TargetType
     fun effect(character: Character): Effect
 
-    fun requiredStatus() : List<Status> {
-        return listOf()
-    }
-
     sealed interface WeaponAction : Action {
         val arity: TargetType.Arity
         val scope: TargetType.Scope
@@ -433,12 +427,29 @@ sealed interface Action {
         override fun effect(character: Character): Effect {
             return Effect.NoEffect
         }
-
-        override fun requiredStatus(): List<Status> {
-            return listOf(Status.Stun)
-        }
     }
 
+
+    data object StandUp : Action {
+        override val name: String
+            get() = "Stand up"
+        override val movement: Movement
+            get() = Movement(type = Movement.Type.Normal, amount = 0)
+        override val resourceCost: Int
+            get() = 0
+        override val classRestriction: List<Class>
+            get() = Actions.noClassRestriction
+        override val armsRestriction: (arms: Inventory.Arms) -> Boolean
+            get() = { true }
+        override val triggeredAction: TriggeredAction?
+            get() = null
+        override fun targetType(character: Character): TargetType {
+            return TargetType.TargetTypes.self
+        }
+        override fun effect(character: Character): Effect {
+            return Effect.NoEffect
+        }
+    }
 
     data object FightForLife : Action {
         override val name: String
