@@ -57,7 +57,7 @@ class Encounter(
                 allegiance = allegiance,
                 damageTaken = 0,
                 resourcesSpent = 0,
-                statuses = listOf()
+                statuses = mutableListOf()
             )
         }
     }

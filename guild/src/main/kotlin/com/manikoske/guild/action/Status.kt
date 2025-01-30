@@ -9,14 +9,15 @@ sealed interface Status {
 
     sealed class ActionForcingStatus : Status {
         abstract fun severity(): Int
-        abstract fun forcedAction() : Action
+        abstract fun forcedAction(): Action.ForcedAction
 
         data object Prone : ActionForcingStatus() {
             override fun severity(): Int {
                 return 3
             }
-            override fun forcedAction(): Action {
-                return Action.StandUp
+
+            override fun forcedAction(): Action.ForcedAction {
+                return Action.ForcedAction.StandUp
             }
 
             override val name: String
@@ -29,12 +30,15 @@ sealed interface Status {
             override fun severity(): Int {
                 return 2
             }
-            override fun forcedAction(): Action {
-                return Action.StandUp
+
+            override fun forcedAction(): Action.ForcedAction {
+                return Action.ForcedAction.NoAction
             }
+
             override fun roundsLeft(): Int {
                 return roundsLeft
             }
+
             override val name: String
                 get() = "Stun"
         }
@@ -43,9 +47,11 @@ sealed interface Status {
             override fun severity(): Int {
                 return 5
             }
-            override fun forcedAction(): Action {
-                return Action.StandUp
+
+            override fun forcedAction(): Action.ForcedAction {
+                return Action.ForcedAction.FightForLife
             }
+
             override val name: String
                 get() = "Dying"
         }
@@ -60,8 +66,10 @@ sealed interface Status {
             override fun roundsLeft(): Int {
                 return roundsLeft
             }
+
             override val name: String
                 get() = "Slow"
+
             override fun alterActionMovement(movement: Movement): Movement {
                 return movement.let { it.copy(amount = max(it.amount - 1, 0)) }
             }
@@ -112,8 +120,10 @@ sealed interface Status {
             override fun roundsLeft(): Int {
                 return roundsLeft
             }
+
             override val name: String
                 get() = "Hold"
+
             override fun restrictActionMovement(movement: Movement): Movement {
                 return movement.copy(amount = 0)
             }
@@ -125,16 +135,18 @@ sealed interface Status {
     }
 
     sealed class ActionRestrictingStatus : Status {
-        abstract fun restrictedAction(action: Action) : Boolean
+        abstract fun restrictedAction(action: Action): Boolean
         data class Disarmed(
             val roundsLeft: Int
         ) : ActionRestrictingStatus(), HasRoundsLeftStatus {
             override fun roundsLeft(): Int {
                 return roundsLeft
             }
+
             override fun restrictedAction(action: Action): Boolean {
                 return action is Action.WeaponAction
             }
+
             override val name: String
                 get() = "Disarmed"
         }
@@ -145,9 +157,11 @@ sealed interface Status {
             override fun roundsLeft(): Int {
                 return roundsLeft
             }
+
             override fun restrictedAction(action: Action): Boolean {
                 return action is Action.SpellAction
             }
+
             override val name: String
                 get() = "Silenced"
         }
@@ -163,51 +177,58 @@ sealed interface Status {
             override fun roundsLeft(): Int {
                 return roundsLeft
             }
+
             override val name: String
                 get() = "Bleed"
+
             override fun damageRoll(): () -> Int {
                 return damageRoll
             }
         }
 
         data class Poison(
-            override val name: String,
             val roundsLeft: Int,
             val damageRoll: () -> Int,
-        ) : HasRoundsLeftStatus, DamageOverTimeStatus {
+        ) : DamageOverTimeStatus(), HasRoundsLeftStatus {
             override fun roundsLeft(): Int {
                 return roundsLeft
             }
+
+            override val name: String
+                get() = "Poison"
 
             override fun damageRoll(): () -> Int {
                 return damageRoll
             }
 
-            override val category: Category
-                get() = Category.Poison
         }
+    }
+
+    sealed class HealOverTimeStatus : Status {
+        abstract fun healRoll(): () -> Int
+
+        data class Regeneration(
+            val roundsLeft: Int,
+            val healRoll: () -> Int,
+        ) : HealOverTimeStatus(), HasRoundsLeftStatus {
+            override fun roundsLeft(): Int {
+                return roundsLeft
+            }
+
+            override fun healRoll(): () -> Int {
+                return healRoll
+            }
+
+            override val name: String
+                get() = "Regeneration"
+        }
+
     }
 
     sealed interface RemovedOnDamageTakenStatus : Status
 
     sealed interface HasRoundsLeftStatus : Status {
-        fun roundsLeft() : Int
+        fun roundsLeft(): Int
     }
-
-
-
-    data class HealOverTime(
-        override val name: String,
-        val roundsLeft: Int,
-        val healRoll: () -> Int,
-    ) : HasRoundsLeftStatus {
-        override fun roundsLeft(): Int {
-            return roundsLeft
-        }
-
-        override val category: Category
-            get() = Category.Heal
-    }
-
 
 }

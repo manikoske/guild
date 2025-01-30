@@ -125,8 +125,7 @@ sealed interface Action {
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.dexterity,
                         targetAttributeType = Attribute.Type.constitution,
-                        status = Status.Bleed(
-                            name = "Rend",
+                        status = Status.DamageOverTimeStatus.Bleed(
                             roundsLeft = 3,
                             damageRoll = { Die.d4.roll(1) }
                         )
@@ -198,7 +197,7 @@ sealed interface Action {
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.dexterity,
                         targetAttributeType = Attribute.Type.strength,
-                        status = Status.Entangled(roundsLeft = 1)
+                        status = Status.MovementRestrictingStatus.Entangled(roundsLeft = 1)
                     )
                 )
             ),
@@ -407,10 +406,7 @@ sealed interface Action {
         }
     }
 
-
-    data object NoAction : Action {
-        override val name: String
-            get() = "No Action"
+    sealed class ForcedAction : Action {
         override val movement: Movement
             get() = Movement(type = Movement.Type.Normal, amount = 0)
         override val resourceCost: Int
@@ -427,48 +423,23 @@ sealed interface Action {
         override fun effect(character: Character): Effect {
             return Effect.NoEffect
         }
-    }
 
+        data object NoAction : ForcedAction() {
+            override val name: String
+                get() = "No Action"
 
-    data object StandUp : Action {
-        override val name: String
-            get() = "Stand up"
-        override val movement: Movement
-            get() = Movement(type = Movement.Type.Normal, amount = 0)
-        override val resourceCost: Int
-            get() = 0
-        override val classRestriction: List<Class>
-            get() = Actions.noClassRestriction
-        override val armsRestriction: (arms: Inventory.Arms) -> Boolean
-            get() = { true }
-        override val triggeredAction: TriggeredAction?
-            get() = null
-        override fun targetType(character: Character): TargetType {
-            return TargetType.TargetTypes.self
         }
-        override fun effect(character: Character): Effect {
-            return Effect.NoEffect
-        }
-    }
 
-    data object FightForLife : Action {
-        override val name: String
-            get() = "Fight For Life"
-        override val movement: Movement
-            get() = Movement(type = Movement.Type.Normal, amount = 0)
-        override val resourceCost: Int
-            get() = 0
-        override val classRestriction: List<Class>
-            get() = Actions.noClassRestriction
-        override val armsRestriction: (arms: Inventory.Arms) -> Boolean
-            get() = { true }
-        override val triggeredAction: TriggeredAction?
-            get() = null
-        override fun targetType(character: Character): TargetType {
-            return TargetType.TargetTypes.self
+        data object StandUp : ForcedAction() {
+            override val name: String
+                get() = "Stand Up"
+
         }
-        override fun effect(character: Character): Effect {
-            return Effect.NoEffect
+
+        data object FightForLife : ForcedAction() {
+            override val name: String
+                get() = "Fight For Life"
+
         }
     }
 

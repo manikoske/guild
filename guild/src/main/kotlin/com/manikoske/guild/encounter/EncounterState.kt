@@ -9,11 +9,11 @@ data class EncounterState(
     private val characterStates: Map<Int, CharacterState>,
 ) {
     fun utility(): Int {
-        return Random.nextInt(1,10)
+        return Random.nextInt(1, 10)
     }
 
     private fun copy(): EncounterState {
-        return EncounterState(this.characterStates.values.associateBy({ it.character.id }, { it.copy() }))
+        return EncounterState(this.characterStates.values.associateBy({ it.character.id }, { it.copy(statuses = it.statuses.toMutableList()) }))
     }
 
     fun resolveEnding(
@@ -155,7 +155,15 @@ data class EncounterState(
     }
 
     fun allEventualActions(pointOfView: PointOfView): List<Action> {
-        return Action.Actions.actions.filter { characterState(pointOfView.self).canExecuteAction(it) }
+        return characterState(pointOfView.self).let { self ->
+            self.forcedToAction().let { forcedAction ->
+                if (forcedAction == null) {
+                    Action.Actions.actions.filter { self.canExecuteAction(it) }
+                } else {
+                    listOf(forcedAction)
+                }
+            }
+        }
     }
 
 

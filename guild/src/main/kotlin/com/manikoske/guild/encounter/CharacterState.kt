@@ -12,7 +12,7 @@ data class CharacterState(
     var allegiance: Allegiance,
     var damageTaken: Int,
     var resourcesSpent: Int,
-    var statuses: List<Status>,
+    var statuses: MutableList<Status>, // TODO how does it behave after context copy?
 ) {
     fun takeDamage(hitPointDamage: Int) {
         this.damageTaken = max(0, damageTaken + hitPointDamage)
@@ -35,11 +35,11 @@ data class CharacterState(
     }
 
     fun addStatus(status: Status) {
-        this.statuses = this.statuses.map { if (it.category == status.category) status else it }
+        this.statuses.add = this.statuses.map { if (it.category == status.category) status else it }
     }
 
     fun removeStatus(status: Status) {
-        this.statuses = this.statuses.filter { it.category != status.category }
+        this.statuses = this.statuses.filter { it is status.class }
     }
 
     fun moveTo(newPositionNodeIde: Int) {
@@ -47,24 +47,28 @@ data class CharacterState(
     }
 
     fun applyOverTimeStatuses() {
-        heal(statuses.filterIsInstance<Status.HealOverTime>().sumOf { it.healRoll.invoke() })
+        heal(statuses.filterIsInstance<Status.HealOverTimeStatus>().sumOf { it.healRoll().invoke() })
         takeDamage(statuses.filterIsInstance<Status.DamageOverTimeStatus>().sumOf { it.damageRoll().invoke() })
     }
 
     fun canExecuteAction(eventualAction: Action): Boolean {
-        val noStatusExecutionProhibition = statuses.filterIsInstance<Status.ActionLimitingStatus>().none { it.limitsActionExecution(eventualAction)}
+        val noActionRestrictionStatus = statuses.filterIsInstance<Status.ActionRestrictingStatus>().none { it.restrictedAction(eventualAction)}
         val classRestriction = eventualAction.classRestriction.contains(character.clazz())
         val resourceRestriction = eventualAction.resourceCost < character.maxResources() - resourcesSpent
         val armsRestriction = eventualAction.armsRestriction.invoke(character.arms())
-        return noStatusExecutionProhibition && classRestriction && resourceRestriction && armsRestriction
+        return noActionRestrictionStatus && classRestriction && resourceRestriction && armsRestriction
+    }
+
+    fun forcedToAction() : Action.ForcedAction? {
+        return statuses.filterIsInstance<Action.ForcedAction>().firstOrNull()
     }
 
     fun canMoveBy(actionMovement: Movement): Movement {
-        val movementProhibitingStatus = statuses.filterIsInstance<Status.MovementProhibitingStatus>().firstOrNull()
-        val movementAlteringStatus = statuses.filterIsInstance<Status.MovementAlteringStatus>().firstOrNull()
+        val movementProhibitingStatus = statuses.filterIsInstance<Status.MovementRestrictingStatus>().firstOrNull()
+        val movementAlteringStatuses = statuses.filterIsInstance<Status.MovementAlteringStatus>()
 
-        val finalMovement = (movementProhibitingStatus?.prohibitsActionMovement(actionMovement) ?: actionMovement)
-            .let { if (it.amount > 0) movementAlteringStatus?.altersActionMovement(it) ?: it else it }
+        val finalMovement = (movementProhibitingStatus?.restrictActionMovement(actionMovement) ?: actionMovement)
+            .let { if (it.amount > 0) movementAlteringStatuses.fold(it) { a, b -> b.alterActionMovement(a) } else it }
 
         return finalMovement
     }
