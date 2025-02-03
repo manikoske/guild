@@ -3,10 +3,10 @@ package com.manikoske.guild.action
 sealed interface TriggeredAction {
 
     data class SelfTriggeredAction(
-        val effect: Effect
+        val outcome: Outcome
     ) : TriggeredAction
 
     data class TargetTriggeredAction(
-        val effect: Effect
+        val outcome: Outcome
     ) : TriggeredAction
 }

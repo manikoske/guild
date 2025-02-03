@@ -57,7 +57,12 @@ class Encounter(
                 allegiance = allegiance,
                 damageTaken = 0,
                 resourcesSpent = 0,
-                statuses = mutableListOf()
+                actionForcingEffect = null,
+                movementRestrictingEffect = null,
+                movementAlteringEffects = listOf(),
+                actionRestrictingEffects = listOf(),
+                damageOverTimeEffects = listOf(),
+                healOverTimeEffects = listOf()
             )
         }
     }

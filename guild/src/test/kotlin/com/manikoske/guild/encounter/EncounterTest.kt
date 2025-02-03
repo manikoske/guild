@@ -290,7 +290,7 @@ class EncounterTest {
             allegiance = allegiance,
             damageTaken = 0,
             resourcesSpent = 0,
-            statuses = listOf()
+            effects = listOf()
         )
     }
 

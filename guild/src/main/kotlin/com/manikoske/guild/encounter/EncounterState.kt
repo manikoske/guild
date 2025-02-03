@@ -7,13 +7,13 @@ import kotlin.random.Random
 
 data class EncounterState(
     private val characterStates: Map<Int, CharacterState>,
-) {
+) : Cloneable {
     fun utility(): Int {
         return Random.nextInt(1, 10)
     }
 
     private fun copy(): EncounterState {
-        return EncounterState(this.characterStates.values.associateBy({ it.character.id }, { it.copy(statuses = it.statuses.toMutableList()) }))
+        return EncounterState(this.characterStates.values.associateBy({ it.character.id }, { it.copy() }))
     }
 
     fun resolveEnding(
@@ -32,17 +32,17 @@ data class EncounterState(
         actionTargets.forEach { actionTarget ->
             val target = ending.characterState(actionTarget)
 
-            if (resolveEffect(action.effect(executor.character), executor, target)) {
+            if (resolveOutcome(action.outcome(executor.character), executor, target)) {
                 when (val triggeredAction = action.triggeredAction) {
 
-                    is TriggeredAction.SelfTriggeredAction -> resolveEffect(
-                        effect = triggeredAction.effect,
+                    is TriggeredAction.SelfTriggeredAction -> resolveOutcome(
+                        outcome = triggeredAction.outcome,
                         executor = executor,
                         target = executor
                     )
 
-                    is TriggeredAction.TargetTriggeredAction -> resolveEffect(
-                        effect = triggeredAction.effect,
+                    is TriggeredAction.TargetTriggeredAction -> resolveOutcome(
+                        outcome = triggeredAction.outcome,
                         executor = executor,
                         target = target
                     )
@@ -51,57 +51,58 @@ data class EncounterState(
                 }
             }
         }
-        executor.applyOverTimeStatuses()
-        // todo decrement rounds left and fight status dc
+        executor.applyOverTimeEffects()
+        executor.decrementRoundsLeft()
         return ending
     }
 
-    private fun resolveEffect(
-        effect: Effect,
+    // TODO move to outcome
+    private fun resolveOutcome(
+        outcome: Outcome,
         executor: CharacterState,
         target: CharacterState,
     ): Boolean {
-        if (!effect.savingThrow.saved(executor.character, target.character)) {
-            when (effect) {
-                is Effect.AddBuffStatus ->
-                    target.addStatus(effect.status)
+        if (!outcome.savingThrow.saved(executor.character, target.character)) {
+            when (outcome) {
+                is Outcome.AddBuffEffect ->
+                    target.addEffect(outcome.effect)
 
-                is Effect.AddStatus ->
-                    target.addStatus(effect.status)
+                is Outcome.AddEffect ->
+                    target.addEffect(outcome.effect)
 
-                is Effect.AvoidableDamage ->
+                is Outcome.AvoidableDamage ->
                     target.takeDamage(
                         executor.character.attributeRoll(
-                            effect.executorAttributeType,
-                            effect.damageRoll
+                            outcome.executorAttributeType,
+                            outcome.damageRoll
                         )
                     )
 
-                is Effect.DirectDamage ->
-                    target.takeDamage(effect.damageRoll.invoke())
+                is Outcome.DirectDamage ->
+                    target.takeDamage(outcome.damageRoll.invoke())
 
-                is Effect.Healing ->
+                is Outcome.Healing ->
                     target.heal(
                         executor.character.attributeRoll(
                             Attribute.Type.wisdom,
-                            effect.healingRoll
+                            outcome.healingRoll
                         )
                     )
 
-                Effect.NoEffect -> Unit
-                is Effect.ResourceBoost ->
-                    target.gainResources(effect.amount)
+                Outcome.NoOutcome -> Unit
+                is Outcome.ResourceBoost ->
+                    target.gainResources(outcome.amount)
 
-                is Effect.WeaponDamage ->
+                is Outcome.WeaponDamage ->
                     target.takeDamage(
                         executor.character.weaponDamageRoll(
-                            effect.damageRoll,
-                            effect.damageRollMultiplier
+                            outcome.damageRoll,
+                            outcome.damageRollMultiplier
                         )
                     )
 
-                is Effect.RemoveStatus ->
-                    target.removeStatus(effect.status)
+                is Outcome.RemoveEffect ->
+                    target.removeEffect(outcome.effect)
             }
             return true
         } else {

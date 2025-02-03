@@ -30,14 +30,14 @@ sealed interface Action {
                 resourceCost = 0,
                 movement = Movement(type = Movement.Type.Special, amount = 1),
                 classRestriction = noClassRestriction,
-                effect = Effect.NoEffect
+                outcome = Outcome.NoOutcome
             ),
             SelfAction(
                 name = "Dash",
                 resourceCost = 0,
                 movement = Movement(type = Movement.Type.Normal, amount = 2),
                 classRestriction = noClassRestriction,
-                effect = Effect.NoEffect
+                outcome = Outcome.NoOutcome
             ),
 
             SelfAction(
@@ -45,7 +45,7 @@ sealed interface Action {
                 resourceCost = 0,
                 movement = Movement(type = Movement.Type.Normal, amount = 0),
                 classRestriction = noClassRestriction,
-                effect = Effect.NoEffect
+                outcome = Outcome.NoOutcome
             ),
 
             MeleeWeaponAction(
@@ -56,11 +56,11 @@ sealed interface Action {
                 armsRestriction = { arms -> arms is Inventory.Arms.OneHandedWeaponAndShield },
                 damageRollMultiplier = 0,
                 triggeredAction = TriggeredAction.TargetTriggeredAction(
-                    effect = Effect.AddStatus(
+                    outcome = Outcome.AddEffect(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.strength,
                         targetAttributeType = Attribute.Type.constitution,
-                        status = Status.ActionForcingStatus.Stun(roundsLeft = 1)
+                        effect = Effect.ActionForcingEffect.Stun(roundsLeft = 1)
                     )
                 )
             ),
@@ -108,8 +108,8 @@ sealed interface Action {
                 name = "Second Wind",
                 resourceCost = 1,
                 classRestriction = listOf(Class.Fighter),
-                effect =
-                Effect.Healing(
+                outcome =
+                Outcome.Healing(
                     healingRoll = { Die.d4.roll(1) }
                 )
             ),
@@ -121,11 +121,11 @@ sealed interface Action {
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Rogue),
                 triggeredAction = TriggeredAction.TargetTriggeredAction(
-                    effect = Effect.AddStatus(
+                    outcome = Outcome.AddEffect(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.dexterity,
                         targetAttributeType = Attribute.Type.constitution,
-                        status = Status.DamageOverTimeStatus.Bleed(
+                        effect = Effect.DamageOverTimeEffect.Bleed(
                             roundsLeft = 3,
                             damageRoll = { Die.d4.roll(1) }
                         )
@@ -138,7 +138,7 @@ sealed interface Action {
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Rogue),
                 triggeredAction = TriggeredAction.SelfTriggeredAction(
-                    effect = Effect.ResourceBoost(
+                    outcome = Outcome.ResourceBoost(
                         amount = 2
                     )
                 )
@@ -157,7 +157,7 @@ sealed interface Action {
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Cleric),
                 triggeredAction = TriggeredAction.TargetTriggeredAction(
-                    effect = Effect.DirectDamage(
+                    outcome = Outcome.DirectDamage(
                         damageRoll = { Die.d4.roll(1) }
                     )
                 )
@@ -167,11 +167,11 @@ sealed interface Action {
                 resourceCost = 1,
                 targetType = TargetType(scope = TargetType.Scope.Ally, range = 1, arity = TargetType.Arity.Single),
                 classRestriction = listOf(Class.Cleric),
-                effect = Effect.Healing(
+                outcome = Outcome.Healing(
                     healingRoll = { Die.d8.roll(1) }
                 ),
                 triggeredAction = TriggeredAction.SelfTriggeredAction(
-                    effect = Effect.Healing(
+                    outcome = Outcome.Healing(
                         healingRoll = { Die.d4.roll(1) }
                     )
                 )
@@ -181,7 +181,7 @@ sealed interface Action {
                 resourceCost = 2,
                 targetType = TargetType(scope = TargetType.Scope.Ally, range = 1, arity = TargetType.Arity.Triple),
                 classRestriction = listOf(Class.Cleric),
-                effect = Effect.Healing(
+                outcome = Outcome.Healing(
                     healingRoll = { Die.d6.roll(1) }
                 )
             ),
@@ -193,11 +193,11 @@ sealed interface Action {
                 arity = TargetType.Arity.Single,
                 classRestriction = listOf(Class.Ranger),
                 triggeredAction = TriggeredAction.TargetTriggeredAction(
-                    effect = Effect.AddStatus(
+                    outcome = Outcome.AddEffect(
                         baseDifficultyClass = 8,
                         executorAttributeType = Attribute.Type.dexterity,
                         targetAttributeType = Attribute.Type.strength,
-                        status = Status.MovementRestrictingStatus.Entangled(roundsLeft = 1)
+                        effect = Effect.MovementRestrictingEffect.Entangled(roundsLeft = 1)
                     )
                 )
             ),
@@ -222,8 +222,8 @@ sealed interface Action {
                 resourceCost = 0,
                 targetType = TargetType(scope = TargetType.Scope.Enemy, range = 2, arity = TargetType.Arity.Single),
                 classRestriction = listOf(Class.Wizard),
-                effect =
-                Effect.AvoidableDamage(
+                outcome =
+                Outcome.AvoidableDamage(
                     baseDifficultyClass = 8,
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
@@ -236,8 +236,8 @@ sealed interface Action {
                 resourceCost = 1,
                 targetType = TargetType(scope = TargetType.Scope.Everyone, range = 2, arity = TargetType.Arity.Node),
                 classRestriction = listOf(Class.Wizard),
-                effect =
-                Effect.AvoidableDamage(
+                outcome =
+                Outcome.AvoidableDamage(
                     baseDifficultyClass = 8,
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
@@ -249,15 +249,15 @@ sealed interface Action {
                 resourceCost = 1,
                 targetType = TargetType(scope = TargetType.Scope.Enemy, range = 0, arity = TargetType.Arity.Single),
                 classRestriction = listOf(Class.Wizard),
-                effect =
-                Effect.AvoidableDamage(
+                outcome =
+                Outcome.AvoidableDamage(
                     baseDifficultyClass = 8,
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.constitution,
                     damageRoll = { Die.d6.roll(1) }
                 ),
                 triggeredAction = TriggeredAction.SelfTriggeredAction(
-                    effect = Effect.Healing(
+                    outcome = Outcome.Healing(
                         healingRoll = { Die.d4.roll(1) }
                     )
                 )
@@ -269,7 +269,7 @@ sealed interface Action {
                 movement = Movement(type = Movement.Type.Special, amount = 3),
                 targetType = TargetType.TargetTypes.self,
                 classRestriction = listOf(Class.Wizard),
-                effect = Effect.NoEffect
+                outcome = Outcome.NoOutcome
             ),
 
             )
@@ -283,7 +283,7 @@ sealed interface Action {
     val triggeredAction: TriggeredAction?
 
     fun targetType(character: Character): TargetType
-    fun effect(character: Character): Effect
+    fun outcome(character: Character): Outcome
 
     sealed interface WeaponAction : Action {
         val arity: TargetType.Arity
@@ -291,30 +291,30 @@ sealed interface Action {
         val attackRollBonusModifier: Int
         val damageRollMultiplier: Int
 
-        override fun effect(character: Character): Effect {
+        override fun outcome(character: Character): Outcome {
             return when (val arms = character.arms()) {
                 is Inventory.Arms.DualWeapon ->
-                    Effect.WeaponDamage(
+                    Outcome.WeaponDamage(
                         damageRoll = { arms.mainHand.damageRoll.invoke() + arms.offHand.damageRoll.invoke() },
                         attackRollBonusModifier = attackRollBonusModifier - 2,
                         damageRollMultiplier = damageRollMultiplier
                     )
                 is Inventory.Arms.OneHandedWeaponAndShield ->
-                    Effect.WeaponDamage(
+                    Outcome.WeaponDamage(
                         damageRoll = arms.mainHand.damageRoll,
                         attackRollBonusModifier = attackRollBonusModifier,
                         damageRollMultiplier = damageRollMultiplier
                     )
 
                 is Inventory.Arms.TwoHandedWeapon ->
-                    Effect.WeaponDamage(
+                    Outcome.WeaponDamage(
                         damageRoll = arms.bothHands.damageRoll,
                         attackRollBonusModifier = attackRollBonusModifier,
                         damageRollMultiplier = damageRollMultiplier
                     )
 
                 is Inventory.Arms.RangedWeapon ->
-                    Effect.WeaponDamage(
+                    Outcome.WeaponDamage(
                         damageRoll = arms.bothHands.damageRoll,
                         attackRollBonusModifier = attackRollBonusModifier,
                         damageRollMultiplier = damageRollMultiplier
@@ -367,12 +367,12 @@ sealed interface Action {
         override val movement: Movement = Movement(type = Movement.Type.Normal, amount = 1),
         val targetType: TargetType,
         override val classRestriction: List<Class>,
-        val effect: Effect,
+        val outcome: Outcome,
         override val triggeredAction: TriggeredAction? = null
     ) : Action {
 
-        override fun effect(character: Character): Effect {
-            return effect
+        override fun outcome(character: Character): Outcome {
+            return outcome
         }
 
         override val armsRestriction: (arms: Inventory.Arms) -> Boolean
@@ -389,7 +389,7 @@ sealed interface Action {
         override val resourceCost: Int,
         override val movement: Movement = Movement(type = Movement.Type.Normal, amount = 1),
         override val classRestriction: List<Class>,
-        val effect: Effect
+        val outcome: Outcome
     ) : Action {
 
         override val armsRestriction: (arms: Inventory.Arms) -> Boolean
@@ -401,8 +401,8 @@ sealed interface Action {
             return TargetType(scope = TargetType.Scope.Self, range = 0, arity = TargetType.Arity.Single)
         }
 
-        override fun effect(character: Character): Effect {
-            return effect
+        override fun outcome(character: Character): Outcome {
+            return outcome
         }
     }
 
@@ -420,8 +420,8 @@ sealed interface Action {
         override fun targetType(character: Character): TargetType {
             return TargetType.TargetTypes.self
         }
-        override fun effect(character: Character): Effect {
-            return Effect.NoEffect
+        override fun outcome(character: Character): Outcome {
+            return Outcome.NoOutcome
         }
 
         data object NoAction : ForcedAction() {
@@ -433,6 +433,10 @@ sealed interface Action {
         data object StandUp : ForcedAction() {
             override val name: String
                 get() = "Stand Up"
+
+            override fun outcome(character: Character): Outcome {
+                return Outcome.RemoveEffect(effect = Effect.ActionForcingEffect.Prone)
+            }
 
         }
 

@@ -4,6 +4,7 @@ import com.manikoske.guild.action.Movement
 import com.manikoske.guild.character.Character
 import com.manikoske.guild.encounter.TestingCommons.randomBuilder
 import com.manikoske.guild.encounter.TestingCommons.smallBattleground
+import com.navercorp.fixturemonkey.FixtureMonkey
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import io.mockk.every
 import io.mockk.mockk
@@ -144,7 +145,6 @@ class EncounterStateTest {
 
         val janPointOfView = mockk<PointOfView>()
         every { janPointOfView.self } returns jan.id
-
 
         val vantageNode0 = randomBuilder.giveMeOne<PointOfView.VantageNode>().copy(requiredNormalMovement = 0, requiredSpecialMovement = 0)
         val vantageNode1 = randomBuilder.giveMeOne<PointOfView.VantageNode>().copy(requiredNormalMovement = 1, requiredSpecialMovement = 2)
