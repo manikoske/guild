@@ -52,7 +52,7 @@ data class EncounterState(
             }
         }
         executor.applyOverTimeEffects()
-        executor.decrementRoundsLeft()
+        executor.tickEffects()
         return ending
     }
 

@@ -83,7 +83,7 @@ class CharacterState(
         allEffects().filter { it.removeOnDamageTaken() }.forEach { removeEffect(it) }
     }
 
-    fun decrementRoundsLeft() {
+    fun tickEffects() {
         allEffects().forEach { effect ->
             when (val roundState = effect.tick()) {
                 Effect.RoundState.Expired -> removeEffect(effect)
