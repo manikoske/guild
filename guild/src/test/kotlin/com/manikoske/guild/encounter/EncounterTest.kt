@@ -260,16 +260,16 @@ class EncounterTest {
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin),
             encounterState = EncounterState(
                 characterStates = mapOf(
-                    khalid.id to characterStateOf(khalid, 4, CharacterState.Allegiance.Attacker),
-                    kivan.id to characterStateOf(kivan, 4, CharacterState.Allegiance.Attacker),
-                    anomen.id to characterStateOf(anomen, 4, CharacterState.Allegiance.Attacker),
-                    imoen.id to characterStateOf(imoen, 4, CharacterState.Allegiance.Attacker),
-                    xan.id to characterStateOf(xan, 4, CharacterState.Allegiance.Attacker),
-                    dorn.id to characterStateOf(dorn, 6, CharacterState.Allegiance.Defender),
-                    valygar.id to characterStateOf(valygar, 6, CharacterState.Allegiance.Defender),
-                    viconia.id to characterStateOf(viconia, 6, CharacterState.Allegiance.Defender),
-                    yoshimo.id to characterStateOf(yoshimo, 6, CharacterState.Allegiance.Defender),
-                    edwin.id to characterStateOf(edwin, 6, CharacterState.Allegiance.Defender),
+                    khalid.id to CharacterState.CharacterStates.initialCharacterState(khalid, 4, CharacterState.Allegiance.Attacker),
+                    kivan.id to CharacterState.CharacterStates.initialCharacterState(kivan, 4, CharacterState.Allegiance.Attacker),
+                    anomen.id to CharacterState.CharacterStates.initialCharacterState(anomen, 4, CharacterState.Allegiance.Attacker),
+                    imoen.id to CharacterState.CharacterStates.initialCharacterState(imoen, 4, CharacterState.Allegiance.Attacker),
+                    xan.id to CharacterState.CharacterStates.initialCharacterState(xan, 4, CharacterState.Allegiance.Attacker),
+                    dorn.id to CharacterState.CharacterStates.initialCharacterState(dorn, 6, CharacterState.Allegiance.Defender),
+                    valygar.id to CharacterState.CharacterStates.initialCharacterState(valygar, 6, CharacterState.Allegiance.Defender),
+                    viconia.id to CharacterState.CharacterStates.initialCharacterState(viconia, 6, CharacterState.Allegiance.Defender),
+                    yoshimo.id to CharacterState.CharacterStates.initialCharacterState(yoshimo, 6, CharacterState.Allegiance.Defender),
+                    edwin.id to CharacterState.CharacterStates.initialCharacterState(edwin, 6, CharacterState.Allegiance.Defender),
                 )
             )
         )
@@ -278,21 +278,5 @@ class EncounterTest {
             .ignoringCollectionOrder()
             .isEqualTo(expectedEncounter)
     }
-
-    private fun characterStateOf(
-        character: Character,
-        positionNodeId: Int,
-        allegiance: CharacterState.Allegiance
-    ) : CharacterState {
-        return CharacterState(
-            character = character,
-            positionNodeId = positionNodeId,
-            allegiance = allegiance,
-            damageTaken = 0,
-            resourcesSpent = 0,
-            effects = listOf()
-        )
-    }
-
 }
 

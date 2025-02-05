@@ -26,7 +26,7 @@ class Encounter(
                     characterStates = attackers.associateBy(
                         { it.id },
                         {
-                            initializeCharacterState(
+                            CharacterState.CharacterStates.initialCharacterState(
                                 character = it,
                                 startingNodeId = attackersStartingNodeId,
                                 allegiance = CharacterState.Allegiance.Attacker
@@ -35,7 +35,7 @@ class Encounter(
                     ) + defenders.associateBy(
                         { it.id },
                         {
-                            initializeCharacterState(
+                            CharacterState.CharacterStates.initialCharacterState(
                                 character = it,
                                 startingNodeId = defendersStartingNodeId,
                                 allegiance = CharacterState.Allegiance.Defender
@@ -43,26 +43,6 @@ class Encounter(
                         }
                     ),
                 ),
-            )
-        }
-
-        private fun initializeCharacterState(
-            character: Character,
-            startingNodeId: Int,
-            allegiance: CharacterState.Allegiance
-        ): CharacterState {
-            return CharacterState(
-                character = character,
-                positionNodeId = startingNodeId,
-                allegiance = allegiance,
-                damageTaken = 0,
-                resourcesSpent = 0,
-                actionForcingEffect = null,
-                movementRestrictingEffect = null,
-                movementAlteringEffects = listOf(),
-                actionRestrictingEffects = listOf(),
-                damageOverTimeEffects = listOf(),
-                healOverTimeEffects = listOf()
             )
         }
     }

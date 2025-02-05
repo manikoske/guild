@@ -6,116 +6,87 @@ import com.manikoske.guild.action.Effect
 import com.manikoske.guild.character.Character
 import kotlin.math.max
 
-class CharacterState(
+data class CharacterState(
     val character: Character,
-    var positionNodeId: Int,
-    var allegiance: Allegiance,
-    private var damageTaken: Int,
-    private var resourcesSpent: Int,
-    private var actionForcingEffect: Effect.ActionForcingEffect?,
-    private var movementRestrictingEffect: Effect.MovementRestrictingEffect?,
-    private var movementAlteringEffects: List<Effect.MovementAlteringEffect>,
-    private var actionRestrictingEffects: List<Effect.ActionRestrictingEffect>,
-    private var damageOverTimeEffects: List<Effect.DamageOverTimeEffect>,
-    private var healOverTimeEffects: List<Effect.HealOverTimeEffect>,
+    val positionNodeId: Int,
+    val allegiance: Allegiance,
+    private val damageTaken: Int,
+    private val resourcesSpent: Int,
+    private val effects: Effects,
 ) {
 
-    fun copy(): CharacterState {
-        return CharacterState(
-            character = character,
-            positionNodeId = positionNodeId,
-            allegiance = allegiance,
-            damageTaken = damageTaken,
-            resourcesSpent = resourcesSpent,
-            actionForcingEffect = actionForcingEffect,
-            movementRestrictingEffect = movementRestrictingEffect,
-            movementAlteringEffects = movementAlteringEffects.toList(),
-            actionRestrictingEffects = actionRestrictingEffects.toList(),
-            damageOverTimeEffects = damageOverTimeEffects.toList(),
-            healOverTimeEffects = healOverTimeEffects.toList()
+    object CharacterStates {
+        fun initialCharacterState(
+            character: Character,
+            startingNodeId: Int,
+            allegiance: Allegiance
+        ) : CharacterState {
+            return CharacterState(
+                character = character,
+                positionNodeId = startingNodeId,
+                allegiance = allegiance,
+                damageTaken = 0,
+                resourcesSpent = 0,
+                effects = noEffects()
+            )
+        }
+
+        fun noEffects() : Effects {
+            return Effects(
+                actionForcingEffect = null,
+                movementRestrictingEffect = null,
+                movementAlteringEffects = listOf(),
+                actionRestrictingEffects = listOf(),
+                damageOverTimeEffects = listOf(),
+                healOverTimeEffects = listOf()
+            )
+        }
+    }
+
+
+    fun takeDamage(damageToTake: Int) : CharacterState {
+        val damageTakenUpdated = max(0, damageTaken + damageToTake)
+        return this.copy(
+            damageTaken = damageTakenUpdated,
+            effects = (if (damageTakenUpdated > character.maxHitPoints()) effects.addEffect(Effect.ActionForcingEffect.Dying) else effects).removeEffectsOnDamage()
         )
     }
 
-    fun takeDamage(hitPointDamage: Int) {
-        this.damageTaken = max(0, damageTaken + hitPointDamage)
-        if (damageTaken >= character.maxHitPoints()) {
-            addEffect(Effect.ActionForcingEffect.Dying)
-        }
-        removeEffectsOnDamage()
+    fun addEffect(effect: Effect) : CharacterState {
+        return this.copy(effects = effects.addEffect(effect))
     }
 
-    fun heal(hitPointHeal: Int) {
-        this.damageTaken = max(0, damageTaken - hitPointHeal)
+    fun removeEffect(effect: Effect) : CharacterState {
+        return this.copy(effects = effects.removeEffect(effect))
     }
 
-    fun spendResources(amount: Int) {
-        this.resourcesSpent = max(0, resourcesSpent + amount)
+    fun tickEffects() : CharacterState {
+        return this.copy(effects = effects.tickEffects())
     }
 
-    fun gainResources(amount: Int) {
-        this.resourcesSpent = max(0, resourcesSpent - amount)
+    fun heal(amountToHeal: Int) : CharacterState {
+        return this.copy(damageTaken = max(0, damageTaken - amountToHeal))
     }
 
-    fun addEffect(effect: Effect) {
-        when (effect) {
-            is Effect.ActionForcingEffect -> actionForcingEffect = effect.add(actionForcingEffect)
-            is Effect.MovementRestrictingEffect -> movementRestrictingEffect = effect.add(movementRestrictingEffect)
-            is Effect.ActionRestrictingEffect -> actionRestrictingEffects = effect.add(actionRestrictingEffects)
-            is Effect.DamageOverTimeEffect -> damageOverTimeEffects = effect.add(damageOverTimeEffects)
-            is Effect.MovementAlteringEffect -> movementAlteringEffects = effect.add(movementAlteringEffects)
-            is Effect.HealOverTimeEffect -> healOverTimeEffects = effect.add(healOverTimeEffects)
-        }
+    fun spendResources(amount: Int) : CharacterState {
+        return this.copy(resourcesSpent = max(0, resourcesSpent + amount))
     }
 
-
-    fun removeEffect(effect: Effect) {
-        when (effect) {
-            is Effect.ActionForcingEffect -> actionForcingEffect = effect.remove(actionForcingEffect)
-            is Effect.MovementRestrictingEffect -> movementRestrictingEffect = effect.remove(movementRestrictingEffect)
-            is Effect.ActionRestrictingEffect -> actionRestrictingEffects = effect.remove(actionRestrictingEffects)
-            is Effect.DamageOverTimeEffect -> damageOverTimeEffects = effect.remove(damageOverTimeEffects)
-            is Effect.MovementAlteringEffect -> movementAlteringEffects = effect.remove(movementAlteringEffects)
-            is Effect.HealOverTimeEffect -> healOverTimeEffects = effect.remove(healOverTimeEffects)
-        }
+    fun gainResources(amount: Int) : CharacterState {
+        return this.copy(resourcesSpent = max(0, resourcesSpent - amount))
     }
 
-    private fun removeEffectsOnDamage() {
-        allEffects().filter { it.removeOnDamageTaken() }.forEach { removeEffect(it) }
-    }
-
-    fun tickEffects() {
-        allEffects().forEach { effect ->
-            when (val roundState = effect.tick()) {
-                Effect.RoundState.Expired -> removeEffect(effect)
-                is Effect.RoundState.Timed -> addEffect(roundState.nextRoundEffect)
-                Effect.RoundState.Untimed -> Unit
-            }
-        }
-    }
-
-    private fun allEffects(): List<Effect> {
-        return (
-                movementAlteringEffects +
-                        actionRestrictingEffects +
-                        damageOverTimeEffects +
-                        healOverTimeEffects +
-                        listOf(actionForcingEffect) +
-                        listOf(movementRestrictingEffect)
-                )
-            .filterNotNull()
-    }
-
-    fun moveTo(newPositionNodeIde: Int) {
-        this.positionNodeId = newPositionNodeIde
+    fun moveTo(newPositionNodeIde: Int) : CharacterState {
+        return this.copy(positionNodeId = newPositionNodeIde)
     }
 
     fun applyOverTimeEffects() {
-        heal(healOverTimeEffects.sumOf { it.healRoll().invoke() })
-        takeDamage(damageOverTimeEffects.sumOf { it.damageRoll().invoke() })
+        heal(effects.healOverTimeEffects.sumOf { it.healRoll().invoke() })
+        takeDamage(effects.damageOverTimeEffects.sumOf { it.damageRoll().invoke() })
     }
 
     fun canExecuteAction(eventualAction: Action): Boolean {
-        val noActionRestrictionEffect = actionRestrictingEffects.none { it.restrictedAction(eventualAction) }
+        val noActionRestrictionEffect = effects.actionRestrictingEffects.none { it.restrictedAction(eventualAction) }
         val classRestriction = eventualAction.classRestriction.contains(character.clazz())
         val resourceRestriction = eventualAction.resourceCost < character.maxResources() - resourcesSpent
         val armsRestriction = eventualAction.armsRestriction.invoke(character.arms())
@@ -123,12 +94,12 @@ class CharacterState(
     }
 
     fun forcedToAction(): Action.ForcedAction? {
-        return actionForcingEffect?.forcedAction()
+        return effects.actionForcingEffect?.forcedAction()
     }
 
     fun canMoveBy(actionMovement: Movement): Movement {
-        val finalMovement = (movementRestrictingEffect?.restrictActionMovement(actionMovement) ?: actionMovement)
-            .let { if (it.amount > 0) movementAlteringEffects.fold(it) { a, b -> b.alterActionMovement(a) } else it }
+        val finalMovement = (effects.movementRestrictingEffect?.restrictActionMovement(actionMovement) ?: actionMovement)
+            .let { if (it.amount > 0) effects.movementAlteringEffects.fold(it) { a, b -> b.alterActionMovement(a) } else it }
 
         return finalMovement
     }

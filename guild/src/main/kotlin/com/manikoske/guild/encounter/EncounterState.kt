@@ -7,7 +7,7 @@ import kotlin.random.Random
 
 data class EncounterState(
     private val characterStates: Map<Int, CharacterState>,
-) : Cloneable {
+) {
     fun utility(): Int {
         return Random.nextInt(1, 10)
     }
@@ -22,6 +22,8 @@ data class EncounterState(
         action: Action,
         actionTargets: List<Int>
     ): EncounterState {
+
+        // TODO accumulate updated characterStates
 
         val ending = this.copy()
         val executor = ending.characterState(executorCharacterId)
