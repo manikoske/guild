@@ -12,7 +12,7 @@ data class CharacterState(
     val allegiance: Allegiance,
     private val damageTaken: Int,
     private val resourcesSpent: Int,
-    private val effects: Effects,
+    val effects: Effects,
 ) {
 
     object CharacterStates {
@@ -48,20 +48,20 @@ data class CharacterState(
         val damageTakenUpdated = max(0, damageTaken + damageToTake)
         return this.copy(
             damageTaken = damageTakenUpdated,
-            effects = (if (damageTakenUpdated > character.maxHitPoints()) effects.addEffect(Effect.ActionForcingEffect.Dying) else effects).removeEffectsOnDamage()
+            effects = (if (damageTakenUpdated > character.maxHitPoints()) effects.add(Effect.ActionForcingEffect.Dying) else effects).removeOnDamage()
         )
     }
 
     fun addEffect(effect: Effect) : CharacterState {
-        return this.copy(effects = effects.addEffect(effect))
+        return this.copy(effects = effects.add(effect))
     }
 
     fun removeEffect(effect: Effect) : CharacterState {
-        return this.copy(effects = effects.removeEffect(effect))
+        return this.copy(effects = effects.remove(effect))
     }
 
     fun tickEffects() : CharacterState {
-        return this.copy(effects = effects.tickEffects())
+        return this.copy(effects = effects.tick())
     }
 
     fun heal(amountToHeal: Int) : CharacterState {

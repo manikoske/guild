@@ -1,7 +1,11 @@
 package com.manikoske.guild.encounter
 
+import com.manikoske.guild.action.Effect
 import com.navercorp.fixturemonkey.FixtureMonkey
-import com.navercorp.fixturemonkey.kotlin.KotlinPlugin
+import com.navercorp.fixturemonkey.api.instantiator.Instantiator
+import com.navercorp.fixturemonkey.kotlin.*
+import com.navercorp.fixturemonkey.kotlin.instantiator.instantiateBy
+import com.navercorp.fixturemonkey.kotlin.introspector.KotlinAndJavaCompositeArbitraryIntrospector
 
 object TestingCommons {
 
@@ -269,6 +273,10 @@ object TestingCommons {
 
     val randomBuilder = FixtureMonkey.builder()
         .plugin(KotlinPlugin())
+        .objectIntrospector(KotlinAndJavaCompositeArbitraryIntrospector())
+//        .register(Effect.ActionForcingEffect.Dying::class.java) {
+//            it.giveMeBuilder<Effect.ActionForcingEffect.Dying>().instantiateBy { constructor<Effect.ActionForcingEffect.Dying>() }
+//        }
         .build()
 
 

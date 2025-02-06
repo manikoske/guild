@@ -11,7 +11,7 @@ data class Effects(
     val healOverTimeEffects: List<Effect.HealOverTimeEffect>
 ) {
 
-    fun addEffect(effect: Effect): Effects {
+    fun add(effect: Effect): Effects {
         return when (effect) {
             is Effect.ActionForcingEffect -> this.copy(actionForcingEffect = effect.add(actionForcingEffect))
             is Effect.MovementRestrictingEffect -> this.copy(movementRestrictingEffect = effect.add(movementRestrictingEffect))
@@ -22,7 +22,7 @@ data class Effects(
         }
     }
 
-    fun removeEffect(effect: Effect): Effects {
+    fun remove(effect: Effect): Effects {
         return when (effect) {
             is Effect.ActionForcingEffect -> this.copy(actionForcingEffect = effect.remove(actionForcingEffect))
             is Effect.MovementRestrictingEffect -> this.copy(movementRestrictingEffect = effect.remove(movementRestrictingEffect))
@@ -33,21 +33,21 @@ data class Effects(
         }
     }
 
-    fun removeEffectsOnDamage() : Effects {
-        return allEffects().filter { it.removeOnDamageTaken() }.fold(this) { _: Effects, effect: Effect -> removeEffect(effect) }
+    fun removeOnDamage() : Effects {
+        return all().filter { it.removeOnDamageTaken() }.fold(this) { _: Effects, effect: Effect -> remove(effect) }
     }
 
-    fun tickEffects(): Effects {
-        return allEffects().fold(this) { _: Effects, effect: Effect ->
+    fun tick(): Effects {
+        return all().fold(this) { _: Effects, effect: Effect ->
             return when (val roundState = effect.tick()) {
-                Effect.RoundState.Expired -> removeEffect(effect)
-                is Effect.RoundState.Timed -> addEffect(roundState.nextRoundEffect)
+                Effect.RoundState.Expired -> remove(effect)
+                is Effect.RoundState.Timed -> add(roundState.nextRoundEffect)
                 Effect.RoundState.Untimed -> this
             }
         }
     }
 
-    private fun allEffects(): List<Effect> {
+    fun all(): List<Effect> {
         return (
             movementAlteringEffects +
                 actionRestrictingEffects +
