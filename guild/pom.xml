@@ -68,6 +68,12 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>com.navercorp.fixturemonkey</groupId>
+			<artifactId>fixture-monkey-junit-jupiter</artifactId>
+			<version>${fixture-monkey.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>io.mockk</groupId>
 			<artifactId>mockk-jvm</artifactId>
 			<version>${mockk.version}</version>

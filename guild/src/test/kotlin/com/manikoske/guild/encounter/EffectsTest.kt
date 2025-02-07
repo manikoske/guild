@@ -2,6 +2,7 @@ package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Effect
 import com.manikoske.guild.encounter.TestingCommons.randomBuilder
+import com.navercorp.fixturemonkey.junit.jupiter.annotation.Seed
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -174,6 +175,7 @@ class EffectsTest {
     }
 
     @Test
+    @Seed(30)
     fun testTick() {
         val prone = Effect.ActionForcingEffect.Prone
         val entangled = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Entangled>().copy(roundsLeft = 2)

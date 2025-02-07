@@ -273,7 +273,7 @@ object TestingCommons {
 
     val randomBuilder = FixtureMonkey.builder()
         .plugin(KotlinPlugin())
-        .objectIntrospector(KotlinAndJavaCompositeArbitraryIntrospector())
+//        .objectIntrospector(KotlinAndJavaCompositeArbitraryIntrospector())
 //        .register(Effect.ActionForcingEffect.Dying::class.java) {
 //            it.giveMeBuilder<Effect.ActionForcingEffect.Dying>().instantiateBy { constructor<Effect.ActionForcingEffect.Dying>() }
 //        }

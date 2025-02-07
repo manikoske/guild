@@ -39,7 +39,7 @@ data class Effects(
 
     fun tick(): Effects {
         return all().fold(this) { _: Effects, effect: Effect ->
-            return when (val roundState = effect.tick()) {
+            when (val roundState = effect.tick()) {
                 Effect.RoundState.Expired -> remove(effect)
                 is Effect.RoundState.Timed -> add(roundState.nextRoundEffect)
                 Effect.RoundState.Untimed -> this

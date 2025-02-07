@@ -13,46 +13,6 @@ import org.junit.jupiter.api.Test
 
 class CharacterStateTest {
 
-
-    data class MyData2(
-        val roll : () -> Int
-    )
-
-    @Test
-    fun test() {
-        val sampled = FixtureMonkeyBuilder()
-            .plugin(KotlinPlugin())
-            .build()
-            .giveMeKotlinBuilder<MyData2>()
-            .sample()
-
-        println("sampled: $sampled")
-    }
-
-
-    data class MyData(
-        val id: Int,
-        val name: String,
-        val scheme: Scheme,
-    )
-
-    sealed class Scheme {
-        data class Url(val scheme: String) : Scheme()
-        data object None : Scheme()
-    }
-
-    @Test
-    fun `test fixtureMonkey`() {
-        val sampled = FixtureMonkeyBuilder()
-            .plugin(KotlinPlugin())
-            .build()
-            .giveMeKotlinBuilder<MyData>()
-            .set(MyData::scheme, Scheme.None)
-            .sample()
-
-        println("sampled: $sampled")
-    }
-
     @Test
     fun canMoveBy() {
 
