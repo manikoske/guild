@@ -4,6 +4,7 @@ import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Effect
 import com.manikoske.guild.encounter.TestingCommons.randomBuilder
 import com.navercorp.fixturemonkey.FixtureMonkeyBuilder
+import com.navercorp.fixturemonkey.customizer.Values
 import com.navercorp.fixturemonkey.kotlin.KotlinPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeKotlinBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
@@ -25,7 +26,7 @@ class CharacterStateTest {
 
         val characterState = randomBuilder
             .giveMeKotlinBuilder<CharacterState>()
-            .set(CharacterState::effects, CharacterState.CharacterStates.noEffects())
+//            .set(CharacterState::effects, Values.just(CharacterState.CharacterStates.noEffects()))
             .sample()
 
 

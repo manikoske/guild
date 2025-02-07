@@ -7,8 +7,8 @@ sealed interface Effect {
 
     val category: String
 
-    fun tick() : RoundState {
-        return RoundState.Untimed
+    fun tick() : Effect? {
+        return this
     }
 
     fun removeOnDamageTaken(): Boolean {
@@ -38,6 +38,11 @@ sealed interface Effect {
         data class Stun(
             override val roundsLeft: Int
         ) : ActionForcingEffect(), TimedEffect {
+
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
+
             override fun severity(): Int {
                 return 2
             }
@@ -77,6 +82,10 @@ sealed interface Effect {
             override val roundsLeft: Int
         ) : MovementAlteringEffect(), TimedEffect {
 
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
+
             override val category: String
                 get() = "Slow"
 
@@ -90,6 +99,11 @@ sealed interface Effect {
         data class Haste(
             override val roundsLeft: Int
         ) : MovementAlteringEffect(), TimedEffect {
+
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
+
             override val category: String
                 get() = "Haste"
 
@@ -111,6 +125,10 @@ sealed interface Effect {
             override val roundsLeft: Int
         ) : MovementRestrictingEffect(), TimedEffect {
 
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
+
             override val category: String
                 get() = "Entangled"
 
@@ -131,6 +149,10 @@ sealed interface Effect {
         data class Held(
             override val roundsLeft: Int
         ) : MovementRestrictingEffect(), TimedEffect {
+
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
 
             override val category: String
                 get() = "Held"
@@ -156,6 +178,10 @@ sealed interface Effect {
             override val roundsLeft: Int
         ) : ActionRestrictingEffect(), TimedEffect {
 
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
+
             override fun restrictedAction(action: Action): Boolean {
                 return action is Action.WeaponAction
             }
@@ -167,6 +193,10 @@ sealed interface Effect {
         data class Silenced(
             override val roundsLeft: Int
         ) : ActionRestrictingEffect(), TimedEffect {
+
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
 
             override fun restrictedAction(action: Action): Boolean {
                 return action is Action.SpellAction
@@ -189,6 +219,10 @@ sealed interface Effect {
             val damageRoll: () -> Int,
         ) : DamageOverTimeEffect(), TimedEffect {
 
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
+
             override val category: String
                 get() = "Bleed"
 
@@ -201,6 +235,10 @@ sealed interface Effect {
             override val roundsLeft: Int,
             val damageRoll: () -> Int,
         ) : DamageOverTimeEffect(), TimedEffect {
+
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
 
             override val category: String
                 get() = "Poison"
@@ -223,6 +261,10 @@ sealed interface Effect {
             override val roundsLeft: Int,
             val healRoll: () -> Int,
         ) : HealOverTimeEffect(), TimedEffect {
+
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
 
             override fun healRoll(): () -> Int {
                 return healRoll
@@ -279,21 +321,15 @@ sealed interface Effect {
             return existingEffects.filter { it.category != this.category }
         }
     }
-    sealed interface RoundState {
-        data class Timed(val nextRoundEffect: Effect) : RoundState
-        data object Untimed: RoundState
-        data object Expired: RoundState
-
-    }
 
     sealed interface TimedEffect : Effect {
 
         val roundsLeft: Int
 
-        fun self(): Effect
+        fun nextRoundEffect(roundsLeft: Int): Effect
 
-        override fun tick(): RoundState {
-            return (roundsLeft - 1).let { if (it > 0) RoundState.Timed(nextRoundEffect = self()) else RoundState.Expired }
+        override fun tick(): Effect? {
+            return (roundsLeft - 1).let { if (it > 0)  nextRoundEffect(it) else null }
         }
 
     }

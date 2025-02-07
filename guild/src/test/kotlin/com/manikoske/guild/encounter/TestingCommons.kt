@@ -2,7 +2,9 @@ package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Effect
 import com.navercorp.fixturemonkey.FixtureMonkey
+import com.navercorp.fixturemonkey.api.arbitrary.CombinableArbitrary
 import com.navercorp.fixturemonkey.api.instantiator.Instantiator
+import com.navercorp.fixturemonkey.api.introspector.ArbitraryIntrospectorResult
 import com.navercorp.fixturemonkey.kotlin.*
 import com.navercorp.fixturemonkey.kotlin.instantiator.instantiateBy
 import com.navercorp.fixturemonkey.kotlin.introspector.KotlinAndJavaCompositeArbitraryIntrospector
@@ -273,9 +275,17 @@ object TestingCommons {
 
     val randomBuilder = FixtureMonkey.builder()
         .plugin(KotlinPlugin())
-//        .objectIntrospector(KotlinAndJavaCompositeArbitraryIntrospector())
+        .pushAssignableTypeArbitraryIntrospector<Effects> {
+            ArbitraryIntrospectorResult(CombinableArbitrary.from(CharacterState.CharacterStates.noEffects()))
+        }
+        .pushAssignableTypeArbitraryIntrospector<Effect.ActionForcingEffect> {
+            ArbitraryIntrospectorResult(CombinableArbitrary.from(Effect.ActionForcingEffect.Prone))
+        }
+        .pushAssignableTypeArbitraryIntrospector<Effect.ActionForcingEffect> {
+            ArbitraryIntrospectorResult(CombinableArbitrary.from(Effect.ActionForcingEffect.Dying))
+        }
 //        .register(Effect.ActionForcingEffect.Dying::class.java) {
-//            it.giveMeBuilder<Effect.ActionForcingEffect.Dying>().instantiateBy { constructor<Effect.ActionForcingEffect.Dying>() }
+//            it.giveMeBuilder<Effects>().instantiateBy { constructor<Effect.ActionForcingEffect.Dying>() }
 //        }
         .build()
 

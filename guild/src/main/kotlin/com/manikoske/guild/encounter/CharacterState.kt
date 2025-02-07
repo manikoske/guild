@@ -12,7 +12,7 @@ data class CharacterState(
     val allegiance: Allegiance,
     private val damageTaken: Int,
     private val resourcesSpent: Int,
-    val effects: Effects,
+    private val effects: Effects,
 ) {
 
     object CharacterStates {

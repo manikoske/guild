@@ -5,6 +5,7 @@ import com.manikoske.guild.encounter.TestingCommons.randomBuilder
 import com.navercorp.fixturemonkey.junit.jupiter.annotation.Seed
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 
 class EffectsTest {
@@ -149,7 +150,7 @@ class EffectsTest {
 
     }
 
-    @Test
+    @RepeatedTest(1)
     fun testRemoveOnDamageTaken() {
         val stun = randomBuilder.giveMeOne<Effect.ActionForcingEffect.Stun>()
         val entangled = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
@@ -174,8 +175,7 @@ class EffectsTest {
             .isEqualTo(listOf(stun, haste, silenced, regeneration, poison))
     }
 
-    @Test
-    @Seed(30)
+    @RepeatedTest(1)
     fun testTick() {
         val prone = Effect.ActionForcingEffect.Prone
         val entangled = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Entangled>().copy(roundsLeft = 2)
