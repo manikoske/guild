@@ -66,12 +66,6 @@ data class EncounterState(
     ): Boolean {
         if (!outcome.savingThrow.saved(executor.character, target.character)) {
             when (outcome) {
-                is Outcome.AddBuffEffect ->
-                    target.addEffect(outcome.effect)
-
-                is Outcome.AddEffect ->
-                    target.addEffect(outcome.effect)
-
                 is Outcome.AvoidableDamage ->
                     target.takeDamage(
                         executor.character.attributeRoll(
@@ -80,20 +74,6 @@ data class EncounterState(
                         )
                     )
 
-                is Outcome.DirectDamage ->
-                    target.takeDamage(outcome.damageRoll.invoke())
-
-                is Outcome.Healing ->
-                    target.heal(
-                        executor.character.attributeRoll(
-                            Attribute.Type.wisdom,
-                            outcome.healingRoll
-                        )
-                    )
-
-                Outcome.NoOutcome -> Unit
-                is Outcome.ResourceBoost ->
-                    target.gainResources(outcome.amount)
 
                 is Outcome.WeaponDamage ->
                     target.takeDamage(

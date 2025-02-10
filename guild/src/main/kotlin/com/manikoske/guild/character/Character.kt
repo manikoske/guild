@@ -52,8 +52,8 @@ data class Character(
         return roll.invoke() * abilityMultiplier + attribute(weaponAttackRollAttributeType()).modifier() + level.modifier()
     }
 
-    fun attributeRoll(attributeType: Attribute.Type, damageRoll: () -> Int): Int {
-        return damageRoll.invoke() + attribute(attributeType).modifier() + level.modifier()
+    fun attributeRoll(attributeType: Attribute.Type, roll: () -> Int): Int {
+        return roll.invoke() + attribute(attributeType).modifier() + level.modifier()
     }
 
     fun initiativeRoll() : Int {

@@ -270,11 +270,6 @@ sealed interface Effect {
                 return healRoll
             }
 
-            override fun toString(): String {
-                healRoll.toString()
-                return super.toString()
-            }
-
             override val category: String
                 get() = "Regeneration"
         }

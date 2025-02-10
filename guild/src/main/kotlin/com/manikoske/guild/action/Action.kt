@@ -40,14 +40,6 @@ sealed interface Action {
                 outcome = Outcome.NoOutcome
             ),
 
-            SelfAction(
-                name = "No Action",
-                resourceCost = 0,
-                movement = Movement(type = Movement.Type.Normal, amount = 0),
-                classRestriction = noClassRestriction,
-                outcome = Outcome.NoOutcome
-            ),
-
             MeleeWeaponAction(
                 name = "Shield Bash",
                 resourceCost = 1,
