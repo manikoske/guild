@@ -3,10 +3,12 @@ add flying to movement
 add advantage/disadvantage
 add advantage/disadvantage to nodesInRange
 add critical hits
-add status handling
 add death saves
 add weapon damage type
 add spell damage type
 add resistance status to types of damage
 
 ? randomized actions ?
+vygeneruju sa nahodne tri akcie
+kazda z nich sa odsimuluje v suboji
+nepriatelia v suboji budu vybrany tak aby sedeli s archetypom charakteru, ak aoe tak proti viacerym nepriatelom, atd
