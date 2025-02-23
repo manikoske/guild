@@ -9,6 +9,7 @@ add spell damage type
 add resistance status to types of damage
 
 ? randomized actions ?
-vygeneruju sa nahodne tri akcie
-kazda z nich sa odsimuluje v suboji
-nepriatelia v suboji budu vybrany tak aby sedeli s archetypom charakteru, ak aoe tak proti viacerym nepriatelom, atd
+vygeneruju sa nahodne tri akcie; kazda z nich sa odsimuluje v suboji; nepriatelia v suboji budu vybrany tak aby sedeli s archetypom charakteru, ak aoe tak proti viacerym nepriatelom, atd
+akcie nebudu per class per level ale pri levelup sa nahodne (nahodnost moze byt ovplyvnena abilitami, backgroundom, rasou, archetypom) vygeneruju moznosti (+hp, +res, +akcia, upg akcie starej, etc)
+kazdy char bude mat nieco ako potencial, co bude rozhodovat aky velky upgrade postava za level spravi, kazdy upgrade bude nieco stat
+kazda postava moze mat rozne urovne levelupov, cize niektora moze mat skor vyssi level ale nizsi potencial cize horsie upgrady

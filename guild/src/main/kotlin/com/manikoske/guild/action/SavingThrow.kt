@@ -7,18 +7,6 @@ sealed interface SavingThrow {
 
     fun saved(executor: Character, target: Character): Boolean
 
-    data class ArmorClassSavingThrow(val attackRollBonusModifier: Int) : SavingThrow {
-        override fun saved(executor: Character, target: Character): Boolean {
-            return executor.weaponAttackRoll(attackRollBonusModifier) < target.armorClass()
-        }
-    }
-
-    data object NoSave : SavingThrow {
-        override fun saved(executor: Character, target: Character): Boolean {
-            return false
-        }
-    }
-
     data class DifficultyClassSavingThrow(
         val baseDifficulty: Int,
         val executorAttributeType: Attribute.Type,

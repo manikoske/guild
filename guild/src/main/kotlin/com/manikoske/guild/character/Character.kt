@@ -1,7 +1,9 @@
 package com.manikoske.guild.character
 
+import com.manikoske.guild.action.Outcome
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.rules.*
+import kotlin.math.max
 
 data class Character(
     val id: Int,
@@ -36,20 +38,32 @@ data class Character(
         return bio.clazz.baseResources * level.level
     }
 
-    private fun weaponAttackRollAttributeType(): Attribute.Type {
-        return if (arms().isFinesse() && attribute(Attribute.Type.dexterity).modifier() > attribute(Attribute.Type.strength).modifier()) {
-            Attribute.Type.dexterity
+    private fun weaponAttributeModifier(): Int {
+        if (arms().isFinesse()) {
+            return max(attribute(Attribute.Type.dexterity).modifier(), attribute(Attribute.Type.strength).modifier())
         } else {
-            Attribute.Type.strength
+            return attribute(Attribute.Type.strength).modifier()
         }
     }
 
     fun weaponAttackRoll(attackRollBonusModifier: Int): Int {
-        return Die.d20.roll(1) + attribute(weaponAttackRollAttributeType()).modifier() + level.modifier() + attackRollBonusModifier
+        val weaponAttackBonus = when (val arms = arms()) {
+            is Inventory.Arms.DualWeapon -> -2
+            is Inventory.Arms.OneHandedWeaponAndShield -> 0
+            is Inventory.Arms.TwoHandedWeapon -> 0
+            is Inventory.Arms.RangedWeapon -> 0
+        }
+        return Die.d20.roll(1) + weaponAttributeModifier() + level.modifier() + attackRollBonusModifier + weaponAttackBonus
     }
 
-    fun weaponDamageRoll(roll: () -> Int, abilityMultiplier : Int): Int {
-        return roll.invoke() * abilityMultiplier + attribute(weaponAttackRollAttributeType()).modifier() + level.modifier()
+    fun weaponDamageRoll(damageRollMultiplier : Int): Int {
+        val rolledWeaponDamage = when (val arms = arms()) {
+            is Inventory.Arms.DualWeapon -> arms.mainHand.damageRoll.invoke() + arms.offHand.damageRoll.invoke()
+            is Inventory.Arms.OneHandedWeaponAndShield -> arms.mainHand.damageRoll.invoke()
+            is Inventory.Arms.TwoHandedWeapon -> arms.bothHands.damageRoll.invoke()
+            is Inventory.Arms.RangedWeapon -> arms.bothHands.damageRoll.invoke()
+        }
+        return rolledWeaponDamage * damageRollMultiplier + weaponAttributeModifier() + level.modifier()
     }
 
     fun attributeRoll(attributeType: Attribute.Type, roll: () -> Int): Int {

@@ -33,6 +33,18 @@ sealed interface Outcome {
 
     }
 
+    data class BeneficialOutcome(
+        val resolution: Resolution.BeneficialResolution,
+    ) : Outcome {
+
+        data class BeneficialSphere(override val range: Int) : Targeting.Sphere {
+            override val scope: Targeting.Scope
+                get() = Targeting.Scope.Ally
+
+        }
+
+    }
+
 
 
     sealed interface Targeting {
@@ -65,30 +77,51 @@ sealed interface Outcome {
 
         sealed interface HarmfulResolution {
 
-            val savingThrow: SavingThrow
+            val onHitSelfEffect : Effect?
+            val onHitTargetEffect : Effect?
 
-            data class WeaponDamage(
-                val damageRoll: () -> Int,
+
+            data class WeaponResolution(
                 val attackRollBonusModifier: Int,
-                val damageRollMultiplier: Int
+                val damageRollMultiplier: Int,
+                override val onHitSelfEffect : Effect?,
+                override val onHitTargetEffect : Effect?
             ) : HarmfulResolution {
-                override val savingThrow: SavingThrow
-                    get() = SavingThrow.ArmorClassSavingThrow(attackRollBonusModifier)
+
+                // TODO wtf to return
+                fun resolve(attacker: CharacterState, target: CharacterState): CharacterState {
+
+                    if (attacker.character.weaponAttackRoll(attackRollBonusModifier) > target.character.armorClass()) {
+                        target.takeDamage(attacker.character.weaponDamageRoll(damageRollMultiplier))
+                        if (onHitSelfEffect != null) attacker.addEffect(onHitSelfEffect)
+                        if (onHitTargetEffect != null) target.addEffect(onHitTargetEffect)
+                    }
+
+                }
 
             }
 
-            data class AvoidableDamage(
+            data class SpellResolution(
                 val baseDifficultyClass: Int,
                 val executorAttributeType: Attribute.Type,
                 val targetAttributeType: Attribute.Type,
-                val damageRoll: () -> Int
+                val damageRoll: () -> Int,
+                override val onHitSelfEffect : Effect?,
+                override val onHitTargetEffect : Effect?
             ) : HarmfulResolution {
-                override val savingThrow: SavingThrow
-                    get() = SavingThrow.DifficultyClassSavingThrow(
-                        baseDifficultyClass,
-                        executorAttributeType,
-                        targetAttributeType
-                    )
+
+                // TODO wtf to return
+                fun resolve(attacker: CharacterState, target: CharacterState): CharacterState {
+
+                    if (target.character.difficultyClassRoll(targetAttributeType) >=
+                        baseDifficultyClass + attacker.character.difficultyClassBonus(executorAttributeType)) {
+
+                        target.takeDamage(attacker.character.attributeRoll(executorAttributeType, damageRoll))
+                        if (onHitSelfEffect != null) attacker.addEffect(onHitSelfEffect)
+                        if (onHitTargetEffect != null) target.addEffect(onHitTargetEffect)
+                    }
+
+                }
             }
 
             data class AddEffect(
