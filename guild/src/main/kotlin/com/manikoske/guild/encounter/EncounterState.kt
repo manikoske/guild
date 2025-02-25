@@ -12,10 +12,6 @@ data class EncounterState(
         return Random.nextInt(1, 10)
     }
 
-    private fun copy(): EncounterState {
-        return EncounterState(this.characterStates.values.associateBy({ it.character.id }, { it.copy() }))
-    }
-
     fun resolveEnding(
         executorCharacterId: Int,
         newPositionNodeId: Int,
@@ -34,62 +30,11 @@ data class EncounterState(
         actionTargets.forEach { actionTarget ->
             val target = ending.characterState(actionTarget)
 
-            if (resolveOutcome(action.outcome(executor.character), executor, target)) {
-                when (val triggeredAction = action.triggeredAction) {
 
-                    is TriggeredAction.SelfTriggeredAction -> resolveOutcome(
-                        outcome = triggeredAction.outcome,
-                        executor = executor,
-                        target = executor
-                    )
-
-                    is TriggeredAction.TargetTriggeredAction -> resolveOutcome(
-                        outcome = triggeredAction.outcome,
-                        executor = executor,
-                        target = target
-                    )
-
-                    null -> Unit
-                }
-            }
         }
         executor.applyOverTimeEffects()
         executor.tickEffects()
         return ending
-    }
-
-    // TODO move to outcome
-    private fun resolveOutcome(
-        outcome: Outcome,
-        executor: CharacterState,
-        target: CharacterState,
-    ): Boolean {
-        if (!outcome.savingThrow.saved(executor.character, target.character)) {
-            when (outcome) {
-                is Outcome.AvoidableDamage ->
-                    target.takeDamage(
-                        executor.character.attributeRoll(
-                            outcome.executorAttributeType,
-                            outcome.damageRoll
-                        )
-                    )
-
-
-                is Outcome.WeaponDamage ->
-                    target.takeDamage(
-                        executor.character.weaponDamageRoll(
-                            outcome.damageRoll,
-                            outcome.damageRollMultiplier
-                        )
-                    )
-
-                is Outcome.RemoveEffect ->
-                    target.removeEffect(outcome.effect)
-            }
-            return true
-        } else {
-            return false
-        }
     }
 
     fun eventualActionTargets(

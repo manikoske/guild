@@ -28,10 +28,11 @@ sealed interface Outcome {
 
     sealed interface HarmfulOutcome : Outcome {
 
-        // TODO add self and target resolutions on hit
 
-        data class WeaponStrikeAttack (
-            val resolution: Resolution.WeaponDamageResolution
+        data class WeaponStrikeAttack(
+            val resolution: Resolution.WeaponDamageResolution,
+            val onHitSelfResolution: Resolution.BeneficialResolution?,
+            val onHitTargetResolution: Resolution.SpellResolution?
         ) : HarmfulOutcome {
 
             fun resolve(attacker: CharacterState, target: CharacterState): CharacterState {
@@ -41,6 +42,10 @@ sealed interface Outcome {
                 }
             }
         }
+    }
+
+    sealed interface H {
+
     }
 
     sealed interface Resolution {
@@ -57,15 +62,12 @@ sealed interface Outcome {
         data class WeaponDamageResolution(
             val attackRollBonusModifier: Int,
             val damageRollMultiplier: Int,
-            val bonusDamageRoll: () -> Int = { 0 }
         ) : HarmfulResolution {
 
             override fun resolve(attacker: CharacterState, target: CharacterState): HarmfulResolution.Result {
                 return if (attacker.character.weaponAttackRoll(attackRollBonusModifier) > target.character.armorClass()) {
                     HarmfulResolution.Result.Hit(
-                        hitTarget = target.takeDamage(
-                            attacker.character.weaponDamageRoll(damageRollMultiplier) + bonusDamageRoll.invoke()
-                        )
+                        hitTarget = target.takeDamage(attacker.character.weaponDamageRoll(damageRollMultiplier))
                     )
                 } else {
                     HarmfulResolution.Result.Miss
