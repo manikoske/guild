@@ -40,16 +40,6 @@ data class EncounterState(
         }
     }
 
-    fun allEventualActions(executor : CharacterState): List<Action> {
-        return executor.forcedToAction().let { forcedAction ->
-                if (forcedAction == null) {
-                    Action.Actions.basicActions.filter { executor.canExecuteAction(it) }
-                } else {
-                    listOf(forcedAction)
-                }
-            }
-    }
-
     fun viewFrom(
         characterId: Int,
         battleground: Battleground

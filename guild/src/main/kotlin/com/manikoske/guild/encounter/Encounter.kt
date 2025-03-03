@@ -59,11 +59,9 @@ class Encounter(
 
         val takerPointOfView = encounterState.viewFrom(takerCharacterId, battleground)
 
-        val eventualActions = encounterState.allEventualActions(takerPointOfView.taker)
-
         val eventualEndings: MutableList<EncounterState> = mutableListOf()
 
-        eventualActions.forEach { eventualAction ->
+        takerPointOfView.taker.allExecutableActions().forEach { eventualAction ->
 
             encounterState.allAccessibleVantageNodes(takerPointOfView, eventualAction.movement)
                 .forEach { eventualVantageNode ->

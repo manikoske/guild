@@ -88,15 +88,14 @@ data class CharacterState(
             .takeDamage(effects.damageOverTimeEffects.sumOf { it.damage().roll() })
     }
 
-    fun canExecuteAction(eventualAction: Action): Boolean {
-        val noActionRestrictionEffect = effects.actionRestrictingEffects.none { it.restrictedAction(eventualAction) }
-        val classRestriction = eventualAction.classRestriction.contains(character.clazz())
-        val resourceRestriction = eventualAction.resourceCost < character.maxResources() - resourcesSpent
-        return noActionRestrictionEffect && classRestriction && resourceRestriction
-    }
-
-    fun forcedToAction(): Action.ForcedAction? {
-        return effects.actionForcingEffect?.forcedAction()
+    fun allExecutableActions() : List<Action> {
+        return effects.actionForcingEffect?.forcedAction().let { forcedAction ->
+            if (forcedAction == null) {
+                Action.Actions.basicActions.filter { canExecuteAction(it) }
+            } else {
+                listOf(forcedAction)
+            }
+        }
     }
 
     fun canMoveBy(actionMovement: Movement): Movement {
@@ -104,6 +103,13 @@ data class CharacterState(
             .let { if (it.amount > 0) effects.movementAlteringEffects.fold(it) { a, b -> b.alterActionMovement(a) } else it }
 
         return finalMovement
+    }
+
+    private fun canExecuteAction(eventualAction: Action): Boolean {
+        val noActionRestrictionEffect = effects.actionRestrictingEffects.none { it.restrictedAction(eventualAction) }
+        val classRestriction = eventualAction.classRestriction.contains(character.clazz())
+        val resourceRestriction = eventualAction.resourceCost < character.maxResources() - resourcesSpent
+        return noActionRestrictionEffect && classRestriction && resourceRestriction
     }
 
     enum class Allegiance {

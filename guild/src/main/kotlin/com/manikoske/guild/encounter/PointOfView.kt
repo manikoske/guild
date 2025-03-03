@@ -12,9 +12,7 @@ data class PointOfView(
         val targets: List<Target>,
     )
 
-
     sealed interface Target {
-
         enum class Scope {
             Ally, Enemy, Everyone
         }

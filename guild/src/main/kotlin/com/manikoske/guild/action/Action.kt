@@ -33,7 +33,7 @@ sealed interface Action {
                         targetAttributeType = Attribute.Type.dexterity,
                         damage =  Rollable.Damage( roll = { Die.d8.roll(1) } )
                     ),
-                    range = 2
+                    range = 1
                 )
             ),
             BasicAction(
