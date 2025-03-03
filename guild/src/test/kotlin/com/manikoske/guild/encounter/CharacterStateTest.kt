@@ -2,10 +2,6 @@ package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Effect
-import com.manikoske.guild.encounter.TestingCommons.randomBuilder
-import com.navercorp.fixturemonkey.FixtureMonkeyBuilder
-import com.navercorp.fixturemonkey.customizer.Values
-import com.navercorp.fixturemonkey.kotlin.KotlinPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeKotlinBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import org.assertj.core.api.Assertions.assertThat
@@ -20,11 +16,11 @@ class CharacterStateTest {
         val normalMovement = Movement(type = Movement.Type.Normal, amount = 2)
         val specialMovement = Movement(type = Movement.Type.Special, amount = 3)
 
-        val entangled = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
-        val slow = randomBuilder.giveMeOne<Effect.MovementAlteringEffect.Slow>()
-        val haste = randomBuilder.giveMeOne<Effect.MovementAlteringEffect.Haste>()
+        val entangled = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
+        val slow = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Slow>()
+        val haste = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Haste>()
 
-        val characterState = randomBuilder
+        val characterState = Randomizer.randomBuilder()
             .giveMeKotlinBuilder<CharacterState>()
 //            .set(CharacterState::effects, Values.just(CharacterState.CharacterStates.noEffects()))
             .sample()

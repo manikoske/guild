@@ -259,17 +259,17 @@ class EncounterTest {
             attackers = setOf(khalid, kivan, anomen, imoen, xan),
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin),
             encounterState = EncounterState(
-                characterStates = mapOf(
-                    khalid.id to CharacterState.CharacterStates.initialCharacterState(khalid, 4, CharacterState.Allegiance.Attacker),
-                    kivan.id to CharacterState.CharacterStates.initialCharacterState(kivan, 4, CharacterState.Allegiance.Attacker),
-                    anomen.id to CharacterState.CharacterStates.initialCharacterState(anomen, 4, CharacterState.Allegiance.Attacker),
-                    imoen.id to CharacterState.CharacterStates.initialCharacterState(imoen, 4, CharacterState.Allegiance.Attacker),
-                    xan.id to CharacterState.CharacterStates.initialCharacterState(xan, 4, CharacterState.Allegiance.Attacker),
-                    dorn.id to CharacterState.CharacterStates.initialCharacterState(dorn, 6, CharacterState.Allegiance.Defender),
-                    valygar.id to CharacterState.CharacterStates.initialCharacterState(valygar, 6, CharacterState.Allegiance.Defender),
-                    viconia.id to CharacterState.CharacterStates.initialCharacterState(viconia, 6, CharacterState.Allegiance.Defender),
-                    yoshimo.id to CharacterState.CharacterStates.initialCharacterState(yoshimo, 6, CharacterState.Allegiance.Defender),
-                    edwin.id to CharacterState.CharacterStates.initialCharacterState(edwin, 6, CharacterState.Allegiance.Defender),
+                characterStates = listOf(
+                    CharacterState.CharacterStates.initialCharacterState(khalid, 4, CharacterState.Allegiance.Attacker),
+                    CharacterState.CharacterStates.initialCharacterState(kivan, 4, CharacterState.Allegiance.Attacker),
+                    CharacterState.CharacterStates.initialCharacterState(anomen, 4, CharacterState.Allegiance.Attacker),
+                    CharacterState.CharacterStates.initialCharacterState(imoen, 4, CharacterState.Allegiance.Attacker),
+                    CharacterState.CharacterStates.initialCharacterState(xan, 4, CharacterState.Allegiance.Attacker),
+                    CharacterState.CharacterStates.initialCharacterState(dorn, 6, CharacterState.Allegiance.Defender),
+                    CharacterState.CharacterStates.initialCharacterState(valygar, 6, CharacterState.Allegiance.Defender),
+                    CharacterState.CharacterStates.initialCharacterState(viconia, 6, CharacterState.Allegiance.Defender),
+                    CharacterState.CharacterStates.initialCharacterState(yoshimo, 6, CharacterState.Allegiance.Defender),
+                    CharacterState.CharacterStates.initialCharacterState(edwin, 6, CharacterState.Allegiance.Defender),
                 )
             )
         )

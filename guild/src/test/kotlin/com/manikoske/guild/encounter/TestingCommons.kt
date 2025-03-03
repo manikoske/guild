@@ -1,6 +1,8 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Effect
+import com.manikoske.guild.character.Bio
+import com.manikoske.guild.character.Character
 import com.navercorp.fixturemonkey.FixtureMonkey
 import com.navercorp.fixturemonkey.api.arbitrary.CombinableArbitrary
 import com.navercorp.fixturemonkey.api.instantiator.Instantiator
@@ -231,7 +233,7 @@ object TestingCommons {
             ),
             Battleground.Node(
                 id = 2,
-                capacity = 3,
+                capacity = 5,
                 paths = setOf(
                     Battleground.Path(cost = 1, toNodeId = 1),
                     Battleground.Path(cost = 1, toNodeId = 3),
@@ -270,24 +272,4 @@ object TestingCommons {
             ),
         ),
     )
-
-
-
-    val randomBuilder = FixtureMonkey.builder()
-        .plugin(KotlinPlugin())
-        .pushAssignableTypeArbitraryIntrospector<Effects> {
-            ArbitraryIntrospectorResult(CombinableArbitrary.from(CharacterState.CharacterStates.noEffects()))
-        }
-        .pushAssignableTypeArbitraryIntrospector<Effect.ActionForcingEffect> {
-            ArbitraryIntrospectorResult(CombinableArbitrary.from(Effect.ActionForcingEffect.Prone))
-        }
-        .pushAssignableTypeArbitraryIntrospector<Effect.ActionForcingEffect> {
-            ArbitraryIntrospectorResult(CombinableArbitrary.from(Effect.ActionForcingEffect.Dying))
-        }
-//        .register(Effect.ActionForcingEffect.Dying::class.java) {
-//            it.giveMeBuilder<Effects>().instantiateBy { constructor<Effect.ActionForcingEffect.Dying>() }
-//        }
-        .build()
-
-
 }

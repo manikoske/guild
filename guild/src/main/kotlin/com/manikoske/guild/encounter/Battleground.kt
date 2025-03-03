@@ -60,7 +60,7 @@ class Battleground(
         enemyCountPerNode: Map<Int, Int>,
     ): Map<Int, Int> {
         // We'll store the minimal known cost to reach each node
-        val dist = mutableMapOf<Int, Int>()
+         val dist = mutableMapOf<Int, Int>()
         // Start with infinite distances
         for (node in nodes) {
             dist[node.id] = Int.MAX_VALUE

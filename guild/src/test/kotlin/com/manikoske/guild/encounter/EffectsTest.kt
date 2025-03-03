@@ -1,8 +1,6 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Effect
-import com.manikoske.guild.encounter.TestingCommons.randomBuilder
-import com.navercorp.fixturemonkey.junit.jupiter.annotation.Seed
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.RepeatedTest
@@ -14,10 +12,10 @@ class EffectsTest {
     fun testActionForcingEffects() {
         val noEffects = CharacterState.CharacterStates.noEffects()
 
-        val prone = Effect.ActionForcingEffect.Prone
-        val dying = Effect.ActionForcingEffect.Dying
-        val firstStun = randomBuilder.giveMeOne<Effect.ActionForcingEffect.Stun>()
-        val secondStun = randomBuilder.giveMeOne<Effect.ActionForcingEffect.Stun>()
+        val prone = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Prone>()
+        val dying = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Dying>()
+        val firstStun = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Stun>()
+        val secondStun = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Stun>()
 
         val effects1 = noEffects.add(firstStun).add(prone).add(dying)
 
@@ -39,9 +37,9 @@ class EffectsTest {
     fun testMovementRestrictingEffects() {
         val noEffects = CharacterState.CharacterStates.noEffects()
 
-        val firstEntagled = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
-        val secondEntagled = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
-        val held = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Held>()
+        val firstEntagled = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
+        val secondEntagled = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
+        val held = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Held>()
 
         val effects1 = noEffects.add(firstEntagled).add(held)
 
@@ -63,9 +61,9 @@ class EffectsTest {
     fun testMovementAlteringEffects() {
         val noEffects = CharacterState.CharacterStates.noEffects()
 
-        val firstSlow = randomBuilder.giveMeOne<Effect.MovementAlteringEffect.Slow>()
-        val secondSlow = randomBuilder.giveMeOne<Effect.MovementAlteringEffect.Slow>()
-        val haste = randomBuilder.giveMeOne<Effect.MovementAlteringEffect.Haste>()
+        val firstSlow = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Slow>()
+        val secondSlow = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Slow>()
+        val haste = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Haste>()
 
         val effects1 = noEffects.add(firstSlow).add(haste)
 
@@ -87,9 +85,9 @@ class EffectsTest {
     fun testActionRestrictingEffects() {
         val noEffects = CharacterState.CharacterStates.noEffects()
 
-        val firstDisarm = randomBuilder.giveMeOne<Effect.ActionRestrictingEffect.Disarmed>()
-        val secondDisarm = randomBuilder.giveMeOne<Effect.ActionRestrictingEffect.Disarmed>()
-        val silenced = randomBuilder.giveMeOne<Effect.ActionRestrictingEffect.Silenced>()
+        val firstDisarm = Randomizer.randomBuilder().giveMeOne<Effect.ActionRestrictingEffect.Disarmed>()
+        val secondDisarm = Randomizer.randomBuilder().giveMeOne<Effect.ActionRestrictingEffect.Disarmed>()
+        val silenced = Randomizer.randomBuilder().giveMeOne<Effect.ActionRestrictingEffect.Silenced>()
 
         val effects1 = noEffects.add(firstDisarm).add(silenced)
 
@@ -111,9 +109,9 @@ class EffectsTest {
     fun testDamageOverTimeEffects() {
         val noEffects = CharacterState.CharacterStates.noEffects()
 
-        val firstBleed = randomBuilder.giveMeOne<Effect.DamageOverTimeEffect.Bleed>()
-        val secondBleed = randomBuilder.giveMeOne<Effect.DamageOverTimeEffect.Bleed>()
-        val poison = randomBuilder.giveMeOne<Effect.DamageOverTimeEffect.Poison>()
+        val firstBleed = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Bleed>()
+        val secondBleed = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Bleed>()
+        val poison = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Poison>()
 
         val effects1 = noEffects.add(firstBleed).add(poison)
 
@@ -135,8 +133,8 @@ class EffectsTest {
     fun testHealOverTimeEffects() {
         val noEffects = CharacterState.CharacterStates.noEffects()
 
-        val firstRegeneration = randomBuilder.giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
-        val secondRegeneration = randomBuilder.giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
+        val firstRegeneration = Randomizer.randomBuilder().giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
+        val secondRegeneration = Randomizer.randomBuilder().giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
 
         val effects1 = noEffects.add(firstRegeneration).add(secondRegeneration)
 
@@ -152,12 +150,12 @@ class EffectsTest {
 
     @RepeatedTest(1)
     fun testRemoveOnDamageTaken() {
-        val stun = randomBuilder.giveMeOne<Effect.ActionForcingEffect.Stun>()
-        val entangled = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
-        val haste = randomBuilder.giveMeOne<Effect.MovementAlteringEffect.Haste>()
-        val regeneration = randomBuilder.giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
-        val silenced = randomBuilder.giveMeOne<Effect.ActionRestrictingEffect.Silenced>()
-        val poison = randomBuilder.giveMeOne<Effect.DamageOverTimeEffect.Poison>()
+        val stun = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Stun>()
+        val entangled = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
+        val haste = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Haste>()
+        val regeneration = Randomizer.randomBuilder().giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
+        val silenced = Randomizer.randomBuilder().giveMeOne<Effect.ActionRestrictingEffect.Silenced>()
+        val poison = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Poison>()
 
         assertThat(
             CharacterState.CharacterStates.noEffects()
@@ -177,12 +175,12 @@ class EffectsTest {
 
     @RepeatedTest(1)
     fun testTick() {
-        val prone = Effect.ActionForcingEffect.Prone
-        val entangled = randomBuilder.giveMeOne<Effect.MovementRestrictingEffect.Entangled>().copy(roundsLeft = 2)
-        val haste = randomBuilder.giveMeOne<Effect.MovementAlteringEffect.Haste>().copy(roundsLeft = 1)
-        val regeneration = randomBuilder.giveMeOne<Effect.HealOverTimeEffect.Regeneration>().copy(roundsLeft = 1)
-        val silenced = randomBuilder.giveMeOne<Effect.ActionRestrictingEffect.Silenced>().copy(roundsLeft = 1)
-        val poison = randomBuilder.giveMeOne<Effect.DamageOverTimeEffect.Poison>().copy(roundsLeft = 2)
+        val prone = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Prone>()
+        val entangled = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Entangled>().copy(roundsLeft = 2)
+        val haste = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Haste>().copy(roundsLeft = 1)
+        val regeneration = Randomizer.randomBuilder().giveMeOne<Effect.HealOverTimeEffect.Regeneration>().copy(roundsLeft = 1)
+        val silenced = Randomizer.randomBuilder().giveMeOne<Effect.ActionRestrictingEffect.Silenced>().copy(roundsLeft = 1)
+        val poison = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Poison>().copy(roundsLeft = 2)
 
         assertThat(
             CharacterState.CharacterStates.noEffects()

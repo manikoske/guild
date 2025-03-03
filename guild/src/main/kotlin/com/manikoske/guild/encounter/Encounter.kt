@@ -1,5 +1,6 @@
 package com.manikoske.guild.encounter
 
+import com.manikoske.guild.action.Outcome
 import com.manikoske.guild.character.Character
 
 class Encounter(
@@ -22,26 +23,22 @@ class Encounter(
                 battleground = battleground,
                 attackers = attackers,
                 defenders = defenders,
-                encounterState = EncounterState(
-                    characterStates = attackers.associateBy(
-                        { it.id },
-                        {
-                            CharacterState.CharacterStates.initialCharacterState(
-                                character = it,
-                                startingNodeId = attackersStartingNodeId,
-                                allegiance = CharacterState.Allegiance.Attacker
-                            )
-                        }
-                    ) + defenders.associateBy(
-                        { it.id },
-                        {
+                encounterState = EncounterState(characterStates =
+                attackers.map {
+                    CharacterState.CharacterStates.initialCharacterState(
+                        character = it,
+                        startingNodeId = attackersStartingNodeId,
+                        allegiance = CharacterState.Allegiance.Attacker
+                    )
+                }
+                        +
+                        defenders.map {
                             CharacterState.CharacterStates.initialCharacterState(
                                 character = it,
                                 startingNodeId = defendersStartingNodeId,
                                 allegiance = CharacterState.Allegiance.Defender
                             )
                         }
-                    ),
                 ),
             )
         }
@@ -62,25 +59,28 @@ class Encounter(
 
         val takerPointOfView = encounterState.viewFrom(takerCharacterId, battleground)
 
-        val eventualActions = encounterState.allEventualActions(takerPointOfView)
+        val eventualActions = encounterState.allEventualActions(takerPointOfView.taker)
 
         val eventualEndings: MutableList<EncounterState> = mutableListOf()
 
         eventualActions.forEach { eventualAction ->
 
-            encounterState.allAccessibleVantageNodes(takerPointOfView, eventualAction.movement).forEach {
-                eventualVantageNode ->
-                encounterState.eventualActionTargets(takerPointOfView, eventualVantageNode, eventualAction).forEach { eventualActionTargets ->
-                    eventualEndings.add(
-                        encounterState.resolveEnding(
-                            executorCharacterId = takerCharacterId,
-                            newPositionNodeId = eventualVantageNode.nodeId,
-                            action = eventualAction,
-                            actionTargets = eventualActionTargets
-                        )
+            encounterState.allAccessibleVantageNodes(takerPointOfView, eventualAction.movement)
+                .forEach { eventualVantageNode ->
+                    eventualEndings.addAll(
+                        eventualVantageNode.targets
+                            .map { eventualAction.outcome.resolve(takerPointOfView.taker, it) }
+                            .filterIsInstance<Outcome.OutcomeResult.AppliedToTarget>()
+                            .map {
+                                encounterState.resolveEnding(
+                                    takerCharacterId = takerPointOfView.taker.character.id,
+                                    newPositionNodeId = eventualVantageNode.nodeId,
+                                    resourceCost = eventualAction.resourceCost,
+                                    updatedCharacterStates = it.updatedCharacterStates
+                                )
+                            }
                     )
                 }
-            }
         }
         this.encounterState = eventualEndings.maxBy { it.utility() }
     }

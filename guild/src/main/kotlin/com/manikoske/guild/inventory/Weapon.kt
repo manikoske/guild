@@ -1,6 +1,8 @@
 package com.manikoske.guild.inventory
 
+import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.rules.Die
+import com.manikoske.guild.rules.Rollable
 
 sealed interface Weapon {
 
@@ -8,104 +10,133 @@ sealed interface Weapon {
 
         val longSword = MeleeWeapon(
             name = "Long Sword",
-            damageRoll = { Die.d8.roll(1) },
-            properties = listOf()
+            damage = Rollable.Damage(roll = { Die.d8.roll(1) }),
+            properties = listOf(),
+            attributeType = Attribute.Type.strength
         )
 
         val axe = MeleeWeapon(
             name = "Axe",
-            damageRoll = { Die.d8.roll(1) },
-            properties = listOf()
+            damage = Rollable.Damage(roll = { Die.d8.roll(1) }),
+            properties = listOf(),
+            attributeType = Attribute.Type.strength
         )
 
         val shortSword = MeleeWeapon(
             name = "Short Sword",
-            damageRoll = { Die.d6.roll(1) },
-            properties = listOf(Property.finesse, Property.light)
+            damage = Rollable.Damage(roll = { Die.d6.roll(1) }),
+            properties = listOf(Property.light),
+            attributeType = Attribute.Type.dexterity
         )
 
         val dagger = MeleeWeapon(
             name = "Dagger",
-            damageRoll = { Die.d4.roll(1) },
-            properties = listOf(Property.finesse, Property.light)
+            damage = Rollable.Damage(roll = { Die.d4.roll(1) }),
+            properties = listOf(Property.light),
+            attributeType = Attribute.Type.dexterity
         )
 
         val greatSword = MeleeWeapon(
             name = "Great Sword",
-            damageRoll = { Die.d6.roll(2) },
-            properties = listOf(Property.twoHanded)
+            damage = Rollable.Damage(roll = { Die.d6.roll(2) }),
+            properties = listOf(Property.twoHanded),
+            attributeType = Attribute.Type.strength
         )
 
         val greatAxe = MeleeWeapon(
             name = "Great Axe",
-            damageRoll = { Die.d12.roll(1) },
-            properties = listOf(Property.twoHanded)
+            damage = Rollable.Damage(roll = { Die.d12.roll(1) }),
+            properties = listOf(Property.twoHanded),
+            attributeType = Attribute.Type.strength
+        )
+
+        val spear = MeleeWeapon(
+            name = "Spear",
+            damage = Rollable.Damage(roll = { Die.d10.roll(1) }),
+            properties = listOf(Property.twoHanded),
+            attributeType = Attribute.Type.dexterity
         )
 
         val warHammer = MeleeWeapon(
             name = "War Hammer",
-            damageRoll = { Die.d8.roll(1) },
-            properties = listOf()
+            damage = Rollable.Damage(roll = { Die.d8.roll(1) }),
+            properties = listOf(),
+            attributeType = Attribute.Type.strength
         )
 
         val mace = MeleeWeapon(
             name = "Mace",
-            damageRoll = { Die.d6.roll(1) },
-            properties = listOf()
+            damage = Rollable.Damage(roll = { Die.d6.roll(1) }),
+            properties = listOf(),
+            attributeType = Attribute.Type.strength
         )
 
         val quarterStaff = MeleeWeapon(
             name = "Quarterstaff",
-            damageRoll = { Die.d6.roll(1) },
-            properties = listOf(Property.twoHanded)
+            damage = Rollable.Damage(roll = { Die.d6.roll(1) }),
+            properties = listOf(Property.twoHanded),
+            attributeType = Attribute.Type.dexterity
         )
 
         val sling = RangedWeapon(
             name = "Sling",
-            damageRoll = { Die.d4.roll(1) },
+            damage = Rollable.Damage(roll = { Die.d4.roll(1) }),
             properties = listOf(),
             range = 1,
+            attributeType = Attribute.Type.dexterity
         )
 
         val shortBow = RangedWeapon(
             name = "Short Bow",
-            damageRoll = { Die.d6.roll(1) },
+            damage = Rollable.Damage(roll = { Die.d6.roll(1) }),
             properties = listOf(),
             range = 2,
+            attributeType = Attribute.Type.dexterity
         )
 
         val longBow = RangedWeapon(
             name = "Long Bow",
-            damageRoll = { Die.d8.roll(1) },
+            damage = Rollable.Damage(roll = { Die.d8.roll(1) }),
             properties = listOf(),
             range = 3,
+            attributeType = Attribute.Type.dexterity
         )
 
     }
 
     val name: String
-    val damageRoll: () -> Int
+    val damage: Rollable.Damage
     val properties: List<Property>
 
-    fun isFinesse(): Boolean {
-        return properties.contains(Property.finesse)
-    }
+    fun attributeType(): Attribute.Type
 
     data class MeleeWeapon(
         override val name: String,
-        override val damageRoll: () -> Int,
-        override val properties: List<Property>
-    ): Weapon
+        override val damage: Rollable.Damage,
+        override val properties: List<Property>,
+        val attributeType: Attribute.Type
+    ): Weapon {
+
+        override fun attributeType(): Attribute.Type {
+            return attributeType
+        }
+    }
 
     data class RangedWeapon(
         override val name: String,
-        override val damageRoll: () -> Int,
+        override val damage: Rollable.Damage,
         override val properties: List<Property>,
+        val attributeType: Attribute.Type,
         val range: Int
-    ): Weapon
+    ): Weapon {
+
+        override fun attributeType(): Attribute.Type {
+            return attributeType
+        }
+    }
 
     enum class Property {
-        twoHanded, light, finesse
+        twoHanded, light
     }
 
 }

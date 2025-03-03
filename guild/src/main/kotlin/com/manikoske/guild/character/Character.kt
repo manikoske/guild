@@ -1,9 +1,7 @@
 package com.manikoske.guild.character
 
-import com.manikoske.guild.action.Outcome
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.rules.*
-import kotlin.math.max
 
 data class Character(
     val id: Int,
@@ -39,15 +37,11 @@ data class Character(
     }
 
     private fun weaponAttributeModifier(): Int {
-        if (arms().isFinesse()) {
-            return max(attribute(Attribute.Type.dexterity).modifier(), attribute(Attribute.Type.strength).modifier())
-        } else {
-            return attribute(Attribute.Type.strength).modifier()
-        }
+        return attribute(arms().attributeType()).modifier()
     }
 
     fun weaponAttackRoll(attackRollBonusModifier: Int): Int {
-        val weaponAttackBonus = when (val arms = arms()) {
+        val weaponAttackBonus = when (arms()) {
             is Inventory.Arms.DualWeapon -> -2
             is Inventory.Arms.OneHandedWeaponAndShield -> 0
             is Inventory.Arms.TwoHandedWeapon -> 0
@@ -58,16 +52,16 @@ data class Character(
 
     fun weaponDamageRoll(damageRollMultiplier : Int): Int {
         val rolledWeaponDamage = when (val arms = arms()) {
-            is Inventory.Arms.DualWeapon -> arms.mainHand.damageRoll.invoke() + arms.offHand.damageRoll.invoke()
-            is Inventory.Arms.OneHandedWeaponAndShield -> arms.mainHand.damageRoll.invoke()
-            is Inventory.Arms.TwoHandedWeapon -> arms.bothHands.damageRoll.invoke()
-            is Inventory.Arms.RangedWeapon -> arms.bothHands.damageRoll.invoke()
+            is Inventory.Arms.DualWeapon -> arms.mainHand.damage.roll() + arms.offHand.damage.roll()
+            is Inventory.Arms.OneHandedWeaponAndShield -> arms.mainHand.damage.roll()
+            is Inventory.Arms.TwoHandedWeapon -> arms.bothHands.damage.roll()
+            is Inventory.Arms.RangedWeapon -> arms.bothHands.damage.roll()
         }
         return rolledWeaponDamage * damageRollMultiplier + weaponAttributeModifier() + level.modifier()
     }
 
-    fun attributeRoll(attributeType: Attribute.Type, roll: () -> Int): Int {
-        return roll.invoke() + attribute(attributeType).modifier() + level.modifier()
+    fun attributeRoll(attributeType: Attribute.Type, rollable: Rollable): Int {
+        return rollable.roll() + attribute(attributeType).modifier() + level.modifier()
     }
 
     fun initiativeRoll() : Int {

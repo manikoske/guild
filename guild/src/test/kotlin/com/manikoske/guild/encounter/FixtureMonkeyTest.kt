@@ -4,12 +4,13 @@ import com.navercorp.fixturemonkey.FixtureMonkeyBuilder
 import com.navercorp.fixturemonkey.api.arbitrary.CombinableArbitrary
 import com.navercorp.fixturemonkey.api.introspector.ArbitraryIntrospectorResult
 import com.navercorp.fixturemonkey.customizer.Values
-import com.navercorp.fixturemonkey.junit.jupiter.annotation.Seed
 import com.navercorp.fixturemonkey.kotlin.KotlinPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeKotlinBuilder
 import com.navercorp.fixturemonkey.kotlin.pushAssignableTypeArbitraryIntrospector
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
+@Disabled
 class FixtureMonkeyTest {
 
     sealed class Scheme {
@@ -24,7 +25,6 @@ class FixtureMonkeyTest {
     )
 
     @Test
-    @Seed(30)
     fun fixtureMonkey1() {
         val sampled = FixtureMonkeyBuilder()
             .plugin(KotlinPlugin())
@@ -37,7 +37,6 @@ class FixtureMonkeyTest {
     }
 
     @Test
-    @Seed(30)
     fun fixtureMonkey2() {
         val sampled = FixtureMonkeyBuilder()
             .plugin(KotlinPlugin())
@@ -52,7 +51,6 @@ class FixtureMonkeyTest {
     }
 
     @Test
-    @Seed(30)
     fun fixtureMonkey3() {
         val sampled = FixtureMonkeyBuilder()
             .plugin(KotlinPlugin())
@@ -69,7 +67,6 @@ class FixtureMonkeyTest {
     )
 
     @Test
-    @Seed(30)
     fun test() {
         val sampled = FixtureMonkeyBuilder()
             .plugin(KotlinPlugin())

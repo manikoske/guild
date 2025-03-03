@@ -13,6 +13,7 @@ data class CharacterState(
     private val damageTaken: Int,
     private val resourcesSpent: Int,
     private val effects: Effects,
+    val sequence: Int,
 ) {
 
     object CharacterStates {
@@ -27,7 +28,8 @@ data class CharacterState(
                 allegiance = allegiance,
                 damageTaken = 0,
                 resourcesSpent = 0,
-                effects = noEffects()
+                effects = noEffects(),
+                sequence = 0
             )
         }
 
@@ -48,49 +50,49 @@ data class CharacterState(
         val damageTakenUpdated = max(0, damageTaken + damageToTake)
         return this.copy(
             damageTaken = damageTakenUpdated,
-            effects = (if (damageTakenUpdated > character.maxHitPoints()) effects.add(Effect.ActionForcingEffect.Dying) else effects).removeOnDamage()
+            effects = (if (damageTakenUpdated > character.maxHitPoints()) effects.add(Effect.ActionForcingEffect.Dying(0)) else effects).removeOnDamage(),
+            sequence = sequence + 1
         )
     }
 
     fun addEffect(effect: Effect) : CharacterState {
-        return this.copy(effects = effects.add(effect))
+        return this.copy(effects = effects.add(effect), sequence = sequence + 1)
     }
 
     fun removeEffect(effect: Effect) : CharacterState {
-        return this.copy(effects = effects.remove(effect))
+        return this.copy(effects = effects.remove(effect), sequence = sequence + 1)
     }
 
     fun tickEffects() : CharacterState {
-        return this.copy(effects = effects.tick())
+        return this.copy(effects = effects.tick(), sequence = sequence + 1)
     }
 
     fun heal(amountToHeal: Int) : CharacterState {
-        return this.copy(damageTaken = max(0, damageTaken - amountToHeal))
+        return this.copy(damageTaken = max(0, damageTaken - amountToHeal), sequence = sequence + 1)
     }
 
     fun spendResources(amount: Int) : CharacterState {
-        return this.copy(resourcesSpent = max(0, resourcesSpent + amount))
+        return this.copy(resourcesSpent = max(0, resourcesSpent + amount), sequence = sequence + 1)
     }
 
     fun gainResources(amount: Int) : CharacterState {
-        return this.copy(resourcesSpent = max(0, resourcesSpent - amount))
+        return this.copy(resourcesSpent = max(0, resourcesSpent - amount), sequence = sequence + 1)
     }
 
     fun moveTo(newPositionNodeIde: Int) : CharacterState {
-        return this.copy(positionNodeId = newPositionNodeIde)
+        return this.copy(positionNodeId = newPositionNodeIde, sequence = sequence + 1)
     }
 
-    fun applyOverTimeEffects() {
-        heal(effects.healOverTimeEffects.sumOf { it.healRoll().invoke() })
-        takeDamage(effects.damageOverTimeEffects.sumOf { it.damageRoll().invoke() })
+    fun applyOverTimeEffects() : CharacterState {
+        return heal(effects.healOverTimeEffects.sumOf { it.heal().roll() })
+            .takeDamage(effects.damageOverTimeEffects.sumOf { it.damage().roll() })
     }
 
     fun canExecuteAction(eventualAction: Action): Boolean {
         val noActionRestrictionEffect = effects.actionRestrictingEffects.none { it.restrictedAction(eventualAction) }
         val classRestriction = eventualAction.classRestriction.contains(character.clazz())
         val resourceRestriction = eventualAction.resourceCost < character.maxResources() - resourcesSpent
-        val armsRestriction = eventualAction.armsRestriction.invoke(character.arms())
-        return noActionRestrictionEffect && classRestriction && resourceRestriction && armsRestriction
+        return noActionRestrictionEffect && classRestriction && resourceRestriction
     }
 
     fun forcedToAction(): Action.ForcedAction? {

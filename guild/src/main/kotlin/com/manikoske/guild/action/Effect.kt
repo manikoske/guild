@@ -1,5 +1,6 @@
 package com.manikoske.guild.action
 
+import com.manikoske.guild.rules.Rollable
 import kotlin.math.max
 
 
@@ -22,7 +23,8 @@ sealed interface Effect {
             return this
         }
 
-        data object Prone : ActionForcingEffect() {
+        // TODO remove dummy when fixture monkey is fixed
+        data class Prone(val dummy: Int) : ActionForcingEffect() {
             override fun severity(): Int {
                 return 3
             }
@@ -56,7 +58,8 @@ sealed interface Effect {
 
         }
 
-        data object Dying : ActionForcingEffect() {
+        // TODO remove dummy when fixture monkey is fixed
+        data class Dying(val dummy: Int) : ActionForcingEffect() {
             override fun severity(): Int {
                 return 5
             }
@@ -183,7 +186,7 @@ sealed interface Effect {
             }
 
             override fun restrictedAction(action: Action): Boolean {
-                return action is Action.WeaponAction
+                return action.outcome is Outcome.AttackOutcome.WeaponAttack
             }
 
             override val category: String
@@ -199,7 +202,7 @@ sealed interface Effect {
             }
 
             override fun restrictedAction(action: Action): Boolean {
-                return action is Action.SpellAction
+                return action.outcome is Outcome.AttackOutcome.SpellAttack
             }
 
             override val category: String
@@ -208,7 +211,7 @@ sealed interface Effect {
     }
 
     sealed class DamageOverTimeEffect : ManyDeterminedByCategory<DamageOverTimeEffect>{
-        abstract fun damageRoll(): () -> Int
+        abstract fun damage(): Rollable.Damage
 
         override fun self(): DamageOverTimeEffect {
             return this
@@ -216,7 +219,7 @@ sealed interface Effect {
 
         data class Bleed(
             override val roundsLeft: Int,
-            val damageRoll: () -> Int,
+            val damage: Rollable.Damage,
         ) : DamageOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {
@@ -226,14 +229,14 @@ sealed interface Effect {
             override val category: String
                 get() = "Bleed"
 
-            override fun damageRoll(): () -> Int {
-                return damageRoll
+            override fun damage(): Rollable.Damage {
+                return damage
             }
         }
 
         data class Poison(
             override val roundsLeft: Int,
-            val damageRoll: () -> Int,
+            val damage: Rollable.Damage,
         ) : DamageOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {
@@ -243,15 +246,15 @@ sealed interface Effect {
             override val category: String
                 get() = "Poison"
 
-            override fun damageRoll(): () -> Int {
-                return damageRoll
+            override fun damage(): Rollable.Damage {
+                return damage
             }
 
         }
     }
 
     sealed class HealOverTimeEffect : ManyDeterminedByCategory<HealOverTimeEffect> {
-        abstract fun healRoll(): () -> Int
+        abstract fun heal(): Rollable.Heal
 
         override fun self(): HealOverTimeEffect {
             return this
@@ -259,15 +262,15 @@ sealed interface Effect {
 
         data class Regeneration(
             override val roundsLeft: Int,
-            val healRoll: () -> Int,
+            val heal: Rollable.Heal,
         ) : HealOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override fun healRoll(): () -> Int {
-                return healRoll
+            override fun heal(): Rollable.Heal {
+                return heal
             }
 
             override val category: String

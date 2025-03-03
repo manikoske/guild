@@ -1,5 +1,7 @@
 package com.manikoske.guild.inventory
 
+import com.manikoske.guild.character.Attribute
+
 data class Inventory(
     val armor: Armor,
     val arms: Arms
@@ -11,34 +13,52 @@ data class Inventory(
             return 0
         }
 
-        fun isFinesse(): Boolean
+        fun attributeType(): Attribute.Type
+
+        fun range() : Int
 
         data class OneHandedWeaponAndShield(val mainHand: Weapon.MeleeWeapon, val shield: Shield) : Arms {
             override fun armorClassBonus(): Int {
                 return shield.armorClass
             }
 
-            override fun isFinesse(): Boolean {
-                return mainHand.isFinesse()
+            override fun attributeType(): Attribute.Type {
+                return mainHand.attributeType()
+            }
+
+            override fun range(): Int {
+                return 0
             }
 
         }
 
         data class RangedWeapon(val bothHands: Weapon.RangedWeapon): Arms {
-            override fun isFinesse(): Boolean {
-                return true
+            override fun attributeType(): Attribute.Type {
+                return bothHands.attributeType()
+            }
+
+            override fun range(): Int {
+                return bothHands.range
             }
         }
 
         data class TwoHandedWeapon(val bothHands: Weapon.MeleeWeapon): Arms {
-            override fun isFinesse(): Boolean {
-                return bothHands.isFinesse()
+            override fun attributeType(): Attribute.Type {
+                return bothHands.attributeType()
+            }
+
+            override fun range(): Int {
+                return 0
             }
         }
 
         data class DualWeapon(val mainHand: Weapon.MeleeWeapon, val offHand: Weapon.MeleeWeapon): Arms {
-            override fun isFinesse(): Boolean {
-                return mainHand.isFinesse()
+            override fun attributeType(): Attribute.Type {
+                return mainHand.attributeType()
+            }
+
+            override fun range(): Int {
+                return 0
             }
         }
 
