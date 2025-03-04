@@ -1,11 +1,13 @@
 package com.manikoske.guild.encounter
 
+import com.manikoske.guild.action.Effect
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.encounter.TestingCommons.smallBattleground
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 
 class EncounterStateTest {
@@ -177,6 +179,35 @@ class EncounterStateTest {
         every { jan.canMoveBy(any()) } returns Movement(type = Movement.Type.Normal, amount = 2)
         assertThat(encounterState.allAccessibleVantageNodes(pointOfView = janPointOfView, Randomizer.randomBuilder().giveMeOne()))
             .containsExactlyInAnyOrder(vantageNode0, vantageNode1, vantageNode2)
+    }
+
+    @RepeatedTest(10)
+    fun resolveEnding() {
+
+        val gorion = Randomizer.characterState("Gorion").copy(damageTaken = 0, resourcesSpent = 0, effects = CharacterState.CharacterStates.noEffects())
+        val sarevok = Randomizer.characterState("Sarevok").copy(damageTaken = 10)
+
+        val encounterState = EncounterState(characterStates = listOf(gorion, sarevok))
+
+
+        val sarevokAttacked = sarevok.takeDamage(5)
+        val sarevokSlowed = sarevokAttacked.addEffect(Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Slow>())
+        val gorionHealed = gorion.heal(8)
+
+        assertThat(encounterState.resolveEnding(
+            takerCharacterId = gorion.character.id,
+            newPositionNodeId = 20,
+            resourceCost = 2,
+            updatedCharacterStates = listOf(sarevokAttacked, sarevokSlowed, gorionHealed)
+        ))
+            .usingRecursiveComparison()
+            .isEqualTo(EncounterState(characterStates = listOf(
+                gorionHealed.moveTo(20).spendResources(2),
+                sarevokSlowed
+            )))
+
+
+
     }
 
 }
