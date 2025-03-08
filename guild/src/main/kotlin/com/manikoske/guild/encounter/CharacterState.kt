@@ -5,6 +5,7 @@ import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Effect
 import com.manikoske.guild.character.Character
 import kotlin.math.max
+import kotlin.math.min
 
 data class CharacterState(
     val character: Character,
@@ -43,14 +44,42 @@ data class CharacterState(
         }
     }
 
+    fun utility(): Double {
+        val hitPointRatio = currentHitPoints() / character.maxHitPoints().toDouble()
+        val resourceRatio = currentResources() / character.maxResources().toDouble()
+
+        // Define weights: health is three times more important than resources.
+        val healthWeight = 3.0
+        val resourceWeight = 1.0
+        val epsilon = 1e-6  // To avoid division by zero
+
+        // Compute the weighted harmonic mean:
+        // Weighted Harmonic Mean = (w1 + w2) / (w1/healthRatio + w2/resourceRatio)
+        return if (hitPointRatio > epsilon && resourceRatio > epsilon) {
+            (healthWeight + resourceWeight) / ((healthWeight / (hitPointRatio + epsilon)) + (resourceWeight / (resourceRatio + epsilon)))
+        } else {
+            0.0
+        }
+    }
+
+    private fun currentHitPoints() : Int {
+        return character.maxHitPoints() - damageTaken
+    }
+
+    private fun currentResources() : Int {
+        return character.maxResources() - resourcesSpent
+    }
+
+    private fun resolveEffectsOnDamage() : CharacterState {
+        return this.copy(
+            effects = (if (currentHitPoints() == 0) effects.add(Effect.ActionForcingEffect.Dying(0)) else effects).removeOnDamage()
+        )
+    }
 
     fun takeDamage(damageToTake: Int) : CharacterState {
         if (damageToTake == 0) return this
-        val damageTakenUpdated = max(0, damageTaken + damageToTake)
-        return this.copy(
-            damageTaken = damageTakenUpdated,
-            effects = (if (damageTakenUpdated > character.maxHitPoints()) effects.add(Effect.ActionForcingEffect.Dying(0)) else effects).removeOnDamage(),
-        )
+        val damageTakenUpdated = min(character.maxHitPoints(), damageTaken + damageToTake)
+        return this.copy(damageTaken = damageTakenUpdated).resolveEffectsOnDamage()
     }
 
     fun addEffect(effect: Effect) : CharacterState {
@@ -71,10 +100,12 @@ data class CharacterState(
     }
 
     fun spendResources(amount: Int) : CharacterState {
-        return this.copy(resourcesSpent = max(0, resourcesSpent + amount))
+        if (amount == 0) return this
+        return this.copy(resourcesSpent = min(character.maxResources(), resourcesSpent + amount))
     }
 
     fun gainResources(amount: Int) : CharacterState {
+        if (amount == 0) return this
         return this.copy(resourcesSpent = max(0, resourcesSpent - amount))
     }
 

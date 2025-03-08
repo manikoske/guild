@@ -23,14 +23,15 @@ class Encounter(
                 battleground = battleground,
                 attackers = attackers,
                 defenders = defenders,
-                encounterState = EncounterState(characterStates =
-                attackers.map {
-                    CharacterState.CharacterStates.initialCharacterState(
-                        character = it,
-                        startingNodeId = attackersStartingNodeId,
-                        allegiance = CharacterState.Allegiance.Attacker
-                    )
-                }
+                encounterState = EncounterState(
+                    characterStates =
+                        attackers.map {
+                            CharacterState.CharacterStates.initialCharacterState(
+                                character = it,
+                                startingNodeId = attackersStartingNodeId,
+                                allegiance = CharacterState.Allegiance.Attacker
+                            )
+                        }
                         +
                         defenders.map {
                             CharacterState.CharacterStates.initialCharacterState(
