@@ -5,82 +5,90 @@ import com.manikoske.guild.character.Character
 
 class Encounter(
     private val battleground: Battleground,
-    private val attackers: Set<Character>,
-    private val defenders: Set<Character>,
-    private var encounterState: EncounterState
 ) {
 
-    object Encounters {
-
-        fun create(
-            battleground: Battleground,
-            attackersStartingNodeId: Int,
-            defendersStartingNodeId: Int,
-            attackers: Set<Character>,
-            defenders: Set<Character>,
-        ): Encounter {
-            return Encounter(
-                battleground = battleground,
+    fun simulateEncounter(
+        attackers: Set<Character>,
+        defenders: Set<Character>,
+        attackersStartingNodeId: Int,
+        defendersStartingNodeId: Int,
+    ) {
+        val finalCharacterStates = Round(
+            encounterState = EncounterState.initial(
                 attackers = attackers,
                 defenders = defenders,
-                encounterState = EncounterState(
-                    characterStates =
-                        attackers.map {
-                            CharacterState.CharacterStates.initialCharacterState(
-                                character = it,
-                                startingNodeId = attackersStartingNodeId,
-                                allegiance = CharacterState.Allegiance.Attacker
-                            )
-                        }
-                        +
-                        defenders.map {
-                            CharacterState.CharacterStates.initialCharacterState(
-                                character = it,
-                                startingNodeId = defendersStartingNodeId,
-                                allegiance = CharacterState.Allegiance.Defender
-                            )
-                        }
-                ),
+                attackersStartingNodeId = attackersStartingNodeId,
+                defendersStartingNodeId = defendersStartingNodeId
             )
-        }
+        ).simulate(battleground)
+
+        println(finalCharacterStates)
     }
 
-    fun simulateEncounter(
+
+    data class Round(
+        private val encounterState: EncounterState
     ) {
-        simulateRound()
+        fun simulate(
+            battleground: Battleground
+        ): EncounterState {
+            return if (encounterState.hasNoWinner()) {
+                Round(
+                    encounterState = encounterState.rollInitiatives()
+                        .fold(encounterState) { updatedEncounterState, takerId ->
+                            Turn(pointOfView = updatedEncounterState.viewFrom(characterId = takerId)).simulate(
+                                battleground
+                            )
+                        }).simulate(battleground)
+            } else {
+                encounterState
+            }
+        }
+
     }
 
-    private fun simulateRound() {
-        (attackers + defenders)
-            .sortedByDescending { character -> character.initiativeRoll() }
-            .forEach { character -> simulateTurn(character.id) }
-    }
+    data class Turn(
+        private val pointOfView: PointOfView,
+    ) {
 
-    private fun simulateTurn(takerCharacterId: Int) {
+        fun simulate(battleground: Battleground): EncounterState {
 
-        val takerPointOfView = encounterState.viewFrom(takerCharacterId, battleground)
+            val eventualEndings: MutableList<Ending> = mutableListOf()
 
-        val eventualEndings: MutableList<EncounterState> = mutableListOf()
-
-        takerPointOfView.taker.allExecutableActions().forEach { eventualAction ->
-
-            encounterState.allAccessibleVantageNodes(takerPointOfView, eventualAction.movement)
-                .forEach { eventualVantageNode ->
+            pointOfView.taker.allExecutableActions().forEach { executableAction ->
+                pointOfView.allVantageNodes(battleground = battleground).filter { vantageNode ->
+                    vantageNode.accessibleBy(executableAction.movement)
+                }.forEach { accessibleVantageNode ->
                     eventualEndings.addAll(
-                        eventualVantageNode.targets
-                            .map { eventualAction.outcome.resolve(takerPointOfView.taker, it) }
-                            .filterIsInstance<Outcome.OutcomeResult.AppliedToTarget>()
-                            .map {
-                                encounterState.resolveEnding(
-                                    takerCharacterId = takerPointOfView.taker.character.id,
-                                    newPositionNodeId = eventualVantageNode.nodeId,
-                                    resourceCost = eventualAction.resourceCost,
-                                    updatedCharacterStates = it.updatedCharacterStates
+                        accessibleVantageNode.targets
+                            .map { target ->
+                                executableAction.outcome.resolve(
+                                    pointOfView = pointOfView,
+                                    target = target,
+                                    newPositionNodeId = accessibleVantageNode.nodeId,
+                                    resourceCost = executableAction.resourceCost
                                 )
                             }
+                            .filterIsInstance<Outcome.OutcomeResult.AppliedToTarget>()
+                            .map { appliedToTarget -> Ending(pointOfView = appliedToTarget.updatedPointOfView) }
                     )
                 }
+            }
+            return eventualEndings.maxBy { it.utility() }.encounterState()
         }
-        this.encounterState = eventualEndings.maxBy { it.utility() }
+
+        data class Ending(
+            private val pointOfView: PointOfView
+        ) {
+            fun utility(): Double {
+                return 0.0
+            }
+
+            fun encounterState(): EncounterState {
+                return EncounterState.fromView(pointOfView)
+            }
+        }
     }
+
+
 }

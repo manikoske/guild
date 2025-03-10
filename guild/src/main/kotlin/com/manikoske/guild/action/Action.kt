@@ -39,12 +39,12 @@ sealed interface Action {
             BasicAction(
                 name = "Disengage",
                 movement = Movement(type = Movement.Type.Special, amount = 1),
-                outcome = Outcome.NoOutcome
+                outcome = Outcome.OutcomeWithNoResolution
             ),
             BasicAction(
                 name = "Dash",
                 movement = Movement(type = Movement.Type.Normal, amount = 2),
-                outcome = Outcome.NoOutcome
+                outcome = Outcome.OutcomeWithNoResolution
             ),
         )
     }
@@ -72,7 +72,7 @@ sealed interface Action {
             get() = noClassRestriction
 
         override val outcome: Outcome
-            get() = Outcome.NoOutcome
+            get() = Outcome.OutcomeWithNoResolution
 
         data object NoAction : ForcedAction() {
             override val name: String

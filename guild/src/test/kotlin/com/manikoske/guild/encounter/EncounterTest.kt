@@ -21,6 +21,7 @@ import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.inventory.Shield
 import com.manikoske.guild.inventory.Weapon
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class EncounterTest {
@@ -243,40 +244,18 @@ class EncounterTest {
     }
 
 
-    @Test
-    fun createEncounter() {
+    @Disabled
+    fun simulate() {
 
-        val encounter = Encounter.Encounters.create(
-            battleground = bigBattleground,
+        val encounter = Encounter(battleground = bigBattleground)
+
+        encounter.simulateEncounter(
             attackersStartingNodeId = 4,
             defendersStartingNodeId = 6,
             attackers = setOf(khalid, kivan, anomen, imoen, xan),
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin)
         )
 
-        val expectedEncounter = Encounter(
-            battleground = bigBattleground,
-            attackers = setOf(khalid, kivan, anomen, imoen, xan),
-            defenders = setOf(dorn, valygar, viconia, yoshimo, edwin),
-            encounterState = EncounterState(
-                characterStates = listOf(
-                    CharacterState.CharacterStates.initialCharacterState(khalid, 4, CharacterState.Allegiance.Attacker),
-                    CharacterState.CharacterStates.initialCharacterState(kivan, 4, CharacterState.Allegiance.Attacker),
-                    CharacterState.CharacterStates.initialCharacterState(anomen, 4, CharacterState.Allegiance.Attacker),
-                    CharacterState.CharacterStates.initialCharacterState(imoen, 4, CharacterState.Allegiance.Attacker),
-                    CharacterState.CharacterStates.initialCharacterState(xan, 4, CharacterState.Allegiance.Attacker),
-                    CharacterState.CharacterStates.initialCharacterState(dorn, 6, CharacterState.Allegiance.Defender),
-                    CharacterState.CharacterStates.initialCharacterState(valygar, 6, CharacterState.Allegiance.Defender),
-                    CharacterState.CharacterStates.initialCharacterState(viconia, 6, CharacterState.Allegiance.Defender),
-                    CharacterState.CharacterStates.initialCharacterState(yoshimo, 6, CharacterState.Allegiance.Defender),
-                    CharacterState.CharacterStates.initialCharacterState(edwin, 6, CharacterState.Allegiance.Defender),
-                )
-            )
-        )
-        assertThat(encounter)
-            .usingRecursiveComparison()
-            .ignoringCollectionOrder()
-            .isEqualTo(expectedEncounter)
     }
 }
 

@@ -1,110 +1,62 @@
 package com.manikoske.guild.encounter
 
+import com.manikoske.guild.action.Movement
+import com.manikoske.guild.action.Outcome
+
 data class PointOfView(
     val taker: CharacterState,
-    val vantageNodes: List<VantageNode>,
+    val allies: List<CharacterState>,
+    val enemies: List<CharacterState>,
 ) {
+
+    fun allVantageNodes(battleground: Battleground): List<VantageNode> {
+
+        val allyCountPerNode = characterCountPerNode(allies + taker)
+        val enemyCountPerNode = characterCountPerNode(enemies)
+
+        val requiredNodeNormalMovements = battleground.getAllNodeNormalMovementRequirements(
+            startNodeId = taker.positionNodeId,
+            allyCountPerNode = allyCountPerNode,
+            enemyCountPerNode = enemyCountPerNode,
+        )
+
+        val requiredNodeSpecialMovements = battleground.getAllNodeSpecialMovementRequirements(
+            startNodeId = taker.positionNodeId,
+            allyCountPerNode = allyCountPerNode,
+            enemyCountPerNode = enemyCountPerNode
+        )
+
+        return battleground.allBattlegroundNodes().map { node ->
+            VantageNode(
+                nodeId = node.id,
+                requiredNormalMovement = requiredNodeNormalMovements.getValue(node.id),
+                requiredSpecialMovement = requiredNodeSpecialMovements.getOrDefault(node.id, Int.MAX_VALUE),
+                targets = node.lineOfSight.map {
+                    Target.Targets.possibleTargets(
+                        range = it.range,
+                        allies = allies.filter { ally -> ally.positionNodeId == it.toNodeId },
+                        enemies = enemies.filter { enemy -> enemy.positionNodeId == it.toNodeId }
+                    )
+                }.flatten() + Target.Self(self = taker)
+            )
+        }
+    }
+
+    private fun characterCountPerNode(characterStates: List<CharacterState>): Map<Int, Int> {
+        return characterStates.groupingBy { it.positionNodeId }.eachCount()
+    }
 
     data class VantageNode(
         val nodeId: Int,
         val requiredNormalMovement: Int,
         val requiredSpecialMovement: Int,
         val targets: List<Target>,
-    )
-
-    sealed interface Target {
-        enum class Scope {
-            Ally, Enemy, Everyone
-        }
-
-        object Targets {
-            fun possibleTargets(range: Int, allies: List<CharacterState>, enemies: List<CharacterState>) : List<Target> {
-                return singleTargets(Scope.Ally, range, allies) +
-                        singleTargets(Scope.Enemy, range, enemies) +
-                        doubleTargets(Scope.Ally, range, allies) +
-                        doubleTargets(Scope.Enemy, range, enemies) +
-                        nodeTargets(Scope.Ally, range, allies) +
-                        nodeTargets(Scope.Enemy, range, enemies) +
-                        nodeTargets(Scope.Everyone, range, allies + enemies)
-            }
-
-            private fun singleTargets(scope: Scope, range: Int, targets: List<CharacterState>): List<Single> {
-                return targets.map { Single(scope = scope, range = range, single = it) }
-            }
-
-            private fun doubleTargets(scope: Scope, range: Int, targets: List<CharacterState>): List<Double> {
-                val result: MutableList<Double> = mutableListOf()
-                if (targets.isNotEmpty()) {
-                    for (i in targets.indices) {
-                        for (j in i + 1..<targets.size) {
-                            result.add(Double(scope = scope, range = range, first = targets[i], second = targets[j]))
-                        }
-                    }
-                }
-                return result
-            }
-
-            private fun nodeTargets(scope: Scope, range: Int, targets: List<CharacterState>) : List<Node> {
-                if (targets.isNotEmpty()) {
-                    return listOf(Node(scope = scope, range, targets = targets))
-                } else {
-                    return listOf()
-                }
-            }
-
-            private fun tripleTarget(targets: List<Int>): List<List<Int>> {
-                val result: MutableList<List<Int>> = mutableListOf()
-                if (targets.isNotEmpty()) {
-                    for (i in targets.indices) {
-                        for (j in i + 1..<targets.size) {
-                            for (k in j + 1..<targets.size) {
-                                result.add(listOf(targets[i], targets[j], targets[k]))
-                            }
-                        }
-                    }
-                }
-                return result
+    ) {
+        fun accessibleBy(actionMovement: Movement): Boolean {
+            return when (actionMovement.type) {
+                Movement.Type.Normal -> requiredNormalMovement <= actionMovement.amount
+                Movement.Type.Special -> requiredSpecialMovement <= actionMovement.amount
             }
         }
-
-        fun targetedCharacterStates() : List<CharacterState>
-
-        data class Single(
-            val scope: Scope,
-            val range: Int,
-            val single: CharacterState
-        ) : Target {
-            override fun targetedCharacterStates(): List<CharacterState> {
-                return listOf(single)
-            }
-        }
-
-        data class Double(
-            val scope: Scope,
-            val range: Int,
-            val first: CharacterState,
-            val second: CharacterState,
-        ) : Target {
-            override fun targetedCharacterStates(): List<CharacterState> {
-                return listOf(first, second)
-            }
-        }
-
-        data class Node(
-            val scope: Scope,
-            val range: Int,
-            val targets: List<CharacterState>
-        ) : Target {
-            override fun targetedCharacterStates(): List<CharacterState> {
-                return targets
-            }
-        }
-
-        data class Self(val self: CharacterState) : Target {
-            override fun targetedCharacterStates(): List<CharacterState> {
-                return listOf(self)
-            }
-        }
-
     }
 }

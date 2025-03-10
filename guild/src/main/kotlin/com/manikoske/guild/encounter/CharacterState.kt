@@ -44,6 +44,10 @@ data class CharacterState(
         }
     }
 
+    fun isDying() : Boolean {
+        return effects.actionForcingEffect is Effect.ActionForcingEffect.Dying
+    }
+
     fun utility(): Double {
         val hitPointRatio = currentHitPoints() / character.maxHitPoints().toDouble()
         val resourceRatio = currentResources() / character.maxResources().toDouble()

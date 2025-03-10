@@ -3,55 +3,83 @@ package com.manikoske.guild.action
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.encounter.CharacterState
 import com.manikoske.guild.encounter.PointOfView
+import com.manikoske.guild.encounter.Target
 import com.manikoske.guild.rules.Rollable
 
 sealed interface Outcome {
 
-    fun resolve(executor: CharacterState, target: PointOfView.Target): OutcomeResult
+    fun resolve(
+        pointOfView: PointOfView,
+        target: Target,
+        newPositionNodeId: Int,
+        resourceCost: Int
+    ): OutcomeResult
+
 
     sealed interface OutcomeResult {
         data object TargetNotApplicable : OutcomeResult
-        data class AppliedToTarget(val updatedCharacterStates: List<CharacterState>) : OutcomeResult
+        data class AppliedToTarget(val updatedPointOfView: PointOfView) : OutcomeResult
     }
 
-    data object NoOutcome : Outcome {
-        override fun resolve(executor: CharacterState, target: PointOfView.Target): OutcomeResult {
-            return OutcomeResult.AppliedToTarget(updatedCharacterStates = listOf())
+    data object OutcomeWithNoResolution : Outcome {
+
+        override fun resolve(
+            pointOfView: PointOfView,
+            target: Target,
+            newPositionNodeId: Int,
+            resourceCost: Int
+        ): OutcomeResult {
+            return OutcomeResult.AppliedToTarget(updatedPointOfView = pointOfView)
         }
     }
 
+    sealed interface OutcomeWithResolution : Outcome {
 
-    sealed class SupportOutcome : Outcome {
+        val resolution: Resolution
+        val selfResolution: Resolution.SupportResolution?
+        fun isValidTarget(executor: CharacterState, target: Target): Boolean
 
-        abstract val resolution: Resolution.SupportResolution
-        abstract val afterCastSelfResolution: Resolution.SupportResolution?
-
-        abstract fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean
-        override fun resolve(executor: CharacterState, target: PointOfView.Target): OutcomeResult {
-            return if (isValidTarget(executor, target)) {
+        override fun resolve(
+            pointOfView: PointOfView,
+            target: Target,
+            newPositionNodeId: Int,
+            resourceCost: Int
+        ): OutcomeResult {
+            return if (isValidTarget(pointOfView.taker, target)) {
+                val updatedPointOfView = target.applyResolution(pointOfView, resolution).let {
+                    if (selfResolution != null && selfResolution is Resolution) {
+                        Target.Self(self = pointOfView.taker)
+                            .applyResolution(it, selfResolution as Resolution.SupportResolution)
+                    } else {
+                        it
+                    }
+                }
                 OutcomeResult.AppliedToTarget(
-                    updatedCharacterStates = target.targetedCharacterStates().map { support(executor, it) }.flatten()
+                    updatedPointOfView = updatedPointOfView.copy(
+                        taker = updatedPointOfView.taker
+                            .moveTo(newPositionNodeId)
+                            .spendResources(resourceCost)
+                            .applyOverTimeEffects()
+                            .tickEffects()
+                    )
                 )
             } else {
                 OutcomeResult.TargetNotApplicable
             }
         }
 
-        private fun support(executor: CharacterState, target: CharacterState): List<CharacterState> {
+    }
 
-            return listOf(
-                resolution.resolve(executor, target),
-                afterCastSelfResolution?.resolve(executor, executor) ?: executor
-            )
+    sealed class SupportOutcome : OutcomeWithResolution {
 
-        }
+        abstract override val resolution: Resolution.SupportResolution
 
         data class SelfSupport(
             override val resolution: Resolution.SupportResolution,
-            override val afterCastSelfResolution: Resolution.SupportResolution?
+            override val selfResolution: Resolution.SupportResolution?
         ) : SupportOutcome() {
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Self
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Self
             }
         }
 
@@ -62,11 +90,11 @@ sealed interface Outcome {
         data class SingleSpellSupport(
             override val resolution: Resolution.SupportResolution,
             override val range: Int,
-            override val afterCastSelfResolution: Resolution.SupportResolution?
+            override val selfResolution: Resolution.SupportResolution?
         ) : SpellSupport() {
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Single &&
-                        target.scope == PointOfView.Target.Scope.Ally &&
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Single &&
+                        target.scope == Target.Scope.Ally &&
                         target.range <= range
             }
         }
@@ -74,11 +102,11 @@ sealed interface Outcome {
         data class DoubleSpellSupport(
             override val resolution: Resolution.SupportResolution,
             override val range: Int,
-            override val afterCastSelfResolution: Resolution.SupportResolution?
+            override val selfResolution: Resolution.SupportResolution?
         ) : SpellSupport() {
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Double &&
-                        target.scope == PointOfView.Target.Scope.Ally &&
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Double &&
+                        target.scope == Target.Scope.Ally &&
                         target.range <= range
             }
         }
@@ -86,100 +114,57 @@ sealed interface Outcome {
         data class NodeSpellSupport(
             override val resolution: Resolution.SupportResolution,
             override val range: Int,
-            override val afterCastSelfResolution: Resolution.SupportResolution?
+            override val selfResolution: Resolution.SupportResolution?
         ) : SpellSupport() {
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Node &&
-                        target.scope == PointOfView.Target.Scope.Ally &&
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Node &&
+                        target.scope == Target.Scope.Ally &&
                         target.range <= range
             }
         }
 
     }
 
-    sealed class AttackOutcome : Outcome {
+    sealed class AttackOutcome : OutcomeWithResolution {
 
-        abstract val resolution: Resolution.AttackResolution
-        abstract val afterAttackSelfResolution: Resolution.SupportResolution?
-        abstract val onHitTargetResolution: Resolution.SpellResolution?
-
-        abstract fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean
-
-        override fun resolve(executor: CharacterState, target: PointOfView.Target): OutcomeResult {
-            return if (isValidTarget(executor, target)) {
-                OutcomeResult.AppliedToTarget(
-                    updatedCharacterStates = target.targetedCharacterStates().map { attack(executor, it) }.flatten()
-                )
-            } else {
-                OutcomeResult.TargetNotApplicable
-            }
-        }
-
-        private fun attack(executor: CharacterState, target: CharacterState): List<CharacterState> {
-
-            when (val result = resolution.resolve(executor, target)) {
-                is Resolution.AttackResolution.Result.Hit -> {
-                    val updatedTarget =
-                        onHitTargetResolution.let {
-                            if (it != null) {
-                                when (val onHitResult = it.resolve(executor, result.hitTarget)) {
-                                    is Resolution.AttackResolution.Result.Hit -> onHitResult.hitTarget
-                                    Resolution.AttackResolution.Result.Miss -> result.hitTarget
-                                }
-                            } else result.hitTarget
-                        }
-
-                    val updatedExecutor =
-                        afterAttackSelfResolution?.resolve(executor, executor) ?: executor
-
-                    return listOf(updatedExecutor, updatedTarget)
-                }
-
-                Resolution.AttackResolution.Result.Miss ->
-                    return listOf()
-            }
-        }
+        abstract override val resolution: Resolution.AttackResolution
 
         sealed class WeaponAttack : AttackOutcome()
 
         data class WeaponSingleAttack(
             override val resolution: Resolution.WeaponDamageResolution,
-            override val afterAttackSelfResolution: Resolution.SupportResolution? = null,
-            override val onHitTargetResolution: Resolution.SpellResolution? = null
+            override val selfResolution: Resolution.SupportResolution? = null,
         ) : WeaponAttack() {
 
             // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Single &&
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Single &&
                         target.range <= executor.character.arms().range() &&
-                        target.scope == PointOfView.Target.Scope.Enemy
+                        target.scope == Target.Scope.Enemy
             }
         }
 
         data class WeaponDoubleAttack(
             override val resolution: Resolution.WeaponDamageResolution,
-            override val afterAttackSelfResolution: Resolution.SupportResolution? = null,
-            override val onHitTargetResolution: Resolution.SpellResolution? = null
+            override val selfResolution: Resolution.SupportResolution? = null,
         ) : WeaponAttack() {
 
             // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Double &&
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Double &&
                         target.range <= executor.character.arms().range() &&
-                        target.scope == PointOfView.Target.Scope.Enemy
+                        target.scope == Target.Scope.Enemy
             }
         }
 
         data class WeaponNodeAttack(
             override val resolution: Resolution.WeaponDamageResolution,
-            override val afterAttackSelfResolution: Resolution.SupportResolution? = null,
-            override val onHitTargetResolution: Resolution.SpellResolution? = null
+            override val selfResolution: Resolution.SupportResolution? = null,
         ) : WeaponAttack() {
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Node &&
-                        ((target.range == 0 && executor.character.arms()
-                            .range() == 0) || target.range > 0 && executor.character.arms().range() > 0) &&
-                        target.scope == PointOfView.Target.Scope.Everyone
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Everyone &&
+                        ((target.range == 0 && executor.character.arms().range() == 0) ||
+                                target.range > 0 && executor.character.arms().range() > 0)
             }
         }
 
@@ -190,45 +175,41 @@ sealed interface Outcome {
         data class SpellSingleAttack(
             override val resolution: Resolution.SpellResolution,
             override val range: Int,
-            override val afterAttackSelfResolution: Resolution.SupportResolution? = null,
-            override val onHitTargetResolution: Resolution.SpellResolution? = null
+            override val selfResolution: Resolution.SupportResolution? = null,
         ) : SpellAttack() {
 
             // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Single &&
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Single &&
                         target.range <= range &&
-                        target.scope == PointOfView.Target.Scope.Enemy
+                        target.scope == Target.Scope.Enemy
             }
         }
 
         data class SpellDoubleAttack(
             override val resolution: Resolution.SpellResolution,
             override val range: Int,
-            override val afterAttackSelfResolution: Resolution.SupportResolution? = null,
-            override val onHitTargetResolution: Resolution.SpellResolution? = null
+            override val selfResolution: Resolution.SupportResolution? = null,
         ) : SpellAttack() {
 
             // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Double &&
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Double &&
                         target.range <= range &&
-                        target.scope == PointOfView.Target.Scope.Enemy
+                        target.scope == Target.Scope.Enemy
             }
         }
 
         data class SpellNodeAttack(
             override val resolution: Resolution.SpellResolution,
             override val range: Int,
-            override val afterAttackSelfResolution: Resolution.SupportResolution? = null,
-            override val onHitTargetResolution: Resolution.SpellResolution? = null
+            override val selfResolution: Resolution.SupportResolution? = null,
         ) : SpellAttack() {
 
             // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: PointOfView.Target): Boolean {
-                return target is PointOfView.Target.Node &&
-                        target.range <= range &&
-                        target.scope == PointOfView.Target.Scope.Everyone
+            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                return target is Target.Everyone &&
+                        target.range <= range
             }
         }
 
@@ -236,27 +217,20 @@ sealed interface Outcome {
 
     sealed interface Resolution {
 
-        sealed interface AttackResolution : Resolution {
-            fun resolve(attacker: CharacterState, target: CharacterState): Result
+        fun resolve(executor: CharacterState, target: CharacterState): CharacterState
 
-            sealed interface Result {
-                data object Miss : Result
-                data class Hit(val hitTarget: CharacterState) : Result
-            }
-        }
+        sealed interface AttackResolution : Resolution
 
         data class WeaponDamageResolution(
             val attackRollBonusModifier: Int,
             val damageRollMultiplier: Int,
         ) : AttackResolution {
 
-            override fun resolve(attacker: CharacterState, target: CharacterState): AttackResolution.Result {
-                return if (attacker.character.weaponAttackRoll(attackRollBonusModifier) > target.character.armorClass()) {
-                    AttackResolution.Result.Hit(
-                        hitTarget = target.takeDamage(attacker.character.weaponDamageRoll(damageRollMultiplier))
-                    )
+            override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
+                return if (executor.character.weaponAttackRoll(attackRollBonusModifier) > target.character.armorClass()) {
+                    target.takeDamage(executor.character.weaponDamageRoll(damageRollMultiplier))
                 } else {
-                    AttackResolution.Result.Miss
+                    target
                 }
             }
         }
@@ -273,21 +247,36 @@ sealed interface Outcome {
                 val damage: Rollable.Damage,
             ) : SpellResolution {
 
-                override fun resolve(attacker: CharacterState, target: CharacterState): AttackResolution.Result {
+                override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
 
                     return if (target.character.difficultyClassRoll(targetAttributeType) >=
-                        baseDifficultyClass + attacker.character.difficultyClassBonus(executorAttributeType)
+                        baseDifficultyClass + executor.character.difficultyClassBonus(executorAttributeType)
                     ) {
-                        AttackResolution.Result.Hit(
-                            hitTarget = target.takeDamage(
-                                attacker.character.attributeRoll(
-                                    executorAttributeType,
-                                    damage
-                                )
-                            )
-                        )
+                        target.takeDamage(executor.character.attributeRoll(executorAttributeType, damage))
                     } else {
-                        AttackResolution.Result.Miss
+                        target
+                    }
+                }
+            }
+
+            data class SpellDamageAndEffectResolution(
+                override val baseDifficultyClass: Int,
+                override val executorAttributeType: Attribute.Type,
+                override val targetAttributeType: Attribute.Type,
+                val damage: Rollable.Damage,
+                val effect: Effect
+            ) : SpellResolution {
+
+                override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
+
+                    return if (target.character.difficultyClassRoll(targetAttributeType) >=
+                        baseDifficultyClass + executor.character.difficultyClassBonus(executorAttributeType)
+                    ) {
+                        target
+                            .takeDamage(executor.character.attributeRoll(executorAttributeType, damage))
+                            .addEffect(effect)
+                    } else {
+                        target
                     }
                 }
             }
@@ -299,14 +288,14 @@ sealed interface Outcome {
                 val effect: Effect
             ) : SpellResolution {
 
-                override fun resolve(attacker: CharacterState, target: CharacterState): AttackResolution.Result {
+                override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
 
                     return if (target.character.difficultyClassRoll(targetAttributeType) >=
-                        baseDifficultyClass + attacker.character.difficultyClassBonus(executorAttributeType)
+                        baseDifficultyClass + executor.character.difficultyClassBonus(executorAttributeType)
                     ) {
-                        AttackResolution.Result.Hit(hitTarget = target.addEffect(effect))
+                        target.addEffect(effect)
                     } else {
-                        AttackResolution.Result.Miss
+                        target
                     }
                 }
             }
@@ -316,14 +305,12 @@ sealed interface Outcome {
 
         sealed interface SupportResolution : Resolution {
 
-            fun resolve(support: CharacterState, target: CharacterState): CharacterState
-
             data class Healing(
                 val heal: Rollable.Heal
             ) : SupportResolution {
-                override fun resolve(support: CharacterState, target: CharacterState): CharacterState {
+                override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
                     return target.heal(
-                        support.character.attributeRoll(Attribute.Type.wisdom, heal)
+                        executor.character.attributeRoll(Attribute.Type.wisdom, heal)
                     )
                 }
             }
@@ -331,7 +318,7 @@ sealed interface Outcome {
             data class ResourceBoost(
                 val amount: Int
             ) : SupportResolution {
-                override fun resolve(support: CharacterState, target: CharacterState): CharacterState {
+                override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
                     return target.gainResources(amount)
                 }
             }
@@ -340,7 +327,7 @@ sealed interface Outcome {
             data class RemoveEffect(
                 val effect: Effect
             ) : SupportResolution {
-                override fun resolve(support: CharacterState, target: CharacterState): CharacterState {
+                override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
                     return target.removeEffect(effect)
                 }
 
@@ -350,7 +337,7 @@ sealed interface Outcome {
                 val effect: Effect
             ) : SupportResolution {
 
-                override fun resolve(support: CharacterState, target: CharacterState): CharacterState {
+                override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
                     return target.addEffect(effect)
                 }
 
