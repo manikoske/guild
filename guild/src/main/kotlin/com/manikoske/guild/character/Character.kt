@@ -5,7 +5,7 @@ import com.manikoske.guild.rules.*
 
 data class Character(
     val id: Int,
-    private val bio: Bio,
+    val bio: Bio,
     private val level: Level,
     private val inventory: Inventory,
 ) {
