@@ -20,8 +20,6 @@ import com.manikoske.guild.inventory.Armor
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.inventory.Shield
 import com.manikoske.guild.inventory.Weapon
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class EncounterTest {
@@ -244,17 +242,19 @@ class EncounterTest {
     }
 
 
-    @Disabled
+    @Test
     fun simulate() {
 
         val encounter = Encounter(battleground = bigBattleground)
 
-        encounter.simulateEncounter(
+        val finalCharacterStates = encounter.simulate(
             attackersStartingNodeId = 4,
             defendersStartingNodeId = 6,
             attackers = setOf(khalid, kivan, anomen, imoen, xan),
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin)
         )
+
+        println(finalCharacterStates)
 
     }
 }

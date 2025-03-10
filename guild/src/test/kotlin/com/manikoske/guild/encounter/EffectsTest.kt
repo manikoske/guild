@@ -10,7 +10,7 @@ class EffectsTest {
 
     @Test
     fun testActionForcingEffects() {
-        val noEffects = CharacterState.CharacterStates.noEffects()
+        val noEffects = CharacterState.noEffects()
 
         val prone = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Prone>()
         val dying = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Dying>()
@@ -35,7 +35,7 @@ class EffectsTest {
 
     @Test
     fun testMovementRestrictingEffects() {
-        val noEffects = CharacterState.CharacterStates.noEffects()
+        val noEffects = CharacterState.noEffects()
 
         val firstEntagled = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
         val secondEntagled = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
@@ -59,7 +59,7 @@ class EffectsTest {
 
     @Test
     fun testMovementAlteringEffects() {
-        val noEffects = CharacterState.CharacterStates.noEffects()
+        val noEffects = CharacterState.noEffects()
 
         val firstSlow = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Slow>()
         val secondSlow = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Slow>()
@@ -83,7 +83,7 @@ class EffectsTest {
 
     @Test
     fun testActionRestrictingEffects() {
-        val noEffects = CharacterState.CharacterStates.noEffects()
+        val noEffects = CharacterState.noEffects()
 
         val firstDisarm = Randomizer.randomBuilder().giveMeOne<Effect.ActionRestrictingEffect.Disarmed>()
         val secondDisarm = Randomizer.randomBuilder().giveMeOne<Effect.ActionRestrictingEffect.Disarmed>()
@@ -107,7 +107,7 @@ class EffectsTest {
 
     @Test
     fun testDamageOverTimeEffects() {
-        val noEffects = CharacterState.CharacterStates.noEffects()
+        val noEffects = CharacterState.noEffects()
 
         val firstBleed = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Bleed>()
         val secondBleed = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Bleed>()
@@ -131,7 +131,7 @@ class EffectsTest {
 
     @Test
     fun testHealOverTimeEffects() {
-        val noEffects = CharacterState.CharacterStates.noEffects()
+        val noEffects = CharacterState.noEffects()
 
         val firstRegeneration = Randomizer.randomBuilder().giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
         val secondRegeneration = Randomizer.randomBuilder().giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
@@ -158,7 +158,7 @@ class EffectsTest {
         val poison = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Poison>()
 
         assertThat(
-            CharacterState.CharacterStates.noEffects()
+            CharacterState.noEffects()
                 .add(stun)
                 .add(entangled)
                 .add(haste)
@@ -183,7 +183,7 @@ class EffectsTest {
         val poison = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Poison>().copy(roundsLeft = 2)
 
         assertThat(
-            CharacterState.CharacterStates.noEffects()
+            CharacterState.noEffects()
                 .add(prone)
                 .add(entangled)
                 .add(haste)

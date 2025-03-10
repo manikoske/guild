@@ -7,13 +7,13 @@ class Encounter(
     private val battleground: Battleground,
 ) {
 
-    fun simulateEncounter(
+    fun simulate(
         attackers: Set<Character>,
         defenders: Set<Character>,
         attackersStartingNodeId: Int,
         defendersStartingNodeId: Int,
-    ) {
-        val finalCharacterStates = Round(
+    ) : EncounterState {
+        return Round(
             encounterState = EncounterState.initial(
                 attackers = attackers,
                 defenders = defenders,
@@ -21,8 +21,6 @@ class Encounter(
                 defendersStartingNodeId = defendersStartingNodeId
             )
         ).simulate(battleground)
-
-        println(finalCharacterStates)
     }
 
 
@@ -48,7 +46,7 @@ class Encounter(
     }
 
     data class Turn(
-        private val pointOfView: PointOfView,
+        private val pointOfView: PointOfView
     ) {
 
         fun simulate(battleground: Battleground): EncounterState {
@@ -81,7 +79,7 @@ class Encounter(
             private val pointOfView: PointOfView
         ) {
             fun utility(): Double {
-                return 0.0
+                return pointOfView.allies.sumOf { it.utility() } - pointOfView.enemies.sumOf { it.utility() }
             }
 
             fun encounterState(): EncounterState {

@@ -14,7 +14,7 @@ object Randomizer {
     private val randomBuilder = FixtureMonkey.builder()
         .plugin(KotlinPlugin())
         .pushAssignableTypeArbitraryIntrospector<Effects> {
-            ArbitraryIntrospectorResult(CombinableArbitrary.from(CharacterState.CharacterStates.noEffects()))
+            ArbitraryIntrospectorResult(CombinableArbitrary.from(CharacterState.noEffects()))
         }
 //        .pushAssignableTypeArbitraryIntrospector<Effect.ActionForcingEffect> {
 //            ArbitraryIntrospectorResult(CombinableArbitrary.from(Effect.ActionForcingEffect.Prone))

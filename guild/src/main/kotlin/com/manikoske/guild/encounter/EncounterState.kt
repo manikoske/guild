@@ -16,7 +16,7 @@ data class EncounterState(val characterStates : List<CharacterState>) {
             return EncounterState(
                 characterStates =
                     attackers.map {
-                        CharacterState.CharacterStates.initialCharacterState(
+                        initialCharacterState(
                             character = it,
                             startingNodeId = attackersStartingNodeId,
                             allegiance = CharacterState.Allegiance.Attacker
@@ -24,12 +24,26 @@ data class EncounterState(val characterStates : List<CharacterState>) {
                     }
                     +
                     defenders.map {
-                        CharacterState.CharacterStates.initialCharacterState(
+                        initialCharacterState(
                             character = it,
                             startingNodeId = defendersStartingNodeId,
                             allegiance = CharacterState.Allegiance.Defender
                         )
                     }
+            )
+        }
+        private fun initialCharacterState(
+            character: Character,
+            startingNodeId: Int,
+            allegiance: CharacterState.Allegiance
+        ) : CharacterState {
+            return CharacterState(
+                character = character,
+                positionNodeId = startingNodeId,
+                allegiance = allegiance,
+                damageTaken = 0,
+                resourcesSpent = 0,
+                effects = CharacterState.noEffects(),
             )
         }
 

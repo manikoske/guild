@@ -21,7 +21,7 @@ class CharacterStateTest {
         val slow = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Slow>()
         val haste = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Haste>()
 
-        val korgan = Randomizer.characterState("Korgan").copy(effects = CharacterState.CharacterStates.noEffects())
+        val korgan = Randomizer.characterState("Korgan").copy(effects = CharacterState.noEffects())
 
         // no statuses, no alterations
         assertThat(korgan.canMoveBy(normalMovement))
@@ -63,7 +63,7 @@ class CharacterStateTest {
 
     @Test
     fun allExecutableActions() {
-        val araken = Randomizer.characterState("Araken").copy(effects = CharacterState.CharacterStates.noEffects())
+        val araken = Randomizer.characterState("Araken").copy(effects = CharacterState.noEffects())
 
         assertThat(araken.allExecutableActions())
             .usingRecursiveComparison()

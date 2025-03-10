@@ -16,22 +16,7 @@ data class CharacterState(
     private val effects: Effects,
 ) {
 
-    object CharacterStates {
-        fun initialCharacterState(
-            character: Character,
-            startingNodeId: Int,
-            allegiance: Allegiance
-        ) : CharacterState {
-            return CharacterState(
-                character = character,
-                positionNodeId = startingNodeId,
-                allegiance = allegiance,
-                damageTaken = 0,
-                resourcesSpent = 0,
-                effects = noEffects(),
-            )
-        }
-
+    companion object {
         fun noEffects() : Effects {
             return Effects(
                 actionForcingEffect = null,
