@@ -9,7 +9,7 @@ class Encounter(
 ) {
 
     companion object {
-        val LOG = Logger.getLogger(Encounter::class.java.name)
+        val LOG: Logger = Logger.getLogger(Encounter::class.java.name)
     }
 
 
@@ -18,7 +18,7 @@ class Encounter(
         defenders: Set<Character>,
         attackersStartingNodeId: Int,
         defendersStartingNodeId: Int,
-    ) : EncounterState {
+    ): EncounterState {
         val firstRound = Round(
             encounterState = EncounterState.initial(
                 attackers = attackers,
@@ -42,7 +42,7 @@ class Encounter(
                     .rollInitiatives()
                     .fold(encounterState) { updatedEncounterState, takerId ->
                         val nextTurn = Turn(pointOfView = updatedEncounterState.viewFrom(characterId = takerId))
-                        return nextTurn.simulate(battleground)
+                        nextTurn.simulate(battleground)
                     }
                 )
                 return nextRound.simulate(battleground)
@@ -67,10 +67,15 @@ class Encounter(
             allExecutableActions
                 .forEach { executableAction ->
                     allVantageNodes
-                        .filter { vantageNode -> vantageNode.accessibleBy(executableAction.movement)}
+                        .filter { vantageNode -> vantageNode.accessibleBy(executableAction.movement) }
                         .forEach { accessibleVantageNode ->
                             endings.addAll(accessibleVantageNode.targets
-                                .filter { target -> executableAction.outcome.isValidTarget(pointOfView.taker, target) }
+                                .filter { target ->
+                                    executableAction.outcome.isValidTarget(
+                                        pointOfView.taker,
+                                        target
+                                    )
+                                }
                                 .map { target ->
                                     Ending(
                                         action = executableAction,
@@ -87,7 +92,9 @@ class Encounter(
                             )
                         }
                 }
-            return endings.maxBy { it.utility() }.encounterState()
+            val chosenEnding = endings.maxBy { it.utility() }
+            LOG.info(chosenEnding.print())
+            return chosenEnding.encounterState()
         }
 
         data class Ending(
@@ -103,6 +110,23 @@ class Encounter(
 
             fun encounterState(): EncounterState {
                 return EncounterState.fromView(pointOfView)
+            }
+
+            fun print(): String {
+                return buildString {
+                    appendLine("----- Turn Outcome -----")
+                    appendLine("Chosen Action: ${action.name}")
+                    appendLine("Target: $target")
+                    appendLine("New Position Node ID: $newPositionNodeId")
+                    appendLine("Updated Taker State:")
+                    appendLine(pointOfView.taker.print())
+                    appendLine("Updated Allies State:")
+                    pointOfView.allies.forEach { appendLine(it.print()) }
+                    appendLine("Updated Enemies State:")
+                    pointOfView.enemies.forEach { appendLine(it.print()) }
+                    appendLine("------------------------")
+                }
+
             }
         }
     }

@@ -254,7 +254,6 @@ class EncounterTest {
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin)
         )
 
-        println(finalCharacterStates)
 
     }
 }

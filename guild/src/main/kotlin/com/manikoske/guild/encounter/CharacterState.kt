@@ -4,6 +4,7 @@ import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Effect
 import com.manikoske.guild.character.Character
+import java.util.logging.Logger
 import kotlin.math.max
 import kotlin.math.min
 
@@ -17,6 +18,9 @@ data class CharacterState(
 ) {
 
     companion object {
+
+        val LOG: Logger = Logger.getLogger(Encounter::class.java.name)
+
         fun noEffects() : Effects {
             return Effects(
                 actionForcingEffect = null,
@@ -133,5 +137,28 @@ data class CharacterState(
 
     enum class Allegiance {
         Attacker, Defender
+    }
+
+    fun print() : String {
+        return buildString {
+            appendLine("----- Character State -----")
+            appendLine("Character ID: ${character.id}")
+            appendLine("Name: ${character.bio.name}")
+            appendLine("Allegiance: $allegiance")
+            appendLine("Position Node ID: $positionNodeId")
+            appendLine("Hit Points: ${currentHitPoints()} / ${character.maxHitPoints()}")
+            appendLine("Resources: ${currentResources()} / ${character.maxResources()}")
+            appendLine("Utility: ${utility()}")
+            appendLine("Active Effects:")
+            val activeEffects = effects.all()
+            if (activeEffects.isEmpty()) {
+                appendLine("  None")
+            } else {
+                activeEffects.forEach { effect ->
+                    appendLine("  - [${effect.category}] $effect")
+                }
+            }
+            appendLine("---------------------------")
+        }
     }
 }
