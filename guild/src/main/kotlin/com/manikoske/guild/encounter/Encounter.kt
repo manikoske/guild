@@ -1,7 +1,6 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
-import com.manikoske.guild.action.Outcome
 import com.manikoske.guild.character.Character
 import java.util.logging.Logger
 
@@ -63,45 +62,41 @@ class Encounter(
             val allExecutableActions = pointOfView.taker.allExecutableActions()
             val allVantageNodes = pointOfView.allVantageNodes(battleground = battleground)
 
-            val choices: MutableList<Choice> = mutableListOf()
+            val endings: MutableList<Ending> = mutableListOf()
 
             allExecutableActions
                 .forEach { executableAction ->
                     allVantageNodes
                         .filter { vantageNode -> vantageNode.accessibleBy(executableAction.movement)}
                         .forEach { accessibleVantageNode ->
-                            choices.addAll(accessibleVantageNode.targets
+                            endings.addAll(accessibleVantageNode.targets
+                                .filter { target -> executableAction.outcome.isValidTarget(pointOfView.taker, target) }
                                 .map { target ->
-                                    Choice(
+                                    Ending(
                                         action = executableAction,
                                         target = target,
-                                        newPositionNodeId = accessibleVantageNode.nodeId
+                                        newPositionNodeId = accessibleVantageNode.nodeId,
+                                        pointOfView = executableAction.outcome.resolve(
+                                            pointOfView = pointOfView,
+                                            target = target,
+                                            newPositionNodeId = accessibleVantageNode.nodeId,
+                                            resourceCost = executableAction.resourceCost
+                                        )
                                     )
                                 }
                             )
                         }
                 }
-
-        }
-
-        data class Choice(
-            val action: Action,
-            val target: Target,
-            val newPositionNodeId: Int
-        ) {
-            fun resolve(pointOfView : PointOfView) : Ending {
-                return action.outcome.resolve(
-                    pointOfView = pointOfView,
-                    target = target,
-                    newPositionNodeId = newPositionNodeId,
-                    resourceCost = action.resourceCost
-                )
-            }
+            return endings.maxBy { it.utility() }.encounterState()
         }
 
         data class Ending(
-            private val pointOfView: PointOfView
+            val action: Action,
+            val target: Target,
+            val newPositionNodeId: Int,
+            val pointOfView: PointOfView
         ) {
+
             fun utility(): Double {
                 return pointOfView.allies.sumOf { it.utility() } - pointOfView.enemies.sumOf { it.utility() }
             }

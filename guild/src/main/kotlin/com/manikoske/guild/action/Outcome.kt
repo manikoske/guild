@@ -13,13 +13,10 @@ sealed interface Outcome {
         target: Target,
         newPositionNodeId: Int,
         resourceCost: Int
-    ): OutcomeResult
+    ): PointOfView
 
+    fun isValidTarget(executor: CharacterState, target: Target): Boolean
 
-    sealed interface OutcomeResult {
-        data object TargetNotApplicable : OutcomeResult
-        data class AppliedToTarget(val updatedPointOfView: PointOfView) : OutcomeResult
-    }
 
     data object OutcomeWithNoResolution : Outcome {
 
@@ -28,8 +25,12 @@ sealed interface Outcome {
             target: Target,
             newPositionNodeId: Int,
             resourceCost: Int
-        ): OutcomeResult {
-            return OutcomeResult.AppliedToTarget(updatedPointOfView = pointOfView)
+        ): PointOfView {
+            return pointOfView
+        }
+
+        override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+            return true
         }
     }
 
@@ -37,35 +38,31 @@ sealed interface Outcome {
 
         val resolution: Resolution
         val selfResolution: Resolution.SupportResolution?
-        fun isValidTarget(executor: CharacterState, target: Target): Boolean
+
 
         override fun resolve(
             pointOfView: PointOfView,
             target: Target,
             newPositionNodeId: Int,
             resourceCost: Int
-        ): OutcomeResult {
-            return if (isValidTarget(pointOfView.taker, target)) {
-                val updatedPointOfView = target.applyResolution(pointOfView, resolution).let {
-                    if (selfResolution != null && selfResolution is Resolution) {
-                        Target.Self(self = pointOfView.taker)
-                            .applyResolution(it, selfResolution as Resolution.SupportResolution)
-                    } else {
-                        it
-                    }
+        ): PointOfView {
+
+            val updatedPointOfView = target.applyResolution(pointOfView, resolution).let {
+                if (selfResolution != null && selfResolution is Resolution) {
+                    Target.Self(self = pointOfView.taker)
+                        .applyResolution(it, selfResolution as Resolution.SupportResolution)
+                } else {
+                    it
                 }
-                OutcomeResult.AppliedToTarget(
-                    updatedPointOfView = updatedPointOfView.copy(
-                        taker = updatedPointOfView.taker
-                            .moveTo(newPositionNodeId)
-                            .spendResources(resourceCost)
-                            .applyOverTimeEffects()
-                            .tickEffects()
-                    )
-                )
-            } else {
-                OutcomeResult.TargetNotApplicable
             }
+
+            return updatedPointOfView.copy(
+                taker = updatedPointOfView.taker
+                    .moveTo(newPositionNodeId)
+                    .spendResources(resourceCost)
+                    .applyOverTimeEffects()
+                    .tickEffects()
+            )
         }
 
     }
