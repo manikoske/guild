@@ -1,6 +1,6 @@
 package com.manikoske.guild.encounter
 
-class OutcomeTest {
+class ResolutionTest {
 
     // TODO test resolve
 

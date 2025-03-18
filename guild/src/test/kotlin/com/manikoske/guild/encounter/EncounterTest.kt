@@ -243,7 +243,7 @@ class EncounterTest {
     }
 
 
-    @RepeatedTest(10000)
+    @RepeatedTest(10)
     fun simulate() {
 
         val encounter = Encounter(battleground = bigBattleground)

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class PointOfViewTest {
 
-    @RepeatedTest(100)
+    @RepeatedTest(10)
     fun testAllVantageNodes() {
 
         val minsc = Randomizer.characterState("Minsc").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Attacker)

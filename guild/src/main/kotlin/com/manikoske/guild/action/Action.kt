@@ -17,7 +17,7 @@ sealed interface Action {
                 name = "Basic Attack",
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
                 outcome = Outcome.AttackOutcome.WeaponSingleAttack(
-                    resolution = Outcome.Resolution.WeaponDamageResolution(
+                    resolution = Resolution.WeaponDamageResolution(
                         attackRollBonusModifier = 0,
                         damageRollMultiplier = 1
                     ),
@@ -27,7 +27,7 @@ sealed interface Action {
                 name = "Cantrip",
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
                 outcome = Outcome.AttackOutcome.SpellSingleAttack(
-                    resolution = Outcome.Resolution.SpellResolution.SpellDamageResolution(
+                    resolution = Resolution.SpellResolution.SpellDamageResolution(
                         baseDifficultyClass = 10,
                         executorAttributeType = Attribute.Type.intelligence,
                         targetAttributeType = Attribute.Type.dexterity,

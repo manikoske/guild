@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Outcome
+import com.manikoske.guild.action.Resolution
 
 sealed interface Target {
     enum class Scope {
@@ -15,7 +16,7 @@ sealed interface Target {
         pointOfView: PointOfView,
         scope: Scope,
         targets: List<CharacterState>,
-        resolution: Outcome.Resolution
+        resolution: Resolution
     ): PointOfView {
         return targets.fold(pointOfView) { updatedPointOfView, target ->
             val updatedCharacterState = resolution.resolve(updatedPointOfView.taker, target)
@@ -76,14 +77,14 @@ sealed interface Target {
         }
     }
 
-    fun applyResolution(pointOfView: PointOfView, resolution: Outcome.Resolution): PointOfView
+    fun applyResolution(pointOfView: PointOfView, resolution: Resolution): PointOfView
 
     data class Single(
         val scope: Scope,
         val range: Int,
         val single: CharacterState
     ) : Target {
-        override fun applyResolution(pointOfView: PointOfView, resolution: Outcome.Resolution): PointOfView {
+        override fun applyResolution(pointOfView: PointOfView, resolution: Resolution): PointOfView {
             return updateWith(pointOfView, scope, listOf(single), resolution)
         }
     }
@@ -94,7 +95,7 @@ sealed interface Target {
         val first: CharacterState,
         val second: CharacterState,
     ) : Target {
-        override fun applyResolution(pointOfView: PointOfView, resolution: Outcome.Resolution): PointOfView {
+        override fun applyResolution(pointOfView: PointOfView, resolution: Resolution): PointOfView {
             return updateWith(pointOfView, scope, listOf(first, second), resolution)
         }
     }
@@ -104,7 +105,7 @@ sealed interface Target {
         val range: Int,
         val targets: List<CharacterState>
     ) : Target {
-        override fun applyResolution(pointOfView: PointOfView, resolution: Outcome.Resolution): PointOfView {
+        override fun applyResolution(pointOfView: PointOfView, resolution: Resolution): PointOfView {
             return updateWith(pointOfView, scope, targets, resolution)
         }
     }
@@ -114,13 +115,13 @@ sealed interface Target {
         val allies: List<CharacterState>,
         val enemies: List<CharacterState>
     ) : Target {
-        override fun applyResolution(pointOfView: PointOfView, resolution: Outcome.Resolution): PointOfView {
+        override fun applyResolution(pointOfView: PointOfView, resolution: Resolution): PointOfView {
             return updateWith(updateWith(pointOfView, Scope.Enemy, enemies, resolution), Scope.Ally, allies, resolution)
         }
     }
 
     data class Self(val self: CharacterState) : Target {
-        override fun applyResolution(pointOfView: PointOfView, resolution: Outcome.Resolution): PointOfView {
+        override fun applyResolution(pointOfView: PointOfView, resolution: Resolution): PointOfView {
             return pointOfView.copy(taker = resolution.resolve(pointOfView.taker, pointOfView.taker))
         }
     }
