@@ -13,6 +13,14 @@ sealed interface Outcome {
         resourceCost: Int
     ): PointOfView
 
+    fun commonResolution(
+        executor: CharacterState,
+        newPositionNodeId: Int,
+        resourceCost: Int
+    ) : CharacterState {
+        return executor.moveTo(newPositionNodeId).spendResources(resourceCost).applyOverTimeEffects().tickEffects()
+    }
+
     fun isValidTarget(executor: CharacterState, target: Target): Boolean
 
 
@@ -24,13 +32,11 @@ sealed interface Outcome {
             newPositionNodeId: Int,
             resourceCost: Int
         ): PointOfView {
-            return pointOfView.copy(
-                taker = pointOfView.taker
-                    .moveTo(newPositionNodeId)
-                    .spendResources(resourceCost)
-                    .applyOverTimeEffects()
-                    .tickEffects()
-            )
+            return pointOfView.copy(taker = commonResolution(
+                executor = pointOfView.taker,
+                newPositionNodeId = newPositionNodeId,
+                resourceCost = resourceCost
+            ))
         }
 
         override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
@@ -61,11 +67,11 @@ sealed interface Outcome {
             }
 
             return updatedPointOfView.copy(
-                taker = updatedPointOfView.taker
-                    .moveTo(newPositionNodeId)
-                    .spendResources(resourceCost)
-                    .applyOverTimeEffects()
-                    .tickEffects()
+                taker = commonResolution(
+                    executor = updatedPointOfView.taker,
+                    newPositionNodeId = newPositionNodeId,
+                    resourceCost = resourceCost
+                )
             )
         }
 
