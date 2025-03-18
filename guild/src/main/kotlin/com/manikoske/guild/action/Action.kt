@@ -31,7 +31,7 @@ sealed interface Action {
                         baseDifficultyClass = 10,
                         executorAttributeType = Attribute.Type.intelligence,
                         targetAttributeType = Attribute.Type.dexterity,
-                        damage =  Rollable.Damage( roll = { Die.d8.roll(1) } )
+                        damage =  Rollable.Damage( roll = { Die.d6.roll(1) } )
                     ),
                     range = 1
                 )

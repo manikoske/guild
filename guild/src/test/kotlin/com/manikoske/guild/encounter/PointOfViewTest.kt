@@ -1,11 +1,12 @@
 package com.manikoske.guild.encounter
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 
 class PointOfViewTest {
 
-    @Test
+    @RepeatedTest(100)
     fun testAllVantageNodes() {
 
         val minsc = Randomizer.characterState("Minsc").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Attacker)

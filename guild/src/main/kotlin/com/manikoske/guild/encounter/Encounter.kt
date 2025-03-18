@@ -116,6 +116,7 @@ class Encounter(
                 return buildString {
                     appendLine("----- Turn Outcome -----")
                     appendLine("Chosen Action: ${action.name}")
+                    appendLine("Ending utility: ${utility()}")
                     appendLine("Target: $target")
                     appendLine("New Position Node ID: $newPositionNodeId")
                     appendLine("Updated Taker State:")

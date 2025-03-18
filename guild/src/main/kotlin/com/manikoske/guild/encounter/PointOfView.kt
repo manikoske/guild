@@ -1,7 +1,6 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Movement
-import com.manikoske.guild.action.Outcome
 
 data class PointOfView(
     val taker: CharacterState,
@@ -11,8 +10,8 @@ data class PointOfView(
 
     fun allVantageNodes(battleground: Battleground): List<VantageNode> {
 
-        val allyCountPerNode = characterCountPerNode(allies + taker)
-        val enemyCountPerNode = characterCountPerNode(enemies)
+        val allyCountPerNode = livingCharacterCountPerNode(allies + taker)
+        val enemyCountPerNode = livingCharacterCountPerNode(enemies)
 
         val requiredNodeNormalMovements = battleground.getAllNodeNormalMovementRequirements(
             startNodeId = taker.positionNodeId,
@@ -42,8 +41,8 @@ data class PointOfView(
         }
     }
 
-    private fun characterCountPerNode(characterStates: List<CharacterState>): Map<Int, Int> {
-        return characterStates.groupingBy { it.positionNodeId }.eachCount()
+    private fun livingCharacterCountPerNode(characterStates: List<CharacterState>): Map<Int, Int> {
+        return characterStates.filter { !it.isDying() }.groupingBy { it.positionNodeId }.eachCount()
     }
 
     data class VantageNode(

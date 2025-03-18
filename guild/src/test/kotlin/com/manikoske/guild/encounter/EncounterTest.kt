@@ -20,6 +20,7 @@ import com.manikoske.guild.inventory.Armor
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.inventory.Shield
 import com.manikoske.guild.inventory.Weapon
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 
 class EncounterTest {
@@ -242,7 +243,7 @@ class EncounterTest {
     }
 
 
-    @Test
+    @RepeatedTest(10000)
     fun simulate() {
 
         val encounter = Encounter(battleground = bigBattleground)
