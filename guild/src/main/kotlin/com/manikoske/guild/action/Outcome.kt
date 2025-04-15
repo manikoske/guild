@@ -59,7 +59,7 @@ sealed interface Outcome {
 
             val updatedPointOfView = target.applyResolution(pointOfView, resolution).let {
                 if (selfResolution != null && selfResolution is Resolution) {
-                    Target.Self(self = pointOfView.taker)
+                    Target.Self
                         .applyResolution(it, selfResolution as Resolution.SupportResolution)
                 } else {
                     it

@@ -42,7 +42,7 @@ class PointOfViewTest {
                             Target.Node(range = 1, scope = Target.Scope.Enemy, targets = listOf(tazok)),
                             Target.Node(range = 1, scope = Target.Scope.Ally, targets = listOf(khalid)),
                             Target.Everyone(range = 1, allies = listOf(khalid), enemies = listOf(tazok)),
-                            Target.Self(self = minsc),
+                            Target.Self,
                         )
                     ),
                     PointOfView.VantageNode(
@@ -61,7 +61,7 @@ class PointOfViewTest {
                             Target.Single(range = 1, scope = Target.Scope.Enemy, single = davaeorn),
                             Target.Node(range = 1, scope = Target.Scope.Enemy, targets = listOf(davaeorn)),
                             Target.Everyone(range = 1, allies = listOf(), enemies = listOf(davaeorn)),
-                            Target.Self(self = minsc),
+                            Target.Self,
                         )
                     ),
                     PointOfView.VantageNode(
@@ -77,7 +77,7 @@ class PointOfViewTest {
                             Target.Node(range = 1, scope = Target.Scope.Enemy, targets = listOf(tazok)),
                             Target.Node(range = 1, scope = Target.Scope.Ally, targets = listOf(khalid)),
                             Target.Everyone(range = 1, allies = listOf(khalid), enemies = listOf(tazok)),
-                            Target.Self(self = minsc),
+                            Target.Self,
                         )
                     )
                 )
@@ -111,7 +111,7 @@ class PointOfViewTest {
                             Target.Node(range = 1, scope = Target.Scope.Ally, targets = listOf(tazok)),
                             Target.Node(range = 1, scope = Target.Scope.Enemy, targets = listOf(minsc, khalid)),
                             Target.Everyone(range = 1, allies = listOf(tazok), enemies = listOf(minsc, khalid)),
-                            Target.Self(self = davaeorn),
+                            Target.Self,
 
                             )
                     ),
@@ -130,7 +130,7 @@ class PointOfViewTest {
                             Target.Node(range = 0, scope = Target.Scope.Ally, targets = listOf(tazok)),
                             Target.Node(range = 0, scope = Target.Scope.Enemy, targets = listOf(khalid, minsc)),
                             Target.Everyone(range = 0, allies = listOf(tazok), enemies = listOf(minsc, khalid)),
-                            Target.Self(self = davaeorn)
+                            Target.Self
                         )
                     ),
                     PointOfView.VantageNode(
@@ -145,7 +145,7 @@ class PointOfViewTest {
                             Target.Node(range = 1, scope = Target.Scope.Enemy, targets = listOf(khalid, minsc)),
                             Target.Node(range = 1, scope = Target.Scope.Ally, targets = listOf(tazok)),
                             Target.Everyone(range = 1, allies = listOf(tazok), enemies = listOf(minsc, khalid)),
-                            Target.Self(self = davaeorn),
+                            Target.Self,
                         )
                     )
                 )

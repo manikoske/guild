@@ -71,7 +71,7 @@ class CharacterStateTest {
 
         assertThat(araken.addEffect(Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Stun>()).allExecutableActions())
             .usingRecursiveComparison()
-            .isEqualTo(listOf(Action.ForcedAction.NoAction))
+            .isEqualTo(listOf(Action.Actions.noAction))
 
 
     }

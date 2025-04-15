@@ -17,7 +17,7 @@ sealed interface Effect {
     }
 
     sealed class ActionForcingEffect : OnlyOneDeterminedBySeverity<ActionForcingEffect> {
-        abstract fun forcedAction(): Action.ForcedAction
+        abstract fun forcedAction(): Action
 
         override fun self(): ActionForcingEffect {
             return this
@@ -29,8 +29,8 @@ sealed interface Effect {
                 return 3
             }
 
-            override fun forcedAction(): Action.ForcedAction {
-                return Action.ForcedAction.StandUp
+            override fun forcedAction(): Action {
+                return Action.Actions.standUp
             }
 
             override val category: String
@@ -49,8 +49,8 @@ sealed interface Effect {
                 return 2
             }
 
-            override fun forcedAction(): Action.ForcedAction {
-                return Action.ForcedAction.NoAction
+            override fun forcedAction(): Action {
+                return Action.Actions.noAction
             }
 
             override val category: String
@@ -64,8 +64,8 @@ sealed interface Effect {
                 return 5
             }
 
-            override fun forcedAction(): Action.ForcedAction {
-                return Action.ForcedAction.FightForLife
+            override fun forcedAction(): Action {
+                return Action.Actions.fightForLife
             }
 
             override val category: String
@@ -186,7 +186,7 @@ sealed interface Effect {
             }
 
             override fun restrictedAction(action: Action): Boolean {
-                return action.outcome is Outcome.AttackOutcome.WeaponAttack
+                return action is Action.OutcomeAction.AttackAction.WeaponAttack
             }
 
             override val category: String
@@ -202,7 +202,7 @@ sealed interface Effect {
             }
 
             override fun restrictedAction(action: Action): Boolean {
-                return action.outcome is Outcome.AttackOutcome.SpellAttack
+                return action is Action.OutcomeAction.AttackAction.WeaponAttack
             }
 
             override val category: String

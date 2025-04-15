@@ -131,7 +131,7 @@ data class CharacterState(
     private fun canExecuteAction(eventualAction: Action): Boolean {
         val noActionRestrictionEffect = effects.actionRestrictingEffects.none { it.restrictedAction(eventualAction) }
         val classRestriction = eventualAction.classRestriction.contains(character.clazz())
-        val resourceRestriction = eventualAction.resourceCost == 0 || eventualAction.resourceCost < character.maxResources() - resourcesSpent
+        val resourceRestriction = eventualAction.resourceCost == 0 || eventualAction.resourceCost < currentResources()
         return noActionRestrictionEffect && classRestriction && resourceRestriction
     }
 

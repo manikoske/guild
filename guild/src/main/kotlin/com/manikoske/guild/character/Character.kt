@@ -21,11 +21,20 @@ data class Character(
         }
     }
 
-    fun armorClass(): Int {
-        return inventory.armor.armorClass +
-                inventory.armor.dexterityModifierLimit(attribute(Attribute.Type.dexterity).modifier()) +
-                level.modifier() +
-                inventory.arms.armorClassBonus()
+    fun levelModifier() : Int {
+        return level.modifier()
+    }
+
+    fun armorClassArmorModifier() : Int {
+        return inventory.armor.armorClassModifier
+    }
+
+    fun armorClassArmsModifier() : Int {
+        return inventory.arms.armorClassModifier()
+    }
+
+    fun armorLimitedDexterityModifier() : Int {
+        return inventory.armor.dexterityModifierLimit(attribute(Attribute.Type.dexterity).modifier())
     }
 
     fun maxHitPoints(): Int {
@@ -36,18 +45,17 @@ data class Character(
         return bio.clazz.baseResources * level.level
     }
 
-    private fun weaponAttributeModifier(): Int {
+    fun weaponAttributeModifier(): Int {
         return attribute(arms().attributeType()).modifier()
     }
 
-    fun weaponAttackRoll(attackRollBonusModifier: Int): Int {
-        val weaponAttackBonus = when (arms()) {
+    fun weaponAttackModifier() : Int {
+        return when (arms()) {
             is Inventory.Arms.DualWeapon -> -2
             is Inventory.Arms.OneHandedWeaponAndShield -> 0
             is Inventory.Arms.TwoHandedWeapon -> 0
             is Inventory.Arms.RangedWeapon -> 0
         }
-        return Die.d20.roll(1) + weaponAttributeModifier() + level.modifier() + attackRollBonusModifier + weaponAttackBonus
     }
 
     fun weaponDamageRoll(damageRollMultiplier : Int): Int {
@@ -83,4 +91,7 @@ data class Character(
     fun arms(): Inventory.Arms {
         return inventory.arms
     }
+
+
+
 }

@@ -10,6 +10,8 @@ enum class Die(val sides: Int) {
     d12(12),
     d20(20);
 
+
+    // TODO fuck treba spravit roll data class
     fun roll(times: Int, modifier: Int = 0): Int {
         return (1..times).sumOf { (1..sides).random() } + modifier
     }

@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
+import com.manikoske.guild.action.Event
 import com.manikoske.guild.character.Character
 import java.util.logging.Logger
 
@@ -63,6 +64,25 @@ class Encounter(
             val allVantageNodes = pointOfView.allVantageNodes(battleground = battleground)
 
             val endings: MutableList<Ending> = mutableListOf()
+            val choices: MutableList<Choice> = mutableListOf()
+
+            allExecutableActions.forEach { executableAction ->
+                allVantageNodes
+                    .filter { vantageNode -> vantageNode.accessibleBy(executableAction.movement) }
+                    .forEach { accessibleVantageNode ->
+                        accessibleVantageNode.targets
+                            .filter { target -> executableAction.isValidTarget(pointOfView.taker, target) }
+                            .forEach { validTarget ->
+                                choices.add(
+                                    Choice(
+                                        action = executableAction,
+                                        newPositionNodeId = accessibleVantageNode.nodeId,
+                                        target = validTarget
+                                    )
+                                )
+                            }
+                    }
+            }
 
             allExecutableActions
                 .forEach { executableAction ->
@@ -95,6 +115,22 @@ class Encounter(
             val chosenEnding = endings.maxBy { it.utility() }
             LOG.info(chosenEnding.print())
             return chosenEnding.encounterState()
+        }
+
+        private fun resolveEvents(events: List<Event>): PointOfView {
+            return events.fold(pointOfView) { updatedPointOfView, event ->
+                when (event) {
+                    is Event.WeaponAttackHit -> return
+                }
+            }
+        }
+
+        data class Choice(
+            val action: Action,
+            val target: Target,
+            val newPositionNodeId: Int,
+        ) {
+
         }
 
         data class Ending(
@@ -131,6 +167,4 @@ class Encounter(
             }
         }
     }
-
-
 }

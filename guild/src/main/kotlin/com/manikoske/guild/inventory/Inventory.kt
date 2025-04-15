@@ -9,7 +9,7 @@ data class Inventory(
 
     sealed interface Arms {
 
-        fun armorClassBonus(): Int {
+        fun armorClassModifier(): Int {
             return 0
         }
 
@@ -18,7 +18,7 @@ data class Inventory(
         fun range() : Int
 
         data class OneHandedWeaponAndShield(val mainHand: Weapon.MeleeWeapon, val shield: Shield) : Arms {
-            override fun armorClassBonus(): Int {
+            override fun armorClassModifier(): Int {
                 return shield.armorClass
             }
 

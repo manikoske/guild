@@ -36,7 +36,7 @@ data class PointOfView(
                         allies = allies.filter { ally -> ally.positionNodeId == it.toNodeId },
                         enemies = enemies.filter { enemy -> enemy.positionNodeId == it.toNodeId }
                     )
-                }.flatten() + Target.Self(self = taker)
+                }.flatten()
             )
         }
     }

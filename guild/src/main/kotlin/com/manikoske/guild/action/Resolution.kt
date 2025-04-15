@@ -2,21 +2,39 @@ package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.encounter.CharacterState
+import com.manikoske.guild.rules.Die
 import com.manikoske.guild.rules.Rollable
 
 sealed interface Resolution {
 
-    fun resolve(executor: CharacterState, target: CharacterState): CharacterState
+    fun resolve(executor: CharacterState, target: CharacterState): List<Event>
 
     sealed interface AttackResolution : Resolution
 
     data class WeaponDamageResolution(
-        val attackRollBonusModifier: Int,
+        val attackRollModifier: Int,
         val damageRollMultiplier: Int,
     ) : AttackResolution {
 
-        override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
-            return if (executor.character.weaponAttackRoll(attackRollBonusModifier) > target.character.armorClass()) {
+        override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
+
+            val armorClass = ArmorClass(
+                armorModifier = target.character.armorClassArmorModifier(),
+                armsModifier = target.character.armorClassArmsModifier(),
+                levelModifier = target.character.levelModifier(),
+                armorAttributeModifier = target.character.armorLimitedDexterityModifier()
+            )
+
+            val weaponAttackRoll = WeaponAttackRoll(
+                weaponAttributeModifier = executor.character.weaponAttributeModifier(),
+                weaponAttackModifier = executor.character.weaponAttackModifier(),
+                actionAttackModifier = attackRollModifier,
+                levelModifier = target.character.levelModifier(),
+                rollDie = Die.d20
+            )
+
+
+            return if (executor.character.weaponAttackRoll(attackRollModifier) > target.character.armorClass()) {
                 target.takeDamage(executor.character.weaponDamageRoll(damageRollMultiplier))
             } else {
                 target
@@ -132,5 +150,29 @@ sealed interface Resolution {
 
         }
     }
+
+
+    data class ArmorClass(
+        val armorModifier: Int,
+        val armsModifier: Int,
+        val levelModifier: Int,
+        val armorAttributeModifier: Int
+    )
+
+    data class WeaponAttackRoll(
+        val weaponAttributeModifier: Int,
+        val weaponAttackModifier : Int,
+        val actionAttackModifier: Int,
+        val levelModifier: Int,
+        val rollDie : Die,
+    )
+
+    data class WeaponAttackDamage(
+        val weaponAttributeModifier: Int,
+        val weaponAttackModifier : Int,
+        val actionAttackModifier: Int,
+        val levelModifier: Int,
+        val rollDies : Dies,
+    )
 
 }
