@@ -58,12 +58,6 @@ data class Effects(
         }
     }
 
-    fun removeOnDamage(): Effects {
-        return all()
-            .filter { it.removeOnDamageTaken() }
-            .fold(this) { effects: Effects, effect: Effect -> effects.remove(effect) }
-    }
-
     fun tick(): Effects {
         return all()
             .fold(this) { effects: Effects, effect: Effect ->

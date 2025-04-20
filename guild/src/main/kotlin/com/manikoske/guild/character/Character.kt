@@ -51,37 +51,28 @@ data class Character(
 
     fun weaponAttackModifier() : Int {
         return when (arms()) {
-            is Inventory.Arms.DualWeapon -> -2
+            is Inventory.Arms.DualWeapon -> -4
             is Inventory.Arms.OneHandedWeaponAndShield -> 0
             is Inventory.Arms.TwoHandedWeapon -> 0
             is Inventory.Arms.RangedWeapon -> 0
         }
     }
 
-    fun weaponDamageRoll(damageRollMultiplier : Int): Int {
-        val rolledWeaponDamage = when (val arms = arms()) {
-            is Inventory.Arms.DualWeapon -> arms.mainHand.damage.roll() + arms.offHand.damage.roll()
-            is Inventory.Arms.OneHandedWeaponAndShield -> arms.mainHand.damage.roll()
-            is Inventory.Arms.TwoHandedWeapon -> arms.bothHands.damage.roll()
-            is Inventory.Arms.RangedWeapon -> arms.bothHands.damage.roll()
+    fun weaponDamage() : Die.Dice {
+        return when (val arms = arms()) {
+            is Inventory.Arms.DualWeapon -> Die.Dice.combine(arms.mainHand.damageDice, arms.offHand.damageDice)
+            is Inventory.Arms.OneHandedWeaponAndShield -> arms.mainHand.damageDice
+            is Inventory.Arms.TwoHandedWeapon -> arms.bothHands.damageDice
+            is Inventory.Arms.RangedWeapon -> arms.bothHands.damageDice
         }
-        return rolledWeaponDamage * damageRollMultiplier + weaponAttributeModifier() + level.modifier()
     }
 
-    fun attributeRoll(attributeType: Attribute.Type, rollable: Rollable): Int {
-        return rollable.roll() + attribute(attributeType).modifier() + level.modifier()
+    fun attributeModifier(attributeType: Attribute.Type): Int {
+        return attribute(attributeType).modifier()
     }
 
     fun initiativeRoll() : Int {
         return Die.d20.roll(1) + attribute(Attribute.Type.dexterity).modifier()
-    }
-
-    fun difficultyClassRoll(attributeType: Attribute.Type): Int {
-        return Die.d20.roll(1) + attribute(attributeType).modifier() + level.modifier()
-    }
-
-    fun difficultyClassBonus(attributeType: Attribute.Type): Int {
-        return attribute(attributeType).modifier() + level.modifier()
     }
 
     fun clazz(): Class {

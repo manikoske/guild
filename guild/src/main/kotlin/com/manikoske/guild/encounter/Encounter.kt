@@ -148,23 +148,6 @@ class Encounter(
                 return EncounterState.fromView(pointOfView)
             }
 
-            fun print(): String {
-                return buildString {
-                    appendLine("----- Turn Outcome -----")
-                    appendLine("Chosen Action: ${action.name}")
-                    appendLine("Ending utility: ${utility()}")
-                    appendLine("Target: $target")
-                    appendLine("New Position Node ID: $newPositionNodeId")
-                    appendLine("Updated Taker State:")
-                    appendLine(pointOfView.taker.print())
-                    appendLine("Updated Allies State:")
-                    pointOfView.allies.forEach { appendLine(it.print()) }
-                    appendLine("Updated Enemies State:")
-                    pointOfView.enemies.forEach { appendLine(it.print()) }
-                    appendLine("------------------------")
-                }
-
-            }
         }
     }
 }

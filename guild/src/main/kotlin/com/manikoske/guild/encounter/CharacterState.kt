@@ -14,12 +14,10 @@ data class CharacterState(
     val allegiance: Allegiance,
     private val damageTaken: Int,
     private val resourcesSpent: Int,
-    private val effects: Effects,
+    val effects: Effects,
 ) {
 
     companion object {
-
-        val LOG: Logger = Logger.getLogger(Encounter::class.java.name)
 
         fun noEffects() : Effects {
             return Effects(
@@ -55,7 +53,7 @@ data class CharacterState(
         }
     }
 
-    private fun currentHitPoints() : Int {
+    fun currentHitPoints() : Int {
         return character.maxHitPoints() - damageTaken
     }
 
@@ -63,16 +61,10 @@ data class CharacterState(
         return character.maxResources() - resourcesSpent
     }
 
-    private fun resolveEffectsOnDamage() : CharacterState {
-        return this.copy(
-            effects = (if (currentHitPoints() == 0) effects.add(Effect.ActionForcingEffect.Dying(0)) else effects).removeOnDamage()
-        )
-    }
-
     fun takeDamage(damageToTake: Int) : CharacterState {
         if (damageToTake == 0) return this
         val damageTakenUpdated = min(character.maxHitPoints(), damageTaken + damageToTake)
-        return this.copy(damageTaken = damageTakenUpdated).resolveEffectsOnDamage()
+        return this.copy(damageTaken = damageTakenUpdated)
     }
 
     fun addEffect(effect: Effect) : CharacterState {
@@ -137,28 +129,5 @@ data class CharacterState(
 
     enum class Allegiance {
         Attacker, Defender
-    }
-
-    fun print() : String {
-        return buildString {
-            appendLine("----- Character State -----")
-            appendLine("Character ID: ${character.id}")
-            appendLine("Name: ${character.bio.name}")
-            appendLine("Allegiance: $allegiance")
-            appendLine("Position Node ID: $positionNodeId")
-            appendLine("Hit Points: ${currentHitPoints()} / ${character.maxHitPoints()}")
-            appendLine("Resources: ${currentResources()} / ${character.maxResources()}")
-            appendLine("Utility: ${utility()}")
-            appendLine("Active Effects:")
-            val activeEffects = effects.all()
-            if (activeEffects.isEmpty()) {
-                appendLine("  None")
-            } else {
-                activeEffects.forEach { effect ->
-                    appendLine("  - [${effect.category}] $effect")
-                }
-            }
-            appendLine("---------------------------")
-        }
     }
 }

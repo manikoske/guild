@@ -5,7 +5,6 @@ import com.manikoske.guild.character.Class
 import com.manikoske.guild.encounter.CharacterState
 import com.manikoske.guild.encounter.Target
 import com.manikoske.guild.rules.Die
-import com.manikoske.guild.rules.Rollable
 
 sealed interface Action {
 
@@ -19,9 +18,10 @@ sealed interface Action {
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
                 classRestriction = noClassRestriction,
                 resourceCost = 0,
-                resolution = Resolution.WeaponDamageResolution(
+                resolution = Resolution.AttackResolution.WeaponDamageResolution(
                     attackRollModifier = 0,
-                    damageRollMultiplier = 1
+                    damageRollMultiplier = 1,
+                    effect = null
                 ),
             ),
             OutcomeAction.AttackAction.SpellAttack.SpellSingleAttack(
@@ -29,11 +29,12 @@ sealed interface Action {
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
                 classRestriction = listOf(Class.Wizard),
                 resourceCost = 0,
-                resolution = Resolution.SpellResolution.SpellDamageResolution(
+                resolution = Resolution.AttackResolution.SpellDamageResolution(
                     baseDifficultyClass = 10,
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
-                    damage =  Rollable.Damage( roll = { Die.d6.roll(1) } )
+                    damage =  Die.Dice.of(Die.d6),
+                    effect = null
                 ),
                 range = 1
             ),
@@ -88,13 +89,19 @@ sealed interface Action {
         target: Target,
         newPositionNodeId: Int
     ): List<Event> {
-        // executor.moveTo(newPositionNodeId).spendResources(resourceCost).applyOverTimeEffects().tickEffects()
+        val result: MutableList<Event> = mutableListOf()
 
-        // TODO move and spend resources
-        executeOutcome(executor, target)
+        val actionTaken = Event.ActionTaken(
+            name = name,
+            newPositionNodeId = newPositionNodeId,
+            resourceCost = resourceCost
+        )
+
+        result.add(actionTaken)
+        result.addAll(executeOutcome(executor, target))
         // TODO update effects
 
-        return listOf()
+        return result
 
     }
 
@@ -200,7 +207,7 @@ sealed interface Action {
             sealed class WeaponAttack : AttackAction() {
 
                 data class WeaponSingleAttack(
-                    override val resolution: Resolution.WeaponDamageResolution,
+                    override val resolution: Resolution.AttackResolution.WeaponDamageResolution,
                     override val selfResolution: Resolution.SupportResolution? = null,
                     override val name: String,
                     override val movement: Movement,
@@ -215,7 +222,7 @@ sealed interface Action {
                 }
 
                 data class WeaponDoubleAttack(
-                    override val resolution: Resolution.WeaponDamageResolution,
+                    override val resolution: Resolution.AttackResolution.WeaponDamageResolution,
                     override val selfResolution: Resolution.SupportResolution? = null,
                     override val name: String,
                     override val movement: Movement,
@@ -230,7 +237,7 @@ sealed interface Action {
                 }
 
                 data class WeaponNodeAttack(
-                    override val resolution: Resolution.WeaponDamageResolution,
+                    override val resolution: Resolution.AttackResolution.WeaponDamageResolution,
                     override val selfResolution: Resolution.SupportResolution? = null,
                     override val name: String,
                     override val movement: Movement,
@@ -250,7 +257,7 @@ sealed interface Action {
                 abstract val range: Int
 
                 data class SpellSingleAttack(
-                    override val resolution: Resolution.SpellResolution,
+                    override val resolution: Resolution.AttackResolution.SpellDamageResolution,
                     override val range: Int,
                     override val selfResolution: Resolution.SupportResolution? = null,
                     override val name: String,
@@ -266,7 +273,7 @@ sealed interface Action {
                 }
 
                 data class SpellDoubleAttack(
-                    override val resolution: Resolution.SpellResolution,
+                    override val resolution: Resolution.AttackResolution.SpellDamageResolution,
                     override val range: Int,
                     override val selfResolution: Resolution.SupportResolution? = null,
                     override val name: String,
@@ -282,7 +289,7 @@ sealed interface Action {
                 }
 
                 data class SpellNodeAttack(
-                    override val resolution: Resolution.SpellResolution,
+                    override val resolution: Resolution.AttackResolution.SpellDamageResolution,
                     override val range: Int,
                     override val selfResolution: Resolution.SupportResolution? = null,
                     override val name: String,

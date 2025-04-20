@@ -9,124 +9,140 @@ sealed interface Resolution {
 
     fun resolve(executor: CharacterState, target: CharacterState): List<Event>
 
-    sealed interface AttackResolution : Resolution
+    sealed interface AttackResolution : Resolution {
 
-    data class WeaponDamageResolution(
-        val attackRollModifier: Int,
-        val damageRollMultiplier: Int,
-    ) : AttackResolution {
+        fun onDamageDealt(damageDealt : Int, target: CharacterState): List<Event> {
 
-        override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
+            val result: MutableList<Event> = mutableListOf()
 
-            val armorClass = ArmorClass(
-                armorModifier = target.character.armorClassArmorModifier(),
-                armsModifier = target.character.armorClassArmsModifier(),
-                levelModifier = target.character.levelModifier(),
-                armorAttributeModifier = target.character.armorLimitedDexterityModifier()
-            )
+            if (damageDealt >= target.currentHitPoints()) {
+                result.add(Event.EffectAdded(Effect.ActionForcingEffect.Dying(0)))
+            }
 
-            val weaponAttackRoll = WeaponAttackRoll(
-                weaponAttributeModifier = executor.character.weaponAttributeModifier(),
-                weaponAttackModifier = executor.character.weaponAttackModifier(),
-                actionAttackModifier = attackRollModifier,
-                levelModifier = target.character.levelModifier(),
-                rollDie = Die.d20
-            )
+            target.effects.all()
+                .filter { it.removeOnDamageTaken() }
+                .forEach { effectRemovedOnDamage -> result.add(Event.EffectRemoved(effectRemovedOnDamage)) }
+
+            return result
+        }
+
+        fun resolveEffect(effect: Effect?) : List<Event> {
+            return if (effect != null) listOf(Event.EffectAdded(effect)) else listOf()
+        }
 
 
-            return if (executor.character.weaponAttackRoll(attackRollModifier) > target.character.armorClass()) {
-                target.takeDamage(executor.character.weaponDamageRoll(damageRollMultiplier))
-            } else {
-                target
+        data class WeaponDamageResolution(
+            val attackRollModifier: Int,
+            val damageRollMultiplier: Int,
+            val effect: Effect?
+        ) : AttackResolution {
+
+            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
+
+                val result: MutableList<Event> = mutableListOf()
+
+                val armorClass = ArmorClass(
+                    armorModifier = target.character.armorClassArmorModifier(),
+                    armsModifier = target.character.armorClassArmsModifier(),
+                    levelModifier = target.character.levelModifier(),
+                    armorAttributeModifier = target.character.armorLimitedDexterityModifier()
+                )
+
+                val weaponAttackRoll = WeaponAttackRoll(
+                    weaponAttributeModifier = executor.character.weaponAttributeModifier(),
+                    weaponAttackModifier = executor.character.weaponAttackModifier(),
+                    actionAttackModifier = attackRollModifier,
+                    levelModifier = target.character.levelModifier(),
+                    roll = Die.Roll(Die.Dice.of(Die.d20))
+                )
+
+                if (weaponAttackRoll.value >= armorClass.value) {
+                    result.add(Event.WeaponAttackHit(weaponAttackRoll = weaponAttackRoll, armorClass = armorClass))
+
+                    val weaponDamageRoll = WeaponDamageRoll(
+                        weaponAttributeModifier = executor.character.weaponAttributeModifier(),
+                        actionDamageMultiplier = damageRollMultiplier,
+                        levelModifier = executor.character.levelModifier(),
+                        roll = Die.Roll(executor.character.weaponDamage())
+                    )
+                    result.add(Event.WeaponDamageDealt(weaponDamageRoll = weaponDamageRoll))
+                    result.addAll(onDamageDealt(damageDealt = weaponDamageRoll.value, target = target))
+                    result.addAll(resolveEffect(effect))
+                } else {
+                    result.add(Event.WeaponAttackMiss(weaponAttackRoll = weaponAttackRoll, armorClass = armorClass))
+                }
+                return result
             }
         }
-    }
-
-    sealed interface SpellResolution : AttackResolution {
-        val baseDifficultyClass: Int
-        val executorAttributeType: Attribute.Type
-        val targetAttributeType: Attribute.Type
 
         data class SpellDamageResolution(
-            override val baseDifficultyClass: Int,
-            override val executorAttributeType: Attribute.Type,
-            override val targetAttributeType: Attribute.Type,
-            val damage: Rollable.Damage,
-        ) : SpellResolution {
+            val baseDifficultyClass: Int,
+            val executorAttributeType: Attribute.Type,
+            val targetAttributeType: Attribute.Type,
+            val damage: Die.Dice,
+            val effect: Effect?
+        ) : AttackResolution {
 
-            override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
+            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
 
-                return if (target.character.difficultyClassRoll(targetAttributeType) >=
-                    baseDifficultyClass + executor.character.difficultyClassBonus(executorAttributeType)
-                ) {
-                    target.takeDamage(executor.character.attributeRoll(executorAttributeType, damage))
+                val result: MutableList<Event> = mutableListOf()
+
+                val spellAttackDifficultyClass = SpellAttackDifficultyClass(
+                    spellAttributeModifier = executor.character.attributeModifier(executorAttributeType),
+                    spellDifficultyClass = baseDifficultyClass,
+                    levelModifier = executor.character.levelModifier()
+                )
+
+                val spellDefenseRoll = SpellDefenseRoll(
+                    spellAttributeModifier = target.character.attributeModifier(targetAttributeType),
+                    levelModifier = target.character.levelModifier(),
+                    roll = Die.Roll(Die.Dice.of(Die.d20))
+                )
+
+                if (spellAttackDifficultyClass.value >= spellDefenseRoll.value) {
+                    result.add(Event.SpellAttackHit(spellAttackDifficultyClass = spellAttackDifficultyClass, spellDefenseRoll = spellDefenseRoll))
+
+                    val spellDamageRoll = SpellDamageRoll(
+                        spellAttributeModifier = executor.character.attributeModifier(executorAttributeType),
+                        levelModifier = executor.character.levelModifier(),
+                        roll = Die.Roll(damage)
+                    )
+
+                    result.add(Event.SpellDamageDealt(spellDamageRoll))
+                    result.addAll(onDamageDealt(damageDealt = spellDamageRoll.value, target = target))
+                    result.addAll(resolveEffect(effect))
                 } else {
-                    target
+                    result.add(Event.SpellAttackMiss(spellAttackDifficultyClass = spellAttackDifficultyClass, spellDefenseRoll = spellDefenseRoll))
                 }
+
+                return result
             }
         }
-
-        data class SpellDamageAndEffectResolution(
-            override val baseDifficultyClass: Int,
-            override val executorAttributeType: Attribute.Type,
-            override val targetAttributeType: Attribute.Type,
-            val damage: Rollable.Damage,
-            val effect: Effect
-        ) : SpellResolution {
-
-            override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
-
-                return if (target.character.difficultyClassRoll(targetAttributeType) >=
-                    baseDifficultyClass + executor.character.difficultyClassBonus(executorAttributeType)
-                ) {
-                    target
-                        .takeDamage(executor.character.attributeRoll(executorAttributeType, damage))
-                        .addEffect(effect)
-                } else {
-                    target
-                }
-            }
-        }
-
-        data class SpellEffectResolution(
-            override val baseDifficultyClass: Int,
-            override val executorAttributeType: Attribute.Type,
-            override val targetAttributeType: Attribute.Type,
-            val effect: Effect
-        ) : SpellResolution {
-
-            override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
-
-                return if (target.character.difficultyClassRoll(targetAttributeType) >=
-                    baseDifficultyClass + executor.character.difficultyClassBonus(executorAttributeType)
-                ) {
-                    target.addEffect(effect)
-                } else {
-                    target
-                }
-            }
-        }
-
     }
-
 
     sealed interface SupportResolution : Resolution {
 
         data class Healing(
-            val heal: Rollable.Heal
+            val executorAttributeType: Attribute.Type,
+            val heal: Die.Dice
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
-                return target.heal(
-                    executor.character.attributeRoll(Attribute.Type.wisdom, heal)
+            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
+
+                val healRoll = HealRoll(
+                    healAttributeModifier = executor.character.attributeModifier(executorAttributeType),
+                    levelModifier = executor.character.levelModifier(),
+                    roll = Die.Roll(heal)
                 )
+
+                return listOf(Event.Healed(healRoll))
             }
         }
 
         data class ResourceBoost(
             val amount: Int
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
-                return target.gainResources(amount)
+            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
+                return listOf(Event.ResourcesGained(amount))
             }
         }
 
@@ -134,8 +150,8 @@ sealed interface Resolution {
         data class RemoveEffect(
             val effect: Effect
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
-                return target.removeEffect(effect)
+            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
+                return listOf(Event.EffectRemoved(effect))
             }
 
         }
@@ -144,8 +160,8 @@ sealed interface Resolution {
             val effect: Effect
         ) : SupportResolution {
 
-            override fun resolve(executor: CharacterState, target: CharacterState): CharacterState {
-                return target.addEffect(effect)
+            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
+                return listOf(Event.EffectAdded(effect))
             }
 
         }
@@ -157,22 +173,59 @@ sealed interface Resolution {
         val armsModifier: Int,
         val levelModifier: Int,
         val armorAttributeModifier: Int
-    )
+    ) {
+        val value = armorModifier + armsModifier + levelModifier + armorAttributeModifier
+    }
 
     data class WeaponAttackRoll(
         val weaponAttributeModifier: Int,
         val weaponAttackModifier : Int,
         val actionAttackModifier: Int,
         val levelModifier: Int,
-        val rollDie : Die,
-    )
+        val roll: Die.Roll,
+    ) {
+        val value = roll.rolled + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
+    }
 
-    data class WeaponAttackDamage(
+    data class WeaponDamageRoll(
         val weaponAttributeModifier: Int,
-        val weaponAttackModifier : Int,
-        val actionAttackModifier: Int,
+        val actionDamageMultiplier: Int,
         val levelModifier: Int,
-        val rollDies : Dies,
-    )
+        val roll : Die.Roll,
+    ) {
+        val value = roll.rolled * actionDamageMultiplier + weaponAttributeModifier + levelModifier
+    }
+
+    data class SpellAttackDifficultyClass(
+        val spellAttributeModifier: Int,
+        val spellDifficultyClass: Int,
+        val levelModifier: Int,
+    ) {
+        val value = spellAttributeModifier + spellDifficultyClass + levelModifier
+    }
+
+    data class SpellDefenseRoll(
+        val spellAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val value = roll.rolled + spellAttributeModifier + levelModifier
+    }
+
+    data class SpellDamageRoll(
+        val spellAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll : Die.Roll,
+    ) {
+        val value = roll.rolled + spellAttributeModifier + levelModifier
+    }
+
+    data class HealRoll(
+        val healAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll : Die.Roll,
+    ) {
+        val value = roll.rolled + healAttributeModifier + levelModifier
+    }
 
 }
