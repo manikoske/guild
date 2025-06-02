@@ -3,7 +3,9 @@ package com.manikoske.guild.encounter
 import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Effect
+import com.manikoske.guild.action.Event
 import com.manikoske.guild.character.Character
+import com.manikoske.guild.rules.Die
 import java.util.logging.Logger
 import kotlin.math.max
 import kotlin.math.min
@@ -129,5 +131,157 @@ data class CharacterState(
 
     enum class Allegiance {
         Attacker, Defender
+    }
+
+
+    data class ArmorClass(
+        val armorModifier: Int,
+        val armsModifier: Int,
+        val levelModifier: Int,
+        val armorAttributeModifier: Int
+    ) {
+        val value = armorModifier + armsModifier + levelModifier + armorAttributeModifier
+    }
+
+    data class WeaponAttackRoll(
+        val weaponAttributeModifier: Int,
+        val weaponAttackModifier : Int,
+        val actionAttackModifier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val value = roll.rolled + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
+    }
+
+    data class WeaponDamageRoll(
+        val weaponAttributeModifier: Int,
+        val actionDamageMultiplier: Int,
+        val levelModifier: Int,
+        val roll : Die.Roll,
+    ) {
+        val value = roll.rolled * actionDamageMultiplier + weaponAttributeModifier + levelModifier
+    }
+
+    data class SpellAttackDifficultyClass(
+        val spellAttributeModifier: Int,
+        val spellDifficultyClass: Int,
+        val levelModifier: Int,
+    ) {
+        val value = spellAttributeModifier + spellDifficultyClass + levelModifier
+    }
+
+    data class SpellDefenseRoll(
+        val spellAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val value = roll.rolled + spellAttributeModifier + levelModifier
+    }
+
+    data class SpellDamageRoll(
+        val spellAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll : Die.Roll,
+    ) {
+        val value = roll.rolled + spellAttributeModifier + levelModifier
+    }
+
+    data class HealRoll(
+        val healAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll : Die.Roll,
+    ) {
+        val value = roll.rolled + healAttributeModifier + levelModifier
+    }
+
+
+    sealed interface Outcome {
+
+    }
+    sealed interface WeaponAttackOutcome : Outcome
+    data class WeaponAttackHit(
+        val updatedCharacterState: CharacterState,
+        val armorClass: ArmorClass,
+        val weaponAttackRoll: WeaponAttackRoll,
+        val weaponDamageRoll: WeaponDamageRoll
+
+    ) : WeaponAttackOutcome
+
+    data class WeaponAttackMiss(
+        val updatedCharacterState: CharacterState,
+        val armorClass: ArmorClass,
+        val weaponAttackRoll: WeaponAttackRoll,
+        val removedEffects : List<Effect>,
+        val addedEffects: List<Effect>
+    ) : WeaponAttackOutcome
+
+    fun spellAttackBy() {
+        TODO()
+    }
+
+    fun actionUsed() {
+        TODO()
+        // move, spend
+    }
+
+    fun applyOvertimeEffects() {
+        TODO()
+
+    }
+
+    fun tickEffects() {
+        TODO()
+    }
+
+    fun weaponAttackBy(
+        attacker: CharacterState,
+        attackRollModifier: Int,
+        damageRollMultiplier: Int
+
+    ) : WeaponAttackOutcome {
+        val armorClass = ArmorClass(
+            armorModifier = character.armorClassArmorModifier(),
+            armsModifier = character.armorClassArmsModifier(),
+            levelModifier = character.levelModifier(),
+            armorAttributeModifier = character.armorLimitedDexterityModifier()
+        )
+
+        val weaponAttackRoll = WeaponAttackRoll(
+            weaponAttributeModifier = attacker.character.weaponAttributeModifier(),
+            weaponAttackModifier = attacker.character.weaponAttackModifier(),
+            actionAttackModifier = attackRollModifier,
+            levelModifier = attacker.character.levelModifier(),
+            roll = Die.Roll(Die.Dice.of(Die.d20))
+        )
+
+        if (weaponAttackRoll.value >= armorClass.value) {
+
+            val weaponDamageRoll = WeaponDamageRoll(
+                weaponAttributeModifier = attacker.character.weaponAttributeModifier(),
+                actionDamageMultiplier = damageRollMultiplier,
+                levelModifier = attacker.character.levelModifier(),
+                roll = Die.Roll(attacker.character.weaponDamage())
+            )
+
+            this.takeDamage(weaponDamageRoll.value)
+
+
+            result.add(Event.WeaponDamageDealt(weaponDamageRoll = weaponDamageRoll))
+            result.addAll(onDamageDealt(damageDealt = weaponDamageRoll.value, target = target))
+            result.addAll(resolveEffect(effect))
+
+            return WeaponAttackHit(
+                updatedCharacterState = todo,
+                weaponAttackRoll = weaponAttackRoll,
+                armorClass = armorClass,
+                weaponDamageRoll = weaponDamageRoll
+            )
+        } else {
+            return WeaponAttackMiss(
+                updatedCharacterState = this,
+                weaponAttackRoll = weaponAttackRoll,
+                armorClass = armorClass
+            )
+        }
     }
 }

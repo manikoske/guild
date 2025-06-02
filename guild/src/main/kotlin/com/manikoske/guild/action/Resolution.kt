@@ -168,64 +168,6 @@ sealed interface Resolution {
     }
 
 
-    data class ArmorClass(
-        val armorModifier: Int,
-        val armsModifier: Int,
-        val levelModifier: Int,
-        val armorAttributeModifier: Int
-    ) {
-        val value = armorModifier + armsModifier + levelModifier + armorAttributeModifier
-    }
 
-    data class WeaponAttackRoll(
-        val weaponAttributeModifier: Int,
-        val weaponAttackModifier : Int,
-        val actionAttackModifier: Int,
-        val levelModifier: Int,
-        val roll: Die.Roll,
-    ) {
-        val value = roll.rolled + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
-    }
-
-    data class WeaponDamageRoll(
-        val weaponAttributeModifier: Int,
-        val actionDamageMultiplier: Int,
-        val levelModifier: Int,
-        val roll : Die.Roll,
-    ) {
-        val value = roll.rolled * actionDamageMultiplier + weaponAttributeModifier + levelModifier
-    }
-
-    data class SpellAttackDifficultyClass(
-        val spellAttributeModifier: Int,
-        val spellDifficultyClass: Int,
-        val levelModifier: Int,
-    ) {
-        val value = spellAttributeModifier + spellDifficultyClass + levelModifier
-    }
-
-    data class SpellDefenseRoll(
-        val spellAttributeModifier: Int,
-        val levelModifier: Int,
-        val roll: Die.Roll,
-    ) {
-        val value = roll.rolled + spellAttributeModifier + levelModifier
-    }
-
-    data class SpellDamageRoll(
-        val spellAttributeModifier: Int,
-        val levelModifier: Int,
-        val roll : Die.Roll,
-    ) {
-        val value = roll.rolled + spellAttributeModifier + levelModifier
-    }
-
-    data class HealRoll(
-        val healAttributeModifier: Int,
-        val levelModifier: Int,
-        val roll : Die.Roll,
-    ) {
-        val value = roll.rolled + healAttributeModifier + levelModifier
-    }
 
 }
