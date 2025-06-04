@@ -3,7 +3,6 @@ package com.manikoske.guild.encounter
 import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Effect
-import com.manikoske.guild.action.Event
 import com.manikoske.guild.character.Character
 import com.manikoske.guild.rules.Die
 import kotlin.math.max
@@ -63,8 +62,7 @@ data class CharacterState(
     }
 
     private fun takeDamage(damageToTake: Int) : CharacterState {
-        val damageTakenUpdated = min(character.maxHitPoints(), damageTaken + damageToTake)
-        return this.copy(damageTaken = damageTakenUpdated)
+        return this.copy(damageTaken = min(character.maxHitPoints(), damageTaken + damageToTake))
     }
 
     private fun addEffects(addedEffects: List<Effect>) : CharacterState {
@@ -75,29 +73,20 @@ data class CharacterState(
         return this.copy(effects = removedEffects.fold(effects) { effects: Effects, effect: Effect -> effects.remove(effect)})
     }
 
-
     private fun heal(amountToHeal: Int) : CharacterState {
-        if (amountToHeal == 0) return this
         return this.copy(damageTaken = max(0, damageTaken - amountToHeal))
     }
 
     private fun spendResources(amount: Int) : CharacterState {
-        if (amount == 0) return this
         return this.copy(resourcesSpent = min(character.maxResources(), resourcesSpent + amount))
     }
 
     private fun gainResources(amount: Int) : CharacterState {
-        if (amount == 0) return this
         return this.copy(resourcesSpent = max(0, resourcesSpent - amount))
     }
 
     private fun moveTo(newPositionNodeIde: Int) : CharacterState {
         return this.copy(positionNodeId = newPositionNodeIde)
-    }
-
-    fun applyOverTimeEffects() : CharacterState {
-        return heal(effects.healOverTimeEffects.sumOf { it.heal().roll() })
-            .takeDamage(effects.damageOverTimeEffects.sumOf { it.damage().roll() })
     }
 
     fun allExecutableActions() : List<Action> {
@@ -157,6 +146,18 @@ data class CharacterState(
         val damage = roll.rolled * actionDamageMultiplier + weaponAttributeModifier + levelModifier
     }
 
+
+
+    data class DamageOverTimeRoll(
+        val category: Effect.Category,
+        val roll : Die.Roll
+    )
+
+    data class HealOverTimeRoll(
+        val category: Effect.Category,
+        val roll : Die.Roll
+    )
+
     data class SpellAttackDifficultyClass(
         val spellAttributeModifier: Int,
         val spellDifficultyClass: Int,
@@ -194,6 +195,14 @@ data class CharacterState(
 
     }
 
+    data class EffectsTicked(
+        val updatedTarget: CharacterState,
+        val removedEffects: List<Effect>,
+        val updatedEffects: List<Effect>,
+        val damageOverTimeRolls: List<DamageOverTimeRoll>,
+        val healOverTimeRolls: List<HealOverTimeRoll>,
+    ) : Outcome
+
     sealed interface WeaponAttackOutcome : Outcome
 
     data class WeaponAttackHit(
@@ -221,14 +230,26 @@ data class CharacterState(
         // move, spend
     }
 
-    fun applyOvertimeEffects() {
-        TODO()
+    fun tickEffects() : EffectsTicked {
+        val healOverTimeRolls =
+            effects.healOverTimeEffects.map { HealOverTimeRoll(category = it.category, roll = Die.Roll(it.healDice)) }
+        val damageOverTimeRolls =
+            effects.damageOverTimeEffects.map { DamageOverTimeRoll(category = it.category, roll = Die.Roll(it.damageDice)) }
 
-    }
+        val removedEffects = effects.all().filter { it.tick() == null }
+        val updatedEffects = effects.all().mapNotNull { it.tick() }
 
-    fun tickEffects() {
-        TODO()
-        //return this.copy(effects = effects.tick())
+        return EffectsTicked(
+            updatedTarget = this
+                .heal(healOverTimeRolls.sumOf { it.roll.rolled })
+                .takeDamage(damageOverTimeRolls.sumOf { it.roll.rolled })
+                .removeEffects(removedEffects)
+                .addEffects(updatedEffects),
+            removedEffects = removedEffects,
+            updatedEffects = updatedEffects,
+            damageOverTimeRolls = damageOverTimeRolls,
+            healOverTimeRolls = healOverTimeRolls
+        )
     }
 
     fun attackedBy(

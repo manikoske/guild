@@ -2,33 +2,14 @@ package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.encounter.CharacterState
+import com.manikoske.guild.encounter.CharacterState.WeaponAttackOutcome
 import com.manikoske.guild.rules.Die
 
 sealed interface Resolution {
 
-    fun resolve(executor: CharacterState, target: CharacterState): List<Event>
+    fun resolve(executor: CharacterState, target: CharacterState): CharacterState.Outcome
 
     sealed interface AttackResolution : Resolution {
-
-        fun onDamageDealt(damageDealt : Int, target: CharacterState): List<Event> {
-
-            val result: MutableList<Event> = mutableListOf()
-
-            if (damageDealt >= target.currentHitPoints()) {
-                result.add(Event.EffectAdded(Effect.ActionForcingEffect.Dying(0)))
-            }
-
-            target.effects.all()
-                .filter { it.removeOnDamageTaken() }
-                .forEach { effectRemovedOnDamage -> result.add(Event.EffectRemoved(effectRemovedOnDamage)) }
-
-            return result
-        }
-
-        fun resolveEffect(effect: Effect?) : List<Event> {
-            return if (effect != null) listOf(Event.EffectAdded(effect)) else listOf()
-        }
-
 
         data class WeaponDamageResolution(
             val attackRollModifier: Int,
@@ -36,41 +17,13 @@ sealed interface Resolution {
             val effectsOnHit: List<Effect>
         ) : AttackResolution {
 
-            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
-
-                val result: MutableList<Event> = mutableListOf()
-
-                val armorClass = ArmorClass(
-                    armorModifier = target.character.armorClassArmorModifier(),
-                    armsModifier = target.character.armorClassArmsModifier(),
-                    levelModifier = target.character.levelModifier(),
-                    armorAttributeModifier = target.character.armorLimitedDexterityModifier()
+            override fun resolve(executor: CharacterState, target: CharacterState): WeaponAttackOutcome {
+                return target.attackedBy(
+                    attacker = executor,
+                    attackRollModifier = attackRollModifier,
+                    damageRollMultiplier = damageRollMultiplier,
+                    effectsOnHit = effectsOnHit
                 )
-
-                val weaponAttackRoll = WeaponAttackRoll(
-                    weaponAttributeModifier = executor.character.weaponAttributeModifier(),
-                    weaponAttackModifier = executor.character.weaponAttackModifier(),
-                    actionAttackModifier = attackRollModifier,
-                    levelModifier = target.character.levelModifier(),
-                    roll = Die.Roll(Die.Dice.of(Die.d20))
-                )
-
-                if (weaponAttackRoll.value >= armorClass.value) {
-                    result.add(Event.WeaponAttackHit(weaponAttackRoll = weaponAttackRoll, armorClass = armorClass))
-
-                    val weaponDamageRoll = WeaponDamageRoll(
-                        weaponAttributeModifier = executor.character.weaponAttributeModifier(),
-                        actionDamageMultiplier = damageRollMultiplier,
-                        levelModifier = executor.character.levelModifier(),
-                        roll = Die.Roll(executor.character.weaponDamage())
-                    )
-                    result.add(Event.WeaponDamageDealt(weaponDamageRoll = weaponDamageRoll))
-                    result.addAll(onDamageDealt(damageDealt = weaponDamageRoll.value, target = target))
-                    result.addAll(resolveEffect(effectsOnHit))
-                } else {
-                    result.add(Event.WeaponAttackMiss(weaponAttackRoll = weaponAttackRoll, armorClass = armorClass))
-                }
-                return result
             }
         }
 

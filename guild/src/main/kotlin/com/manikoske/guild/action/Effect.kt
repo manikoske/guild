@@ -1,12 +1,15 @@
 package com.manikoske.guild.action
 
+import com.manikoske.guild.rules.Die
 import com.manikoske.guild.rules.Rollable
 import kotlin.math.max
 
 
 sealed interface Effect {
 
-    val category: String
+    val category: Category
+
+    sealed interface Category
 
     fun tick() : Effect? {
         return this
@@ -23,6 +26,10 @@ sealed interface Effect {
             return this
         }
 
+        enum class Category : Effect.Category {
+            Prone, Stun, Dying
+        }
+
         // TODO remove dummy when fixture monkey is fixed
         data class Prone(val dummy: Int) : ActionForcingEffect() {
             override fun severity(): Int {
@@ -33,8 +40,8 @@ sealed interface Effect {
                 return Action.Actions.standUp
             }
 
-            override val category: String
-                get() = "Prone"
+            override val category: Category
+                get() = Category.Prone
         }
 
         data class Stun(
@@ -53,8 +60,8 @@ sealed interface Effect {
                 return Action.Actions.noAction
             }
 
-            override val category: String
-                get() = "Stun"
+            override val category: Category
+                get() = Category.Stun
 
         }
 
@@ -68,8 +75,8 @@ sealed interface Effect {
                 return Action.Actions.fightForLife
             }
 
-            override val category: String
-                get() = "Dying"
+            override val category: Category
+                get() = Category.Dying
         }
     }
 
@@ -81,6 +88,10 @@ sealed interface Effect {
             return this
         }
 
+        enum class Category : Effect.Category {
+            Slow, Haste
+        }
+
         data class Slow(
             override val roundsLeft: Int
         ) : MovementAlteringEffect(), TimedEffect {
@@ -89,10 +100,8 @@ sealed interface Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: String
-                get() = "Slow"
-
-
+            override val category: Category
+                get() = Category.Slow
 
             override fun alterActionMovement(movement: Movement): Movement {
                 return movement.let { it.copy(amount = max(it.amount - 1, 0)) }
@@ -107,8 +116,8 @@ sealed interface Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: String
-                get() = "Haste"
+            override val category: Category
+                get() = Category.Haste
 
             override fun alterActionMovement(movement: Movement): Movement {
                 return movement.let { it.copy(amount = max(it.amount + 1, 0)) }
@@ -124,6 +133,10 @@ sealed interface Effect {
             return this
         }
 
+        enum class Category : Effect.Category {
+            Entangled, Held
+        }
+
         data class Entangled(
             override val roundsLeft: Int
         ) : MovementRestrictingEffect(), TimedEffect {
@@ -132,8 +145,8 @@ sealed interface Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: String
-                get() = "Entangled"
+            override val category: Category
+                get() = Category.Entangled
 
             override fun restrictActionMovement(movement: Movement): Movement {
                 return movement.let { if (it.type == Movement.Type.Normal) it.copy(amount = 0) else it }
@@ -157,8 +170,8 @@ sealed interface Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: String
-                get() = "Held"
+            override val category: Category
+                get() = Category.Held
 
             override fun restrictActionMovement(movement: Movement): Movement {
                 return movement.copy(amount = 0)
@@ -177,6 +190,10 @@ sealed interface Effect {
             return this
         }
 
+        enum class Category : Effect.Category {
+            Disarmed, Silenced
+        }
+
         data class Disarmed(
             override val roundsLeft: Int
         ) : ActionRestrictingEffect(), TimedEffect {
@@ -189,8 +206,8 @@ sealed interface Effect {
                 return action is Action.OutcomeAction.AttackAction.WeaponAttack
             }
 
-            override val category: String
-                get() = "Disarmed"
+            override val category: Category
+                get() = Category.Disarmed
         }
 
         data class Silenced(
@@ -205,76 +222,75 @@ sealed interface Effect {
                 return action is Action.OutcomeAction.AttackAction.WeaponAttack
             }
 
-            override val category: String
-                get() = "Silenced"
+            override val category: Category
+                get() = Category.Silenced
         }
     }
 
     sealed class DamageOverTimeEffect : ManyDeterminedByCategory<DamageOverTimeEffect>{
-        abstract fun damage(): Rollable.Damage
+
+        abstract val damageDice: Die.Dice
 
         override fun self(): DamageOverTimeEffect {
             return this
         }
 
+        enum class Category : Effect.Category {
+            Bleed, Poison
+        }
+
         data class Bleed(
             override val roundsLeft: Int,
-            val damage: Rollable.Damage,
+            override val damageDice: Die.Dice,
         ) : DamageOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: String
-                get() = "Bleed"
+            override val category: Category
+                get() = Category.Bleed
 
-            override fun damage(): Rollable.Damage {
-                return damage
-            }
         }
 
         data class Poison(
             override val roundsLeft: Int,
-            val damage: Rollable.Damage,
+            override val damageDice: Die.Dice,
         ) : DamageOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: String
-                get() = "Poison"
-
-            override fun damage(): Rollable.Damage {
-                return damage
-            }
+            override val category: Category
+                get() = Category.Poison
 
         }
     }
 
     sealed class HealOverTimeEffect : ManyDeterminedByCategory<HealOverTimeEffect> {
-        abstract fun heal(): Rollable.Heal
+
+        abstract val healDice: Die.Dice
 
         override fun self(): HealOverTimeEffect {
             return this
         }
 
+        enum class Category : Effect.Category {
+            Regeneration
+        }
+
         data class Regeneration(
             override val roundsLeft: Int,
-            val heal: Rollable.Heal,
+            override val healDice: Die.Dice,
         ) : HealOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override fun heal(): Rollable.Heal {
-                return heal
-            }
-
-            override val category: String
-                get() = "Regeneration"
+            override val category: Category
+                get() = Category.Regeneration
         }
 
     }
