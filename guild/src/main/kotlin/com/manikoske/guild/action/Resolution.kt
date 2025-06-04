@@ -3,7 +3,6 @@ package com.manikoske.guild.action
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.encounter.CharacterState
 import com.manikoske.guild.rules.Die
-import com.manikoske.guild.rules.Rollable
 
 sealed interface Resolution {
 
@@ -34,7 +33,7 @@ sealed interface Resolution {
         data class WeaponDamageResolution(
             val attackRollModifier: Int,
             val damageRollMultiplier: Int,
-            val effect: Effect?
+            val effectsOnHit: List<Effect>
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
@@ -67,7 +66,7 @@ sealed interface Resolution {
                     )
                     result.add(Event.WeaponDamageDealt(weaponDamageRoll = weaponDamageRoll))
                     result.addAll(onDamageDealt(damageDealt = weaponDamageRoll.value, target = target))
-                    result.addAll(resolveEffect(effect))
+                    result.addAll(resolveEffect(effectsOnHit))
                 } else {
                     result.add(Event.WeaponAttackMiss(weaponAttackRoll = weaponAttackRoll, armorClass = armorClass))
                 }
@@ -80,7 +79,7 @@ sealed interface Resolution {
             val executorAttributeType: Attribute.Type,
             val targetAttributeType: Attribute.Type,
             val damage: Die.Dice,
-            val effect: Effect?
+            val effectsOnHit: List<Effect>
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {

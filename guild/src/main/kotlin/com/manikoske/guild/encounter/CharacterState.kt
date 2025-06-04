@@ -6,7 +6,6 @@ import com.manikoske.guild.action.Effect
 import com.manikoske.guild.action.Event
 import com.manikoske.guild.character.Character
 import com.manikoske.guild.rules.Die
-import java.util.logging.Logger
 import kotlin.math.max
 import kotlin.math.min
 
@@ -55,7 +54,7 @@ data class CharacterState(
         }
     }
 
-    fun currentHitPoints() : Int {
+    private fun currentHitPoints() : Int {
         return character.maxHitPoints() - damageTaken
     }
 
@@ -63,40 +62,36 @@ data class CharacterState(
         return character.maxResources() - resourcesSpent
     }
 
-    fun takeDamage(damageToTake: Int) : CharacterState {
-        if (damageToTake == 0) return this
+    private fun takeDamage(damageToTake: Int) : CharacterState {
         val damageTakenUpdated = min(character.maxHitPoints(), damageTaken + damageToTake)
         return this.copy(damageTaken = damageTakenUpdated)
     }
 
-    fun addEffect(effect: Effect) : CharacterState {
-        return this.copy(effects = effects.add(effect))
+    private fun addEffects(addedEffects: List<Effect>) : CharacterState {
+        return this.copy(effects = addedEffects.fold(effects) { effects: Effects, effect: Effect -> effects.add(effect)})
     }
 
-    fun removeEffect(effect: Effect) : CharacterState {
-        return this.copy(effects = effects.remove(effect))
+    private fun removeEffects(removedEffects: List<Effect>) : CharacterState {
+        return this.copy(effects = removedEffects.fold(effects) { effects: Effects, effect: Effect -> effects.remove(effect)})
     }
 
-    fun tickEffects() : CharacterState {
-        return this.copy(effects = effects.tick())
-    }
 
-    fun heal(amountToHeal: Int) : CharacterState {
+    private fun heal(amountToHeal: Int) : CharacterState {
         if (amountToHeal == 0) return this
         return this.copy(damageTaken = max(0, damageTaken - amountToHeal))
     }
 
-    fun spendResources(amount: Int) : CharacterState {
+    private fun spendResources(amount: Int) : CharacterState {
         if (amount == 0) return this
         return this.copy(resourcesSpent = min(character.maxResources(), resourcesSpent + amount))
     }
 
-    fun gainResources(amount: Int) : CharacterState {
+    private fun gainResources(amount: Int) : CharacterState {
         if (amount == 0) return this
         return this.copy(resourcesSpent = max(0, resourcesSpent - amount))
     }
 
-    fun moveTo(newPositionNodeIde: Int) : CharacterState {
+    private fun moveTo(newPositionNodeIde: Int) : CharacterState {
         return this.copy(positionNodeId = newPositionNodeIde)
     }
 
@@ -140,7 +135,7 @@ data class CharacterState(
         val levelModifier: Int,
         val armorAttributeModifier: Int
     ) {
-        val value = armorModifier + armsModifier + levelModifier + armorAttributeModifier
+        val armorClass = armorModifier + armsModifier + levelModifier + armorAttributeModifier
     }
 
     data class WeaponAttackRoll(
@@ -150,7 +145,7 @@ data class CharacterState(
         val levelModifier: Int,
         val roll: Die.Roll,
     ) {
-        val value = roll.rolled + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
+        val attack = roll.rolled + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
     }
 
     data class WeaponDamageRoll(
@@ -159,7 +154,7 @@ data class CharacterState(
         val levelModifier: Int,
         val roll : Die.Roll,
     ) {
-        val value = roll.rolled * actionDamageMultiplier + weaponAttributeModifier + levelModifier
+        val damage = roll.rolled * actionDamageMultiplier + weaponAttributeModifier + levelModifier
     }
 
     data class SpellAttackDifficultyClass(
@@ -167,7 +162,7 @@ data class CharacterState(
         val spellDifficultyClass: Int,
         val levelModifier: Int,
     ) {
-        val value = spellAttributeModifier + spellDifficultyClass + levelModifier
+        val attack = spellAttributeModifier + spellDifficultyClass + levelModifier
     }
 
     data class SpellDefenseRoll(
@@ -175,7 +170,7 @@ data class CharacterState(
         val levelModifier: Int,
         val roll: Die.Roll,
     ) {
-        val value = roll.rolled + spellAttributeModifier + levelModifier
+        val defense = roll.rolled + spellAttributeModifier + levelModifier
     }
 
     data class SpellDamageRoll(
@@ -183,7 +178,7 @@ data class CharacterState(
         val levelModifier: Int,
         val roll : Die.Roll,
     ) {
-        val value = roll.rolled + spellAttributeModifier + levelModifier
+        val damage = roll.rolled + spellAttributeModifier + levelModifier
     }
 
     data class HealRoll(
@@ -191,35 +186,37 @@ data class CharacterState(
         val levelModifier: Int,
         val roll : Die.Roll,
     ) {
-        val value = roll.rolled + healAttributeModifier + levelModifier
+        val heal = roll.rolled + healAttributeModifier + levelModifier
     }
 
 
     sealed interface Outcome {
 
     }
+
     sealed interface WeaponAttackOutcome : Outcome
+
     data class WeaponAttackHit(
-        val updatedCharacterState: CharacterState,
+        val updatedTarget: CharacterState,
         val armorClass: ArmorClass,
         val weaponAttackRoll: WeaponAttackRoll,
-        val weaponDamageRoll: WeaponDamageRoll
+        val weaponDamageRoll: WeaponDamageRoll,
+        val effectsRemovedByDamage : List<Effect>,
+        val effectsAddedByHit: List<Effect>
 
     ) : WeaponAttackOutcome
 
     data class WeaponAttackMiss(
-        val updatedCharacterState: CharacterState,
+        val updatedTarget: CharacterState,
         val armorClass: ArmorClass,
         val weaponAttackRoll: WeaponAttackRoll,
-        val removedEffects : List<Effect>,
-        val addedEffects: List<Effect>
     ) : WeaponAttackOutcome
 
-    fun spellAttackBy() {
+    fun attackedBy() {
         TODO()
     }
 
-    fun actionUsed() {
+    fun useAction() {
         TODO()
         // move, spend
     }
@@ -231,14 +228,16 @@ data class CharacterState(
 
     fun tickEffects() {
         TODO()
+        //return this.copy(effects = effects.tick())
     }
 
-    fun weaponAttackBy(
+    fun attackedBy(
         attacker: CharacterState,
         attackRollModifier: Int,
-        damageRollMultiplier: Int
-
+        damageRollMultiplier: Int,
+        effectsOnHit: List<Effect>
     ) : WeaponAttackOutcome {
+
         val armorClass = ArmorClass(
             armorModifier = character.armorClassArmorModifier(),
             armsModifier = character.armorClassArmsModifier(),
@@ -254,7 +253,7 @@ data class CharacterState(
             roll = Die.Roll(Die.Dice.of(Die.d20))
         )
 
-        if (weaponAttackRoll.value >= armorClass.value) {
+        if (weaponAttackRoll.attack >= armorClass.armorClass) {
 
             val weaponDamageRoll = WeaponDamageRoll(
                 weaponAttributeModifier = attacker.character.weaponAttributeModifier(),
@@ -263,22 +262,23 @@ data class CharacterState(
                 roll = Die.Roll(attacker.character.weaponDamage())
             )
 
-            this.takeDamage(weaponDamageRoll.value)
-
-
-            result.add(Event.WeaponDamageDealt(weaponDamageRoll = weaponDamageRoll))
-            result.addAll(onDamageDealt(damageDealt = weaponDamageRoll.value, target = target))
-            result.addAll(resolveEffect(effect))
+            val effectsRemovedByDamage = effects.all().filter { it.removeOnDamageTaken() }
+            val effectsAddedByHit = effectsOnHit + if (weaponDamageRoll.damage >= currentHitPoints()) listOf(Effect.ActionForcingEffect.Dying(0)) else listOf()
 
             return WeaponAttackHit(
-                updatedCharacterState = todo,
+                updatedTarget = this
+                    .takeDamage(weaponDamageRoll.damage)
+                    .removeEffects(effectsRemovedByDamage)
+                    .addEffects(effectsAddedByHit),
                 weaponAttackRoll = weaponAttackRoll,
                 armorClass = armorClass,
-                weaponDamageRoll = weaponDamageRoll
+                weaponDamageRoll = weaponDamageRoll,
+                effectsRemovedByDamage = effectsRemovedByDamage,
+                effectsAddedByHit = effectsOnHit
             )
         } else {
             return WeaponAttackMiss(
-                updatedCharacterState = this,
+                updatedTarget = this,
                 weaponAttackRoll = weaponAttackRoll,
                 armorClass = armorClass
             )

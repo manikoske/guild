@@ -21,7 +21,7 @@ sealed interface Action {
                 resolution = Resolution.AttackResolution.WeaponDamageResolution(
                     attackRollModifier = 0,
                     damageRollMultiplier = 1,
-                    effect = null
+                    effectsOnHit = null
                 ),
             ),
             OutcomeAction.AttackAction.SpellAttack.SpellSingleAttack(
