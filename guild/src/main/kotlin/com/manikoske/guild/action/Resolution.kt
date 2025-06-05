@@ -2,12 +2,11 @@ package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.encounter.CharacterState
-import com.manikoske.guild.encounter.CharacterState.WeaponAttackOutcome
 import com.manikoske.guild.rules.Die
 
 sealed interface Resolution {
 
-    fun resolve(executor: CharacterState, target: CharacterState): CharacterState.Outcome
+    fun resolve(executor: CharacterState, target: CharacterState): Outcome
 
     sealed interface AttackResolution : Resolution {
 
@@ -17,8 +16,8 @@ sealed interface Resolution {
             val effectsOnHit: List<Effect>
         ) : AttackResolution {
 
-            override fun resolve(executor: CharacterState, target: CharacterState): WeaponAttackOutcome {
-                return target.attackedBy(
+            override fun resolve(executor: CharacterState, target: CharacterState): Outcome.WeaponAttackOutcome {
+                return target.attackBy(
                     attacker = executor,
                     attackRollModifier = attackRollModifier,
                     damageRollMultiplier = damageRollMultiplier,
@@ -35,39 +34,15 @@ sealed interface Resolution {
             val effectsOnHit: List<Effect>
         ) : AttackResolution {
 
-            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
-
-                val result: MutableList<Event> = mutableListOf()
-
-                val spellAttackDifficultyClass = SpellAttackDifficultyClass(
-                    spellAttributeModifier = executor.character.attributeModifier(executorAttributeType),
-                    spellDifficultyClass = baseDifficultyClass,
-                    levelModifier = executor.character.levelModifier()
+            override fun resolve(executor: CharacterState, target: CharacterState): Outcome.SpellAttackOutcome {
+                return target.attackBy(
+                    attacker = executor,
+                    baseDifficultyClass = baseDifficultyClass,
+                    executorAttributeType = executorAttributeType,
+                    targetAttributeType = targetAttributeType,
+                    damage = damage,
+                    effectsOnHit = effectsOnHit
                 )
-
-                val spellDefenseRoll = SpellDefenseRoll(
-                    spellAttributeModifier = target.character.attributeModifier(targetAttributeType),
-                    levelModifier = target.character.levelModifier(),
-                    roll = Die.Roll(Die.Dice.of(Die.d20))
-                )
-
-                if (spellAttackDifficultyClass.value >= spellDefenseRoll.value) {
-                    result.add(Event.SpellAttackHit(spellAttackDifficultyClass = spellAttackDifficultyClass, spellDefenseRoll = spellDefenseRoll))
-
-                    val spellDamageRoll = SpellDamageRoll(
-                        spellAttributeModifier = executor.character.attributeModifier(executorAttributeType),
-                        levelModifier = executor.character.levelModifier(),
-                        roll = Die.Roll(damage)
-                    )
-
-                    result.add(Event.SpellDamageDealt(spellDamageRoll))
-                    result.addAll(onDamageDealt(damageDealt = spellDamageRoll.value, target = target))
-                    result.addAll(resolveEffect(effect))
-                } else {
-                    result.add(Event.SpellAttackMiss(spellAttackDifficultyClass = spellAttackDifficultyClass, spellDefenseRoll = spellDefenseRoll))
-                }
-
-                return result
             }
         }
     }
@@ -78,23 +53,16 @@ sealed interface Resolution {
             val executorAttributeType: Attribute.Type,
             val heal: Die.Dice
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
-
-                val healRoll = HealRoll(
-                    healAttributeModifier = executor.character.attributeModifier(executorAttributeType),
-                    levelModifier = executor.character.levelModifier(),
-                    roll = Die.Roll(heal)
-                )
-
-                return listOf(Event.Healed(healRoll))
+            override fun resolve(executor: CharacterState, target: CharacterState): Outcome.Healed {
+                return target.healBy(healer = executor, executorAttributeType = executorAttributeType, heal = heal)
             }
         }
 
         data class ResourceBoost(
             val amount: Int
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
-                return listOf(Event.ResourcesGained(amount))
+            override fun resolve(executor: CharacterState, target: CharacterState): Outcome.ResourceBoosted {
+                return target.boostResources(amount)
             }
         }
 
@@ -102,20 +70,18 @@ sealed interface Resolution {
         data class RemoveEffect(
             val effect: Effect
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
-                return listOf(Event.EffectRemoved(effect))
+            override fun resolve(executor: CharacterState, target: CharacterState): Outcome.EffectRemoved {
+                return target.removeEffect(effect)
             }
-
         }
 
         data class AddEffect(
             val effect: Effect
         ) : SupportResolution {
 
-            override fun resolve(executor: CharacterState, target: CharacterState): List<Event> {
-                return listOf(Event.EffectAdded(effect))
+            override fun resolve(executor: CharacterState, target: CharacterState): Outcome.EffectAdded {
+                return target.addEffect(effect)
             }
-
         }
     }
 

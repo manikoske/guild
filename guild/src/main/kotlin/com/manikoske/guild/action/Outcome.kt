@@ -1,228 +1,151 @@
 package com.manikoske.guild.action
 
 import com.manikoske.guild.encounter.CharacterState
-import com.manikoske.guild.encounter.PointOfView
-import com.manikoske.guild.encounter.Target
+import com.manikoske.guild.rules.Die
 
 sealed interface Outcome {
 
-    fun resolve(
-        pointOfView: PointOfView,
-        target: Target,
-        newPositionNodeId: Int,
-        resourceCost: Int
-    ): PointOfView
+    val updatedTarget: CharacterState
 
-    fun commonResolution(
-        executor: CharacterState,
-        newPositionNodeId: Int,
-        resourceCost: Int
-    ) : CharacterState {
-        return executor.moveTo(newPositionNodeId).spendResources(resourceCost).applyOverTimeEffects().tickEffects()
+    sealed interface WeaponAttackOutcome : Outcome
+    sealed interface SpellAttackOutcome : Outcome
+
+    data class Healed(
+        override val updatedTarget: CharacterState,
+        val healRoll: HealRoll
+    ) : Outcome
+
+    data class EffectAdded(
+        override val updatedTarget: CharacterState,
+        val category: Effect.Category
+    ) : Outcome
+
+    data class EffectRemoved(
+        override val updatedTarget: CharacterState,
+        val category: Effect.Category
+    ) : Outcome
+
+    data class ResourceBoosted(
+        override val updatedTarget: CharacterState,
+        val amount: Int
+    ) : Outcome
+
+    data class ActionTaken(
+        override val updatedTarget: CharacterState,
+        val name: String,
+        val resourceCost: Int,
+        val newPositionNodeId: Int
+    ) : Outcome
+
+    data class EffectsTicked(
+        override val updatedTarget: CharacterState,
+        val removedEffects: List<Effect>,
+        val updatedEffects: List<Effect>,
+        val damageOverTimeRolls: List<DamageOverTimeRoll>,
+        val healOverTimeRolls: List<HealOverTimeRoll>,
+    ) : Outcome
+
+    data class WeaponAttackHit(
+        override val updatedTarget: CharacterState,
+        val armorClass: ArmorClass,
+        val weaponAttackRoll: WeaponAttackRoll,
+        val weaponDamageRoll: WeaponDamageRoll,
+        val effectsRemovedByDamage: List<Effect>,
+        val effectsAddedByDamage: List<Effect>
+
+    ) : WeaponAttackOutcome
+
+    data class WeaponAttackMissed(
+        override val updatedTarget: CharacterState,
+        val armorClass: ArmorClass,
+        val weaponAttackRoll: WeaponAttackRoll,
+    ) : WeaponAttackOutcome
+
+    data class SpellAttackMissed(
+        override val updatedTarget: CharacterState,
+        val spellDefenseRoll: SpellDefenseRoll,
+        val spellAttackDifficultyClass: SpellAttackDifficultyClass,
+    ) : SpellAttackOutcome
+
+    data class SpellAttackHit(
+        override val updatedTarget: CharacterState,
+        val spellDefenseRoll: SpellDefenseRoll,
+        val spellAttackDifficultyClass: SpellAttackDifficultyClass,
+        val spellDamageRoll: SpellDamageRoll,
+        val effectsRemovedByDamage: List<Effect>,
+        val effectsAddedByDamage: List<Effect>
+
+    ) : SpellAttackOutcome
+
+    data class ArmorClass(
+        val armorModifier: Int,
+        val armsModifier: Int,
+        val levelModifier: Int,
+        val armorAttributeModifier: Int
+    ) {
+        val armorClass = armorModifier + armsModifier + levelModifier + armorAttributeModifier
     }
 
-    fun isValidTarget(executor: CharacterState, target: Target): Boolean
-
-
-    data object OutcomeWithNoResolution : Outcome {
-
-        override fun resolve(
-            pointOfView: PointOfView,
-            target: Target,
-            newPositionNodeId: Int,
-            resourceCost: Int
-        ): PointOfView {
-            return pointOfView.copy(taker = commonResolution(
-                executor = pointOfView.taker,
-                newPositionNodeId = newPositionNodeId,
-                resourceCost = resourceCost
-            ))
-        }
-
-        override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-            return true
-        }
+    data class WeaponAttackRoll(
+        val weaponAttributeModifier: Int,
+        val weaponAttackModifier: Int,
+        val actionAttackModifier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val attack = roll.rolled + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
     }
 
-    sealed interface OutcomeWithResolution : Outcome {
-
-        val resolution: Resolution
-        val selfResolution: Resolution.SupportResolution?
-
-
-        override fun resolve(
-            pointOfView: PointOfView,
-            target: Target,
-            newPositionNodeId: Int,
-            resourceCost: Int
-        ): PointOfView {
-
-            val updatedPointOfView = target.applyResolution(pointOfView, resolution).let {
-                if (selfResolution != null && selfResolution is Resolution) {
-                    Target.Self
-                        .applyResolution(it, selfResolution as Resolution.SupportResolution)
-                } else {
-                    it
-                }
-            }
-
-            return updatedPointOfView.copy(
-                taker = commonResolution(
-                    executor = updatedPointOfView.taker,
-                    newPositionNodeId = newPositionNodeId,
-                    resourceCost = resourceCost
-                )
-            )
-        }
-
-    }
-
-    sealed class SupportOutcome : OutcomeWithResolution {
-
-        abstract override val resolution: Resolution.SupportResolution
-
-        data class SelfSupport(
-            override val resolution: Resolution.SupportResolution,
-            override val selfResolution: Resolution.SupportResolution?
-        ) : SupportOutcome() {
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Self
-            }
-        }
-
-        sealed class SpellSupport : SupportOutcome() {
-            abstract val range: Int
-        }
-
-        data class SingleSpellSupport(
-            override val resolution: Resolution.SupportResolution,
-            override val range: Int,
-            override val selfResolution: Resolution.SupportResolution?
-        ) : SpellSupport() {
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Single &&
-                        target.scope == Target.Scope.Ally &&
-                        target.range <= range
-            }
-        }
-
-        data class DoubleSpellSupport(
-            override val resolution: Resolution.SupportResolution,
-            override val range: Int,
-            override val selfResolution: Resolution.SupportResolution?
-        ) : SpellSupport() {
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Double &&
-                        target.scope == Target.Scope.Ally &&
-                        target.range <= range
-            }
-        }
-
-        data class NodeSpellSupport(
-            override val resolution: Resolution.SupportResolution,
-            override val range: Int,
-            override val selfResolution: Resolution.SupportResolution?
-        ) : SpellSupport() {
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Node &&
-                        target.scope == Target.Scope.Ally &&
-                        target.range <= range
-            }
-        }
-
-    }
-
-    sealed class AttackOutcome : OutcomeWithResolution {
-
-        abstract override val resolution: Resolution.AttackResolution
-
-        sealed class WeaponAttack : AttackOutcome()
-
-        data class WeaponSingleAttack(
-            override val resolution: Resolution.WeaponDamageResolution,
-            override val selfResolution: Resolution.SupportResolution? = null,
-        ) : WeaponAttack() {
-
-            // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Single &&
-                        target.range <= executor.character.arms().range() &&
-                        target.scope == Target.Scope.Enemy
-            }
-        }
-
-        data class WeaponDoubleAttack(
-            override val resolution: Resolution.WeaponDamageResolution,
-            override val selfResolution: Resolution.SupportResolution? = null,
-        ) : WeaponAttack() {
-
-            // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Double &&
-                        target.range <= executor.character.arms().range() &&
-                        target.scope == Target.Scope.Enemy
-            }
-        }
-
-        data class WeaponNodeAttack(
-            override val resolution: Resolution.WeaponDamageResolution,
-            override val selfResolution: Resolution.SupportResolution? = null,
-        ) : WeaponAttack() {
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Everyone &&
-                        ((target.range == 0 && executor.character.arms().range() == 0) ||
-                                target.range > 0 && executor.character.arms().range() > 0)
-            }
-        }
-
-        sealed class SpellAttack : AttackOutcome() {
-            abstract val range: Int
-        }
-
-        data class SpellSingleAttack(
-            override val resolution: Resolution.SpellResolution,
-            override val range: Int,
-            override val selfResolution: Resolution.SupportResolution? = null,
-        ) : SpellAttack() {
-
-            // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Single &&
-                        target.range <= range &&
-                        target.scope == Target.Scope.Enemy
-            }
-        }
-
-        data class SpellDoubleAttack(
-            override val resolution: Resolution.SpellResolution,
-            override val range: Int,
-            override val selfResolution: Resolution.SupportResolution? = null,
-        ) : SpellAttack() {
-
-            // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Double &&
-                        target.range <= range &&
-                        target.scope == Target.Scope.Enemy
-            }
-        }
-
-        data class SpellNodeAttack(
-            override val resolution: Resolution.SpellResolution,
-            override val range: Int,
-            override val selfResolution: Resolution.SupportResolution? = null,
-        ) : SpellAttack() {
-
-            // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-            override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
-                return target is Target.Everyone &&
-                        target.range <= range
-            }
-        }
-
+    data class WeaponDamageRoll(
+        val weaponAttributeModifier: Int,
+        val actionDamageMultiplier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val damage = roll.rolled * actionDamageMultiplier + weaponAttributeModifier + levelModifier
     }
 
 
+    data class DamageOverTimeRoll(
+        val category: Effect.Category,
+        val roll: Die.Roll
+    )
 
+    data class HealOverTimeRoll(
+        val category: Effect.Category,
+        val roll: Die.Roll
+    )
+
+    data class SpellAttackDifficultyClass(
+        val spellAttributeModifier: Int,
+        val spellDifficultyClass: Int,
+        val levelModifier: Int,
+    ) {
+        val attack = spellAttributeModifier + spellDifficultyClass + levelModifier
+    }
+
+    data class SpellDefenseRoll(
+        val spellAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val defense = roll.rolled + spellAttributeModifier + levelModifier
+    }
+
+    data class SpellDamageRoll(
+        val spellAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val damage = roll.rolled + spellAttributeModifier + levelModifier
+    }
+
+    data class HealRoll(
+        val healAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val heal = roll.rolled + healAttributeModifier + levelModifier
+    }
 
 }

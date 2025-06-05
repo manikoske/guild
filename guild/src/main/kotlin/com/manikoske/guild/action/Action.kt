@@ -21,7 +21,7 @@ sealed interface Action {
                 resolution = Resolution.AttackResolution.WeaponDamageResolution(
                     attackRollModifier = 0,
                     damageRollMultiplier = 1,
-                    effectsOnHit = null
+                    effectsOnHit = listOf()
                 ),
             ),
             OutcomeAction.AttackAction.SpellAttack.SpellSingleAttack(
@@ -34,7 +34,7 @@ sealed interface Action {
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
                     damage =  Die.Dice.of(Die.d6),
-                    effect = null
+                    effectsOnHit = listOf()
                 ),
                 range = 1
             ),
@@ -89,19 +89,10 @@ sealed interface Action {
         target: Target,
         newPositionNodeId: Int
     ): List<Event> {
-        val result: MutableList<Event> = mutableListOf()
 
-        val actionTaken = Event.ActionTaken(
-            name = name,
-            newPositionNodeId = newPositionNodeId,
-            resourceCost = resourceCost
-        )
+        executor.takeAction()
 
-        result.add(actionTaken)
-        result.addAll(executeOutcome(executor, target))
-        // TODO update effects
-
-        return result
+        return listOf()
 
     }
 
