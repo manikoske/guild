@@ -68,7 +68,7 @@ class Encounter(
 
             allExecutableActions.forEach { executableAction ->
                 allVantageNodes
-                    .filter { vantageNode -> vantageNode.accessibleBy(executableAction.movement) }
+                    .filter { vantageNode -> vantageNode.accessibleBy(pointOfView.taker.canMoveBy(executableAction.movement)) }
                     .forEach { accessibleVantageNode ->
                         accessibleVantageNode.targets
                             .filter { target -> executableAction.isValidTarget(pointOfView.taker, target) }

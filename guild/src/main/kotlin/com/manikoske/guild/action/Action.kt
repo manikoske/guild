@@ -4,6 +4,7 @@ import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Class
 import com.manikoske.guild.encounter.CharacterState
 import com.manikoske.guild.encounter.Target
+import com.manikoske.guild.encounter.TurnState
 import com.manikoske.guild.rules.Die
 
 sealed interface Action {
@@ -88,7 +89,7 @@ sealed interface Action {
         executor: CharacterState,
         target: Target,
         newPositionNodeId: Int
-    ): List<Event> {
+    ): TurnState {
 
         executor.takeAction()
 
