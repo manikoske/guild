@@ -3,6 +3,7 @@ package com.manikoske.guild.action
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Class
 import com.manikoske.guild.encounter.CharacterState
+import com.manikoske.guild.encounter.PointOfView
 import com.manikoske.guild.encounter.Target
 import com.manikoske.guild.encounter.TurnState
 import com.manikoske.guild.rules.Die
@@ -86,18 +87,30 @@ sealed interface Action {
     fun isValidTarget(executor: CharacterState, target: Target): Boolean
 
     fun execute(
-        executor: CharacterState,
+        pointOfView: PointOfView,
         target: Target,
         newPositionNodeId: Int
     ): TurnState {
 
-        executor.takeAction()
+        val actionTaken =  pointOfView.taker.takeAction(name = name, newPositionNodeId = newPositionNodeId, resourceCost = resourceCost)
 
-        return listOf()
+        when (target) {
+            is Target.Other -> resolve(executor = actionTaken.updatedTarget, target.characterStates)
+            Target.Self -> resolve(executor = actionTaken.updatedTarget, target = updatedPointOfView.taker)
+        }
+
+        val effectsTicked = updatedPointOfView.taker.tickEffects()
+
+        return TurnState(
+            updatedPointOfView = updatedPointOfView,
+            turnStart = actionTaken,
+            turnEnding = effectsTicked
+        )
 
     }
 
-    fun executeOutcome(executor: CharacterState, target: Target) : List<Event>
+    fun resolve(executor: CharacterState, target: CharacterState) : Event
+    fun resolveSelf(self: CharacterState) : Event
 
     data class NoOutcomeAction(
         override val name: String,
@@ -110,8 +123,12 @@ sealed interface Action {
             return target is Target.Self
         }
 
-        override fun executeOutcome(executor: CharacterState, target: Target) : List<Event> {
-            return listOf()
+        override fun resolve(executor: CharacterState, target: CharacterState) : Event {
+            return Event.NoEvent(updatedTarget = executor)
+        }
+
+        override fun resolveSelf(self: CharacterState): Event {
+            return Event.NoEvent(updatedTarget = self)
         }
     }
 
@@ -120,12 +137,12 @@ sealed interface Action {
         val resolution: Resolution
         val selfResolution: Resolution.SupportResolution?
 
-        override fun executeOutcome(executor: CharacterState, target: Target): List<Event> {
-            when (target) {
-                is Target.Other -> target.characterStates
-                Target.Self -> executor
-            }
-            return listOf()
+        override fun resolve(executor: CharacterState, target: CharacterState): Event {
+            return resolution.resolve(executor, target)
+        }
+
+        override fun resolveSelf(self: CharacterState): Event {
+            return selfResolution?.resolve(self, self) ?: Event.NoEvent(updatedTarget = self)
         }
 
         sealed class SupportAction : OutcomeAction {

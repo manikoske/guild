@@ -1,7 +1,6 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
-import com.manikoske.guild.action.Event
 import com.manikoske.guild.character.Character
 import java.util.logging.Logger
 
@@ -115,14 +114,6 @@ class Encounter(
             val chosenEnding = endings.maxBy { it.utility() }
             LOG.info(chosenEnding.print())
             return chosenEnding.encounterState()
-        }
-
-        private fun resolveEvents(events: List<Event>): PointOfView {
-            return events.fold(pointOfView) { updatedPointOfView, event ->
-                when (event) {
-                    is Event.WeaponAttackHit -> return
-                }
-            }
         }
 
         data class Choice(
