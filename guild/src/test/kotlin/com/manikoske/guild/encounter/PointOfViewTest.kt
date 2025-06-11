@@ -2,7 +2,6 @@ package com.manikoske.guild.encounter
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.Test
 
 class PointOfViewTest {
 
@@ -15,7 +14,7 @@ class PointOfViewTest {
         val tazok = Randomizer.characterState("Tazok").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Defender)
         val davaeorn = Randomizer.characterState("Davaeorn").copy(positionNodeId = 3, allegiance = CharacterState.Allegiance.Defender)
 
-        val encounterState = EncounterState(characterStates = listOf(minsc, khalid, jaheira, tazok, davaeorn))
+        val encounterState = EncounterState(updatedCharacterStates = listOf(minsc, khalid, jaheira, tazok, davaeorn))
 
         val minscPointOfView = encounterState.viewFrom(minsc.character.id)
 

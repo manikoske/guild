@@ -13,3 +13,59 @@ vygeneruju sa nahodne tri akcie; kazda z nich sa odsimuluje v suboji; nepriateli
 akcie nebudu per class per level ale pri levelup sa nahodne (nahodnost moze byt ovplyvnena abilitami, backgroundom, rasou, archetypom) vygeneruju moznosti (+hp, +res, +akcia, upg akcie starej, etc)
 kazdy char bude mat nieco ako potencial, co bude rozhodovat aky velky upgrade postava za level spravi, kazdy upgrade bude nieco stat
 kazda postava moze mat rozne urovne levelupov, cize niektora moze mat skor vyssi level ale nizsi potencial cize horsie upgrady
+
+
+mesta sa zdruzuju do vyssich uzemnych celkov (kralovstva)
+mesta maju svoje gildy dobrodruhov
+dobrodruhovia na vyprave prechadzaju dungeon aby odstranili zlo
+zlo moze byt rozsirene do viacerych dungeonov
+po odstraneni zla sa oslobodi uzemie pre mesto a mesto ziska resourcy
+kralovstva medzi sebou vedu vojny, co sposobuje vznik zla na uzemiach kde sa bojovalo
+zlo nemusi hrdinov zabijt, ale zajat, nemusi zajimat len hrdinov ale aj dolezite osoby mesta
+dungeon je proceduralne generovany
+sklada sa s zo zakladnych dielikov ktore sa nahodne generuju
+dieliky mozu obsahovat encounter
+dieliky mozu obsahovat pasce
+v dielikoch sa budu robit rozne checky
+z dielikov moze viest viac ciest
+prechod dieliku zaberie isty cas podla narocnosti terenu
+ochrana pred zraneniami
+boj
+nesmie byt uplne transparentny aby tam bolo tajomno pre taktizovanie
+kazdy dobrodruh bude mat rasu
+rasy budu mat stereotypy
+kazdy dobrodruh bude mat mnozinu ability score
+akcie dobrodruhov budu mat karticky
+zbran bude do baliku akcii vkladat X kariet s akciami pre danu zbran
+personalne questy budu zrychlovat levelup
+
+Inspiracie
+
+Football manager 2024
+namotavka
+predstava o posuvanie sa v ligach
+obcasne navstevy turnajov
+scouting na wonderkidov
+Blood & Magic
+vypustim nieco co sa sprava podla pravidiel
+bije nepriatelov
+zbiera resourcy
+podla danych pravidiel zomrie
+
+Guild of dungeoneering ( a Karak)
+nahodne karticky z ktorych sa zrebuju akcie
+nahodne karticky ktore skladaju dungeon
+
+Encounter
+jednorozmerny counter pre poziciu
+bude od -50 do 50
+boj sa zacina na 0, ak neplatia vynimky dane miestnostou alebo classou
+kazde kolo ziska kazdy ucastnik urcity pocet zavisly od jeho rychlosti
+kazda akcia bude vyzadovat minutie urcitej pozicie
+niektore akcie budu specialne poziciu pridavat
+bonusy budu od -5 do +5
+niektore akcie budu mat poziadavku na urcity bonus pozicie
+actions pridavaju a uberaju poziciu
+thief bude mat vela akcii ktore priadaju poziciu
+mag bude mat obcasne ability na poziciu ale za to z vacsim boostom
+akcie, ktore budu pre danu class predstavovat nebezpecenstvo budu uberat poziciu

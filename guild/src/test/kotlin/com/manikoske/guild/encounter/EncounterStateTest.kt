@@ -30,7 +30,7 @@ class EncounterStateTest {
         val brok = Randomizer.characterState("Brok").copy(character = brokCharacter)
         val trakk = Randomizer.characterState("Trakk").copy(character = trakkCharacter)
 
-        val encounterState = EncounterState(characterStates = listOf(chock, brok, trakk))
+        val encounterState = EncounterState(updatedCharacterStates = listOf(chock, brok, trakk))
 
         assertThat(encounterState.rollInitiatives()).isEqualTo(listOf(trakk.character.id, chock.character.id, brok.character.id))
     }
@@ -44,9 +44,9 @@ class EncounterStateTest {
         val ajantis = Randomizer.characterState("Ajantis").copy(allegiance = CharacterState.Allegiance.Attacker, effects = CharacterState.noEffects())
         val kivan = Randomizer.characterState("Kivan").copy(allegiance = CharacterState.Allegiance.Attacker, effects = CharacterState.noEffects())
 
-        assertThat(EncounterState(characterStates = listOf(firkraag, ajantis, kivan)).hasNoWinner()).isTrue()
-        assertThat(EncounterState(characterStates = listOf(firkraag, ajantis, kivan.addEffect(dying))).hasNoWinner()).isTrue()
-        assertThat(EncounterState(characterStates = listOf(firkraag, ajantis.addEffect(dying), kivan.addEffect(dying))).hasNoWinner()).isFalse()
+        assertThat(EncounterState(updatedCharacterStates = listOf(firkraag, ajantis, kivan)).hasNoWinner()).isTrue()
+        assertThat(EncounterState(updatedCharacterStates = listOf(firkraag, ajantis, kivan.addEffect(dying))).hasNoWinner()).isTrue()
+        assertThat(EncounterState(updatedCharacterStates = listOf(firkraag, ajantis.addEffect(dying), kivan.addEffect(dying))).hasNoWinner()).isFalse()
 
 
     }

@@ -71,10 +71,6 @@ data class Character(
         return attribute(attributeType).modifier()
     }
 
-    fun initiativeRoll() : Int {
-        return Die.d20.roll(1) + attribute(Attribute.Type.dexterity).modifier()
-    }
-
     fun clazz(): Class {
         return bio.clazz
     }

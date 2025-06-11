@@ -18,57 +18,84 @@ class Encounter(
         attackersStartingNodeId: Int,
         defendersStartingNodeId: Int,
     ): EncounterState {
-        val firstRound = Round(
-            encounterState = EncounterState.initial(
-                attackers = attackers,
-                defenders = defenders,
-                attackersStartingNodeId = attackersStartingNodeId,
-                defendersStartingNodeId = defendersStartingNodeId
+
+        return (1..20).fold(
+            EncounterState(
+                updatedCharacterStates =
+                attackers.map {
+                    CharacterState(
+                        character = it,
+                        positionNodeId = attackersStartingNodeId,
+                        allegiance = CharacterState.Allegiance.Attacker,
+                        damageTaken = 0,
+                        resourcesSpent = 0,
+                        effects = CharacterState.noEffects(),
+                    )
+                }
+                        +
+                        defenders.map {
+                            CharacterState(
+                                character = it,
+                                positionNodeId = defendersStartingNodeId,
+                                allegiance = CharacterState.Allegiance.Defender,
+                                damageTaken = 0,
+                                resourcesSpent = 0,
+                                effects = CharacterState.noEffects(),
+                            )
+                        },
+                rounds = listOf()
             )
-        )
-        return firstRound.simulate(battleground)
+        ) { encounterState, roundSequence ->
+
+            val round = Round(sequence = roundSequence, characterStates = encounterState.updatedCharacterStates)
+                .simulate(battleground)
+
+            if (round.turns.isEmpty()) {
+                return encounterState
+            } else {
+                return EncounterState(
+                    updatedCharacterStates = round.updatedCharacterStates,
+                    rounds = encounterState.rounds + round
+                )
+            }
+        }
     }
 
 
     data class Round(
+        private val sequence: Int,
         private val characterStates: List<CharacterState>
     ) {
         fun simulate(
             battleground: Battleground
         ): RoundState {
 
-            val initiativeRolls = characterStates.map { it.rollInitiative() }.sortedByDescending { it.initiativeRoll.initiative }
-            initiativeRolls.map { it.updatedTarget.character.id }.map { viewFrom(it, ) }
+            val initiativeRolls =
+                characterStates.map { it.rollInitiative() }.sortedByDescending { it.initiativeRoll.initiative }
 
-            if (encounterState.hasNoWinner()) {
-                val nextRound = Round(encounterState = encounterState
-                    .rollInitiatives()
-                    .fold(encounterState) { updatedEncounterState, takerId ->
-                        val nextTurn = Turn(pointOfView = updatedEncounterState.viewFrom(characterId = takerId))
-                        nextTurn.simulate(battleground)
+            return initiativeRolls
+                .map { it.updatedTarget }
+                .fold(
+                    RoundState(
+                        sequence = sequence,
+                        updatedCharacterStates = characterStates,
+                        initiativeRolls = initiativeRolls,
+                        turns = listOf()
+                    )
+                ) { roundState, turnTaker ->
+                    if (roundState.hasNoWinner()) {
+
+                        val turn = Turn(roundState.viewFrom(turnTaker.character.id)).simulate(battleground)
+
+                        roundState.copy(
+                            updatedCharacterStates = turn.updatedCharacterStates(),
+                            turns = roundState.turns + turn
+                        )
+                    } else {
+                        return roundState
                     }
-                )
-                return nextRound.simulate(battleground)
-            } else {
-                return encounterState
-            }
+                }
         }
-
-        fun viewFrom(
-            characterId: Int,
-            characterStates: List<CharacterState>
-        ): PointOfView {
-            val taker = characterStates.first { it.character.id == characterId }
-            val allies = characterStates.filter { it.character.id != characterId && it.allegiance == taker.allegiance }
-            val enemies = characterStates.filter { it.allegiance != taker.allegiance }
-
-            return PointOfView(
-                taker = taker,
-                allies = allies,
-                enemies = enemies
-            )
-        }
-
     }
 
     data class Turn(
@@ -101,6 +128,7 @@ class Encounter(
             }
 
             val best = possibleTurnStates.maxBy { it.utility() }
+
             return best.action.execute(
                 pointOfView = pointOfView,
                 target = best.target,
