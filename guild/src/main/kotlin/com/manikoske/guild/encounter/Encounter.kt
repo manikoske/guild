@@ -1,6 +1,5 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.action.Action
 import com.manikoske.guild.character.Character
 import java.util.logging.Logger
 
@@ -32,11 +31,15 @@ class Encounter(
 
 
     data class Round(
-        private val encounterState: EncounterState
+        private val characterStates: List<CharacterState>
     ) {
         fun simulate(
             battleground: Battleground
-        ): EncounterState {
+        ): RoundState {
+
+            val initiativeRolls = characterStates.map { it.rollInitiative() }.sortedByDescending { it.initiativeRoll.initiative }
+            initiativeRolls.map { it.updatedTarget.character.id }.map { viewFrom(it, ) }
+
             if (encounterState.hasNoWinner()) {
                 val nextRound = Round(encounterState = encounterState
                     .rollInitiatives()
@@ -51,94 +54,58 @@ class Encounter(
             }
         }
 
+        fun viewFrom(
+            characterId: Int,
+            characterStates: List<CharacterState>
+        ): PointOfView {
+            val taker = characterStates.first { it.character.id == characterId }
+            val allies = characterStates.filter { it.character.id != characterId && it.allegiance == taker.allegiance }
+            val enemies = characterStates.filter { it.allegiance != taker.allegiance }
+
+            return PointOfView(
+                taker = taker,
+                allies = allies,
+                enemies = enemies
+            )
+        }
+
     }
 
     data class Turn(
         private val pointOfView: PointOfView
     ) {
 
-        fun simulate(battleground: Battleground): EncounterState {
+        fun simulate(battleground: Battleground): TurnState {
 
             val allExecutableActions = pointOfView.taker.allExecutableActions()
             val allVantageNodes = pointOfView.allVantageNodes(battleground = battleground)
 
-            val endings: MutableList<Ending> = mutableListOf()
-            val choices: MutableList<Choice> = mutableListOf()
+            val possibleTurnStates: MutableList<TurnState> = mutableListOf()
 
             allExecutableActions.forEach { executableAction ->
                 allVantageNodes
-                    .filter { vantageNode -> vantageNode.accessibleBy(pointOfView.taker.canMoveBy(executableAction.movement)) }
+                    .filter { vantageNode -> executableAction.canAccess(pointOfView.taker, vantageNode) }
                     .forEach { accessibleVantageNode ->
                         accessibleVantageNode.targets
-                            .filter { target -> executableAction.isValidTarget(pointOfView.taker, target) }
+                            .filter { target -> executableAction.canTarget(pointOfView.taker, target) }
                             .forEach { validTarget ->
-                                choices.add(
-                                    Choice(
-                                        action = executableAction,
-                                        newPositionNodeId = accessibleVantageNode.nodeId,
-                                        target = validTarget
+                                possibleTurnStates.add(
+                                    executableAction.execute(
+                                        pointOfView = pointOfView,
+                                        target = validTarget,
+                                        newPositionNodeId = accessibleVantageNode.nodeId
                                     )
                                 )
                             }
                     }
             }
 
-            allExecutableActions
-                .forEach { executableAction ->
-                    allVantageNodes
-                        .filter { vantageNode -> vantageNode.accessibleBy(executableAction.movement) }
-                        .forEach { accessibleVantageNode ->
-                            endings.addAll(accessibleVantageNode.targets
-                                .filter { target ->
-                                    executableAction.outcome.isValidTarget(
-                                        pointOfView.taker,
-                                        target
-                                    )
-                                }
-                                .map { target ->
-                                    Ending(
-                                        action = executableAction,
-                                        target = target,
-                                        newPositionNodeId = accessibleVantageNode.nodeId,
-                                        pointOfView = executableAction.outcome.resolve(
-                                            pointOfView = pointOfView,
-                                            target = target,
-                                            newPositionNodeId = accessibleVantageNode.nodeId,
-                                            resourceCost = executableAction.resourceCost
-                                        )
-                                    )
-                                }
-                            )
-                        }
-                }
-            val chosenEnding = endings.maxBy { it.utility() }
-            LOG.info(chosenEnding.print())
-            return chosenEnding.encounterState()
-        }
-
-        data class Choice(
-            val action: Action,
-            val target: Target,
-            val newPositionNodeId: Int,
-        ) {
-
-        }
-
-        data class Ending(
-            val action: Action,
-            val target: Target,
-            val newPositionNodeId: Int,
-            val pointOfView: PointOfView
-        ) {
-
-            fun utility(): Double {
-                return pointOfView.allies.sumOf { it.utility() } - pointOfView.enemies.sumOf { it.utility() }
-            }
-
-            fun encounterState(): EncounterState {
-                return EncounterState.fromView(pointOfView)
-            }
-
+            val best = possibleTurnStates.maxBy { it.utility() }
+            return best.action.execute(
+                pointOfView = pointOfView,
+                target = best.target,
+                newPositionNodeId = best.actionTaken.newPositionNodeId
+            )
         }
     }
 }

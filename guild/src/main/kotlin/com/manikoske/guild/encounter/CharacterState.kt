@@ -120,16 +120,27 @@ data class CharacterState(
         }
     }
 
-    fun canMoveBy(actionMovement: Movement): Movement {
+    fun canMoveBy(actionMovement: Movement, requiredMovementAmount : Int): Boolean {
         val finalMovement =
             (effects.movementRestrictingEffect?.restrictActionMovement(actionMovement) ?: actionMovement)
                 .let { if (it.amount > 0) effects.movementAlteringEffects.fold(it) { a, b -> b.alterActionMovement(a) } else it }
 
-        return finalMovement
+        return finalMovement.amount >= requiredMovementAmount
     }
 
     enum class Allegiance {
         Attacker, Defender
+    }
+
+    fun rollInitiative() : Event.InitiativeRolled {
+        return Event.InitiativeRolled(
+            updatedTarget = this,
+            initiativeRoll = Event.InitiativeRoll(
+                initiativeAttributeModifier = this.character.attributeModifier(Attribute.Type.dexterity),
+                levelModifier = this.character.levelModifier(),
+                roll = Die.Roll(Die.Dice.of(Die.d20))
+            )
+        )
     }
 
     fun attackBy(
@@ -256,7 +267,6 @@ data class CharacterState(
     }
 
     fun takeAction(
-        name: String,
         newPositionNodeId: Int,
         resourceCost: Int
     ) : Event.ActionTaken {
@@ -264,7 +274,6 @@ data class CharacterState(
             updatedTarget = this
                 .moveTo(newPositionNodeId)
                 .spendResources(resourceCost),
-            name = name,
             resourceCost = resourceCost,
             newPositionNodeId = newPositionNodeId
         )

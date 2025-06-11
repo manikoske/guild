@@ -46,10 +46,6 @@ data class EncounterState(val characterStates : List<CharacterState>) {
                 effects = CharacterState.noEffects(),
             )
         }
-
-        fun fromView(pointOfView: PointOfView) : EncounterState {
-            return EncounterState(characterStates = pointOfView.allies + pointOfView.enemies + pointOfView.taker)
-        }
     }
 
     fun hasNoWinner(): Boolean {
@@ -57,19 +53,7 @@ data class EncounterState(val characterStates : List<CharacterState>) {
                 characterStates.any { it.allegiance == CharacterState.Allegiance.Defender && !it.isDying() }
     }
 
-    fun viewFrom(
-        characterId: Int,
-    ): PointOfView {
-        val taker = characterStates.first { it.character.id == characterId }
-        val allies = characterStates.filter { it.character.id != characterId && it.allegiance == taker.allegiance }
-        val enemies = characterStates.filter { it.allegiance != taker.allegiance }
 
-        return PointOfView(
-            taker = taker,
-            allies = allies,
-            enemies = enemies
-        )
-    }
 
     fun rollInitiatives() : List<Int> {
         return characterStates.sortedByDescending { it.character.initiativeRoll() }.map { it.character.id }

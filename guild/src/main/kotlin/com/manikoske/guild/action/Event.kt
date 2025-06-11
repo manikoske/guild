@@ -14,6 +14,11 @@ sealed interface Event {
         override val updatedTarget: CharacterState
     ) : Event
 
+    data class InitiativeRolled(
+        override val updatedTarget: CharacterState,
+        val initiativeRoll: InitiativeRoll
+    ) : Event
+
     data class Healed(
         override val updatedTarget: CharacterState,
         val healRoll: HealRoll
@@ -36,7 +41,6 @@ sealed interface Event {
 
     data class ActionTaken(
         override val updatedTarget: CharacterState,
-        val name: String,
         val resourceCost: Int,
         val newPositionNodeId: Int
     ) : Event
@@ -150,6 +154,14 @@ sealed interface Event {
         val roll: Die.Roll,
     ) {
         val heal = roll.rolled + healAttributeModifier + levelModifier
+    }
+
+    data class InitiativeRoll(
+        val initiativeAttributeModifier: Int,
+        val levelModifier: Int,
+        val roll: Die.Roll,
+    ) {
+        val initiative = roll.rolled + initiativeAttributeModifier + levelModifier
     }
 
 }

@@ -84,33 +84,41 @@ sealed interface Action {
     val resourceCost: Int
     val classRestriction: List<Class>
 
-    fun isValidTarget(executor: CharacterState, target: Target): Boolean
-
     fun execute(
         pointOfView: PointOfView,
         target: Target,
         newPositionNodeId: Int
     ): TurnState {
 
-        val actionTaken =  pointOfView.taker.takeAction(name = name, newPositionNodeId = newPositionNodeId, resourceCost = resourceCost)
+        val actionTaken =  pointOfView.taker.takeAction(newPositionNodeId = newPositionNodeId, resourceCost = resourceCost)
 
         when (target) {
-            is Target.Other -> resolve(executor = actionTaken.updatedTarget, target.characterStates)
-            Target.Self -> resolve(executor = actionTaken.updatedTarget, target = updatedPointOfView.taker)
+            is Target.Other -> resolveTarget(executor = actionTaken.updatedTarget, target.characterStates)
+            Target.Self -> resolveTarget(executor = actionTaken.updatedTarget, target = updatedPointOfView.taker)
         }
 
-        val effectsTicked = updatedPointOfView.taker.tickEffects()
+        val effectsTicked = pointOfView.taker.tickEffects()
 
         return TurnState(
             updatedPointOfView = updatedPointOfView,
-            turnStart = actionTaken,
-            turnEnding = effectsTicked
+            action = this,
+            target = target,
+            actionTaken = actionTaken,
+            effectsTicked = effectsTicked,
         )
 
     }
 
-    fun resolve(executor: CharacterState, target: CharacterState) : Event
+    fun canAccess(executor: CharacterState, vantageNode: PointOfView.VantageNode) : Boolean {
+        return when (movement.type) {
+            Movement.Type.Normal -> executor.canMoveBy(movement, vantageNode.requiredNormalMovement)
+            Movement.Type.Special -> executor.canMoveBy(movement, vantageNode.requiredSpecialMovement)
+        }
+    }
+
+    fun resolveTarget(executor: CharacterState, target: CharacterState) : Event
     fun resolveSelf(self: CharacterState) : Event
+    fun canTarget(executor: CharacterState, target: Target): Boolean
 
     data class NoOutcomeAction(
         override val name: String,
@@ -119,11 +127,11 @@ sealed interface Action {
         override val classRestriction: List<Class>,
     ) : Action {
 
-        override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+        override fun canTarget(executor: CharacterState, target: Target): Boolean {
             return target is Target.Self
         }
 
-        override fun resolve(executor: CharacterState, target: CharacterState) : Event {
+        override fun resolveTarget(executor: CharacterState, target: CharacterState) : Event {
             return Event.NoEvent(updatedTarget = executor)
         }
 
@@ -137,7 +145,7 @@ sealed interface Action {
         val resolution: Resolution
         val selfResolution: Resolution.SupportResolution?
 
-        override fun resolve(executor: CharacterState, target: CharacterState): Event {
+        override fun resolveTarget(executor: CharacterState, target: CharacterState): Event {
             return resolution.resolve(executor, target)
         }
 
@@ -157,7 +165,7 @@ sealed interface Action {
                 override val resourceCost: Int,
                 override val classRestriction: List<Class>
             ) : SupportAction() {
-                override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                override fun canTarget(executor: CharacterState, target: Target): Boolean {
                     return target is Target.Self
                 }
             }
@@ -174,7 +182,7 @@ sealed interface Action {
                     override val resourceCost: Int,
                     override val classRestriction: List<Class>
                 ) : SpellSupportAction() {
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.SingleAlly && target.range <= range
                     }
                 }
@@ -188,7 +196,7 @@ sealed interface Action {
                     override val resourceCost: Int,
                     override val classRestriction: List<Class>
                 ) : SpellSupportAction() {
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.DoubleAlly && target.range <= range
                     }
                 }
@@ -202,7 +210,7 @@ sealed interface Action {
                     override val resourceCost: Int,
                     override val classRestriction: List<Class>
                 ) : SpellSupportAction() {
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.NodeAlly && target.range <= range
                     }
                 }
@@ -225,7 +233,7 @@ sealed interface Action {
                 ) : WeaponAttack() {
 
                     // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.SingleEnemy && target.range <= executor.character.arms().range()
                     }
                 }
@@ -240,7 +248,7 @@ sealed interface Action {
                 ) : WeaponAttack() {
 
                     // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.DoubleEnemy && target.range <= executor.character.arms().range()
                     }
                 }
@@ -253,7 +261,7 @@ sealed interface Action {
                     override val resourceCost: Int,
                     override val classRestriction: List<Class>,
                 ) : WeaponAttack() {
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.NodeEveryone &&
                                 ((target.range == 0 && executor.character.arms().range() == 0) ||
                                         target.range > 0 && executor.character.arms().range() > 0)
@@ -276,7 +284,7 @@ sealed interface Action {
                 ) : SpellAttack() {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.SingleEnemy && target.range <= range
                     }
                 }
@@ -292,7 +300,7 @@ sealed interface Action {
                 ) : SpellAttack() {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.DoubleEnemy && target.range <= range
                     }
                 }
@@ -308,7 +316,7 @@ sealed interface Action {
                 ) : SpellAttack() {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-                    override fun isValidTarget(executor: CharacterState, target: Target): Boolean {
+                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.NodeEveryone && target.range <= range
                     }
                 }
