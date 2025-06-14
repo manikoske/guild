@@ -11,8 +11,8 @@ sealed interface Target {
         }
 
         private fun singleTargets(range: Int, allies: List<CharacterState>, enemies: List<CharacterState>): List<Target> {
-            return allies.map { SingleAlly(range = range, characterStates = listOf(it)) } +
-                    enemies.map { SingleEnemy(range = range, characterStates = listOf(it)) }
+            return allies.map { SingleAlly(range = range, others = listOf(it)) } +
+                    enemies.map { SingleEnemy(range = range, others = listOf(it)) }
         }
 
         private fun doubleTargets(range: Int, allies: List<CharacterState>, enemies: List<CharacterState>): List<Target> {
@@ -20,14 +20,14 @@ sealed interface Target {
             if (allies.isNotEmpty()) {
                 for (i in allies.indices) {
                     for (j in i + 1..<allies.size) {
-                        result.add(DoubleAlly(range = range, characterStates = listOf(allies[i], allies[j])))
+                        result.add(DoubleAlly(range = range, others = listOf(allies[i], allies[j])))
                     }
                 }
             }
             if (enemies.isNotEmpty()) {
                 for (i in enemies.indices) {
                     for (j in i + 1..<enemies.size) {
-                        result.add(DoubleEnemy(range = range, characterStates = listOf(enemies[i], enemies[j])))
+                        result.add(DoubleEnemy(range = range, others = listOf(enemies[i], enemies[j])))
                     }
                 }
             }
@@ -37,59 +37,63 @@ sealed interface Target {
         private fun nodeTargets(range: Int, allies: List<CharacterState>, enemies: List<CharacterState>): List<Target> {
             val result: MutableList<Target> = mutableListOf()
             if (allies.isNotEmpty()) {
-                result.add(NodeAlly(range = range, characterStates = allies))
+                result.add(NodeAlly(range = range, others = allies))
             }
             if (enemies.isNotEmpty()) {
-                result.add(NodeEnemy(range = range, characterStates = enemies))
+                result.add(NodeEnemy(range = range, others = enemies))
             }
             if (allies.isNotEmpty() || enemies.isNotEmpty()) {
-                result.add(NodeEveryone(range = range, characterStates = allies + enemies))
+                result.add(NodeEveryone(range = range, others = allies + enemies))
             }
             return result
         }
 
     }
 
-    sealed interface Other : Target {
-        val range: Int
-        val characterStates: List<CharacterState>
-    }
+    val range: Int
+    val others: List<CharacterState>
+
 
     data class SingleEnemy(
         override val range: Int,
-        override val characterStates: List<CharacterState>
-    ) : Other
+        override val others: List<CharacterState>
+    ) : Target
 
     data class SingleAlly(
         override val range: Int,
-        override val characterStates: List<CharacterState>
-    ) : Other
+        override val others: List<CharacterState>
+    ) : Target
 
     data class DoubleEnemy(
         override val range: Int,
-        override val characterStates: List<CharacterState>
-    ) : Other
+        override val others: List<CharacterState>
+    ) : Target
 
     data class DoubleAlly(
         override val range: Int,
-        override val characterStates: List<CharacterState>
-    ) : Other
+        override val others: List<CharacterState>
+    ) : Target
 
     data class NodeAlly(
         override val range: Int,
-        override val characterStates: List<CharacterState>
-    ) : Other
+        override val others: List<CharacterState>
+    ) : Target
 
     data class NodeEnemy(
         override val range: Int,
-        override val characterStates: List<CharacterState>
-    ) : Other
+        override val others: List<CharacterState>
+    ) : Target
 
     data class NodeEveryone(
         override val range: Int,
-        override val characterStates: List<CharacterState>
-    ) : Other
+        override val others: List<CharacterState>
+    ) : Target
 
-    data object Self : Target
+    data object Self : Target {
+        override val range: Int
+            get() = 0
+        override val others: List<CharacterState>
+            get() = listOf()
+    }
 
 }

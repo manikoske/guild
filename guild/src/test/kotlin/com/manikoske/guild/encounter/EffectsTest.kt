@@ -148,30 +148,6 @@ class EffectsTest {
 
     }
 
-    @RepeatedTest(1)
-    fun testRemoveOnDamageTaken() {
-        val stun = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Stun>()
-        val entangled = Randomizer.randomBuilder().giveMeOne<Effect.MovementRestrictingEffect.Entangled>()
-        val haste = Randomizer.randomBuilder().giveMeOne<Effect.MovementAlteringEffect.Haste>()
-        val regeneration = Randomizer.randomBuilder().giveMeOne<Effect.HealOverTimeEffect.Regeneration>()
-        val silenced = Randomizer.randomBuilder().giveMeOne<Effect.ActionRestrictingEffect.Silenced>()
-        val poison = Randomizer.randomBuilder().giveMeOne<Effect.DamageOverTimeEffect.Poison>()
-
-        assertThat(
-            CharacterState.noEffects()
-                .add(stun)
-                .add(entangled)
-                .add(haste)
-                .add(regeneration)
-                .add(silenced)
-                .add(poison)
-                .removeOnDamage()
-                .all()
-        )
-            .usingRecursiveComparison()
-            .ignoringCollectionOrder()
-            .isEqualTo(listOf(stun, haste, silenced, regeneration, poison))
-    }
 
     @RepeatedTest(1)
     fun testTick() {

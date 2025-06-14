@@ -2,10 +2,8 @@ package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Class
-import com.manikoske.guild.encounter.CharacterState
-import com.manikoske.guild.encounter.PointOfView
+import com.manikoske.guild.encounter.*
 import com.manikoske.guild.encounter.Target
-import com.manikoske.guild.encounter.TurnState
 import com.manikoske.guild.rules.Die
 
 sealed interface Action {
@@ -61,7 +59,7 @@ sealed interface Action {
             classRestriction = noClassRestriction
         )
 
-        val standUp = OutcomeAction.SupportAction.SelfSupport(
+        val standUp = SelfSupport(
             name = "Stand Up",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
@@ -88,25 +86,23 @@ sealed interface Action {
         pointOfView: PointOfView,
         target: Target,
         newPositionNodeId: Int
-    ): TurnState {
+    ): Turn.State {
 
-        val actionTaken =  pointOfView.taker.takeAction(newPositionNodeId = newPositionNodeId, resourceCost = resourceCost)
+        val actionTaken =
+            pointOfView.taker.takeAction(newPositionNodeId = newPositionNodeId, resourceCost = resourceCost)
+        val outcome = resolveOutcome(executor = actionTaken.updatedTarget, targets = target.others)
+        val effectsTicked = (outcome.selfEvent?.updatedTarget ?: actionTaken.updatedTarget).tickEffects()
+        val updatedPointOfView = pointOfView.updateWith(outcome.targetEvents.map { it.updatedTarget } + effectsTicked.updatedTarget)
 
-        when (target) {
-            is Target.Other -> resolveTarget(executor = actionTaken.updatedTarget, target.characterStates)
-            Target.Self -> resolveTarget(executor = actionTaken.updatedTarget, target = updatedPointOfView.taker)
-        }
-
-        val effectsTicked = pointOfView.taker.tickEffects()
-
-        return TurnState(
-            updatedPointOfView = updatedPointOfView,
+        return Turn.State(
+            updatedCharacterStates = updatedPointOfView.characterStates,
             action = this,
             target = target,
             actionTaken = actionTaken,
+            outcome = outcome,
             effectsTicked = effectsTicked,
+            utility = updatedPointOfView.utility()
         )
-
     }
 
     fun canAccess(executor: CharacterState, vantageNode: PointOfView.VantageNode) : Boolean {
@@ -116,8 +112,8 @@ sealed interface Action {
         }
     }
 
-    fun resolveTarget(executor: CharacterState, target: CharacterState) : Event
-    fun resolveSelf(self: CharacterState) : Event
+    data class Outcome(val selfEvent : Event? = null, val targetEvents: List<Event>)
+    fun resolveOutcome(executor: CharacterState, targets: List<CharacterState>) : Outcome
     fun canTarget(executor: CharacterState, target: Target): Boolean
 
     data class NoOutcomeAction(
@@ -126,17 +122,29 @@ sealed interface Action {
         override val resourceCost: Int,
         override val classRestriction: List<Class>,
     ) : Action {
+        override fun resolveOutcome(executor: CharacterState, targets: List<CharacterState>): Outcome {
+            return Outcome(targetEvents = listOf())
+        }
 
         override fun canTarget(executor: CharacterState, target: Target): Boolean {
             return target is Target.Self
         }
 
-        override fun resolveTarget(executor: CharacterState, target: CharacterState) : Event {
-            return Event.NoEvent(updatedTarget = executor)
+    }
+
+    data class SelfSupport(
+        val resolution: Resolution.SupportResolution,
+        override val name: String,
+        override val movement: Movement,
+        override val resourceCost: Int,
+        override val classRestriction: List<Class>
+    ) : Action {
+        override fun resolveOutcome(executor: CharacterState, targets: List<CharacterState>): Outcome {
+            return Outcome(selfEvent = resolution.resolve(executor = executor, target = executor), targetEvents = listOf())
         }
 
-        override fun resolveSelf(self: CharacterState): Event {
-            return Event.NoEvent(updatedTarget = self)
+        override fun canTarget(executor: CharacterState, target: Target): Boolean {
+            return target is Target.Self
         }
     }
 
@@ -145,30 +153,17 @@ sealed interface Action {
         val resolution: Resolution
         val selfResolution: Resolution.SupportResolution?
 
-        override fun resolveTarget(executor: CharacterState, target: CharacterState): Event {
-            return resolution.resolve(executor, target)
+        override fun resolveOutcome(executor: CharacterState, targets: List<CharacterState>): Outcome {
+            return Outcome(
+                selfEvent = selfResolution?.resolve(executor = executor, target = executor),
+                targetEvents = targets.map { resolution.resolve(executor = executor, target = it) }
+            )
         }
 
-        override fun resolveSelf(self: CharacterState): Event {
-            return selfResolution?.resolve(self, self) ?: Event.NoEvent(updatedTarget = self)
-        }
 
         sealed class SupportAction : OutcomeAction {
 
             abstract override val resolution: Resolution.SupportResolution
-
-            data class SelfSupport(
-                override val resolution: Resolution.SupportResolution,
-                override val selfResolution: Resolution.SupportResolution? = null,
-                override val name: String,
-                override val movement: Movement,
-                override val resourceCost: Int,
-                override val classRestriction: List<Class>
-            ) : SupportAction() {
-                override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                    return target is Target.Self
-                }
-            }
 
             sealed class SpellSupportAction : SupportAction() {
                 abstract val range: Int

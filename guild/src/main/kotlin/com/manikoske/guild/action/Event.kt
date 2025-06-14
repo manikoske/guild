@@ -10,10 +10,6 @@ sealed interface Event {
     sealed interface WeaponAttackEvent : Event
     sealed interface SpellAttackEvent : Event
 
-    data class NoEvent(
-        override val updatedTarget: CharacterState
-    ) : Event
-
     data class InitiativeRolled(
         override val updatedTarget: CharacterState,
         val initiativeRoll: InitiativeRoll

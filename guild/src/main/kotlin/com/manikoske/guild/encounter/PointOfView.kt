@@ -1,10 +1,13 @@
 package com.manikoske.guild.encounter
 
+
 data class PointOfView(
-    val taker: CharacterState,
-    val allies: List<CharacterState>,
-    val enemies: List<CharacterState>,
+    private val takerId: Int,
+    val characterStates: List<CharacterState>,
 ) {
+    val taker = characterStates.first {it.character.id == takerId}
+    val allies = characterStates.filter { it.character.id != takerId && it.allegiance == taker.allegiance }
+    val enemies = characterStates.filter { it.allegiance != taker.allegiance }
 
     fun allVantageNodes(battleground: Battleground): List<VantageNode> {
 
@@ -49,4 +52,16 @@ data class PointOfView(
         val requiredSpecialMovement: Int,
         val targets: List<Target>,
     )
+
+    fun updateWith(updatedCharacterStates: List<CharacterState>) : PointOfView {
+        return PointOfView(
+            takerId = takerId,
+            characterStates = (updatedCharacterStates + characterStates).distinctBy { it.character.id }
+        )
+    }
+
+    fun utility(): Double {
+        return allies.sumOf { it.utility() } - enemies.sumOf { it.utility() }
+    }
+
 }
