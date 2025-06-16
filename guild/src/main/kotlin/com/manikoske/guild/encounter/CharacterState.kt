@@ -19,6 +19,7 @@ data class CharacterState(
     val effects: Effects,
 ) {
 
+
     companion object {
 
         fun noEffects(): Effects {
@@ -55,11 +56,11 @@ data class CharacterState(
         }
     }
 
-    private fun currentHitPoints(): Int {
+    fun currentHitPoints(): Int {
         return character.maxHitPoints() - damageTaken
     }
 
-    private fun currentResources(): Int {
+    fun currentResources(): Int {
         return character.maxResources() - resourcesSpent
     }
 

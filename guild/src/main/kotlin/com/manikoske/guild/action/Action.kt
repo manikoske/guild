@@ -39,14 +39,14 @@ sealed interface Action {
                 range = 1
             ),
             NoOutcomeAction(
-                name = "Disengage",
-                movement = Movement(type = Movement.Type.Special, amount = 1),
+                name = "Dash",
+                movement = Movement(type = Movement.Type.Normal, amount = 2),
                 resourceCost = 0,
                 classRestriction = noClassRestriction
             ),
             NoOutcomeAction(
-                name = "Dash",
-                movement = Movement(type = Movement.Type.Normal, amount = 2),
+                name = "Disengage",
+                movement = Movement(type = Movement.Type.Special, amount = 1),
                 resourceCost = 0,
                 classRestriction = noClassRestriction
             ),
@@ -214,9 +214,11 @@ sealed interface Action {
 
         sealed class AttackAction : OutcomeAction {
 
-            abstract override val resolution: Resolution.AttackResolution
+
 
             sealed class WeaponAttack : AttackAction() {
+
+                abstract override val resolution: Resolution.AttackResolution.WeaponDamageResolution
 
                 data class WeaponSingleAttack(
                     override val resolution: Resolution.AttackResolution.WeaponDamageResolution,
@@ -225,6 +227,7 @@ sealed interface Action {
                     override val movement: Movement,
                     override val resourceCost: Int,
                     override val classRestriction: List<Class>,
+
                 ) : WeaponAttack() {
 
                     // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
@@ -267,6 +270,7 @@ sealed interface Action {
 
             sealed class SpellAttack : AttackAction() {
                 abstract val range: Int
+                abstract override val resolution: Resolution.AttackResolution.SpellDamageResolution
 
                 data class SpellSingleAttack(
                     override val resolution: Resolution.AttackResolution.SpellDamageResolution,

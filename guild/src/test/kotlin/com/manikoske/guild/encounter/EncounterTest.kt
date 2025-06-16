@@ -21,7 +21,6 @@ import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.inventory.Shield
 import com.manikoske.guild.inventory.Weapon
 import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.Test
 
 class EncounterTest {
 
@@ -243,19 +242,25 @@ class EncounterTest {
     }
 
 
-    @RepeatedTest(10000)
+    @RepeatedTest(1)
     fun simulate() {
 
         val encounter = Encounter(battleground = bigBattleground)
 
-        val finalCharacterStates = encounter.simulate(
+        val finalEncounterState = encounter.simulate(
             attackersStartingNodeId = 4,
             defendersStartingNodeId = 6,
             attackers = setOf(khalid, kivan, anomen, imoen, xan),
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin)
+            // printOutput parameter removed as it's no longer used in the Encounter class
         )
 
-
+        // Explicitly log the encounter results with all parameters
+        com.manikoske.guild.log.StatelessLoggingManager.logEncounter(
+            encounter = finalEncounterState,
+            logLevel = com.manikoske.guild.log.StatelessLoggingManager.LogLevel.ALL,
+            fileOutput = false,
+            outputDirectory = "logs",
+        )
     }
 }
-

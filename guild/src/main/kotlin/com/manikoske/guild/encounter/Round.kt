@@ -25,8 +25,9 @@ data class Round(
             ) { roundState, turnTakerId ->
                 if (roundState.hasNoWinner()) {
 
-                    val turn = Turn(PointOfView(takerId = turnTakerId, characterStates = roundState.updatedCharacterStates))
-                        .simulate(battleground)
+                    val turn =
+                        Turn(PointOfView(takerId = turnTakerId, characterStates = roundState.updatedCharacterStates))
+                            .simulate(battleground)
 
                     roundState.copy(
                         updatedCharacterStates = turn.updatedCharacterStates,
@@ -40,9 +41,9 @@ data class Round(
 
     data class State(
         val sequence: Int,
-        val updatedCharacterStates : List<CharacterState>,
+        val updatedCharacterStates: List<CharacterState>,
         val initiativeRolls: List<Event.InitiativeRolled>,
-        val turns : List<Turn.State>
+        val turns: List<Turn.State>
     ) {
         fun hasNoWinner(): Boolean {
             return updatedCharacterStates.any { it.allegiance == CharacterState.Allegiance.Attacker && !it.isDying() } &&

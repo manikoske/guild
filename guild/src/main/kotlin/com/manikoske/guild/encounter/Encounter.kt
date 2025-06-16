@@ -1,27 +1,20 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.character.Character
-import java.util.logging.Logger
 
 class Encounter(
-    private val battleground: Battleground,
+    private val battleground: Battleground
 ) {
-
-    companion object {
-        val LOG: Logger = Logger.getLogger(Encounter::class.java.name)
-    }
-
 
     fun simulate(
         attackers: Set<Character>,
         defenders: Set<Character>,
         attackersStartingNodeId: Int,
-        defendersStartingNodeId: Int,
+        defendersStartingNodeId: Int
     ): State {
-
-        return (1..20).fold(
-            State(
-                updatedCharacterStates =
+        // Create initial character states
+        val initialState = State(
+            updatedCharacterStates = 
                 attackers.map {
                     CharacterState(
                         character = it,
@@ -31,34 +24,36 @@ class Encounter(
                         resourcesSpent = 0,
                         effects = CharacterState.noEffects(),
                     )
-                }
-                        +
-                        defenders.map {
-                            CharacterState(
-                                character = it,
-                                positionNodeId = defendersStartingNodeId,
-                                allegiance = CharacterState.Allegiance.Defender,
-                                damageTaken = 0,
-                                resourcesSpent = 0,
-                                effects = CharacterState.noEffects(),
-                            )
-                        },
-                rounds = listOf()
-            )
-        ) { encounterState, roundSequence ->
+                } +
+                defenders.map {
+                    CharacterState(
+                        character = it,
+                        positionNodeId = defendersStartingNodeId,
+                        allegiance = CharacterState.Allegiance.Defender,
+                        damageTaken = 0,
+                        resourcesSpent = 0,
+                        effects = CharacterState.noEffects(),
+                    )
+                },
+            rounds = listOf()
+        )
 
+        // Run the simulation without logging
+        val result = (1..20).fold(initialState) { encounterState, roundSequence ->
             val round = Round(sequence = roundSequence, characterStates = encounterState.updatedCharacterStates)
                 .simulate(battleground)
 
             if (round.turns.isEmpty()) {
-                return encounterState
+                encounterState
             } else {
-                return State(
+                State(
                     updatedCharacterStates = round.updatedCharacterStates,
                     rounds = encounterState.rounds + round
                 )
             }
         }
+
+        return result
     }
 
     data class State(

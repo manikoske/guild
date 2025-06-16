@@ -34,11 +34,13 @@ data class Turn(
 
         val best = possibleTurnStates.maxBy { it.utility }
 
-        return best.action.execute(
+        val result = best.action.execute(
             pointOfView = pointOfView,
             target = best.target,
             newPositionNodeId = best.actionTaken.newPositionNodeId
         )
+
+        return result
     }
 
     data class State(
