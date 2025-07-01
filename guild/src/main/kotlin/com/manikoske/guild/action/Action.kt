@@ -59,7 +59,7 @@ sealed interface Action {
             classRestriction = noClassRestriction
         )
 
-        val standUp = SelfSupport(
+        val standUp = SelfSupportAction(
             name = "Stand Up",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
@@ -132,7 +132,7 @@ sealed interface Action {
 
     }
 
-    data class SelfSupport(
+    data class SelfSupportAction(
         val resolution: Resolution.SupportResolution,
         override val name: String,
         override val movement: Movement,

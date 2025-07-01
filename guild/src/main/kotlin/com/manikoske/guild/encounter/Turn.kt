@@ -18,6 +18,11 @@ data class Turn(
             allVantageNodes
                 .filter { vantageNode -> executableAction.canAccess(pointOfView.taker, vantageNode) }
                 .forEach { accessibleVantageNode ->
+                    when (executableAction) {
+                        is Action.NoOutcomeAction -> TODO()
+                        is Action.SelfSupportAction -> TODO()
+                        is Action.OutcomeAction -> TODO ()
+                    }
                     accessibleVantageNode.targets
                         .filter { target -> executableAction.canTarget(pointOfView.taker, target) }
                         .forEach { validTarget ->

@@ -41,6 +41,24 @@ sealed interface Event {
         val newPositionNodeId: Int
     ) : Event
 
+    data class NoOutcomeActionTaken(
+        override val updatedTarget: CharacterState,
+        val resourceCost: Int,
+        val newPositionNodeId: Int
+    ) : Event
+
+    data class SelfSupportActionTaken(
+        override val updatedTarget: CharacterState,
+        val resourceCost: Int,
+        val newPositionNodeId: Int
+    ) : Event
+
+    data class OutcomeActionTaken(
+        override val updatedTarget: CharacterState,
+        val resourceCost: Int,
+        val newPositionNodeId: Int
+    ) : Event
+
     data class EffectsTicked(
         override val updatedTarget: CharacterState,
         val removedEffects: List<Effect>,
