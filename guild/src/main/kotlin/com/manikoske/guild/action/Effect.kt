@@ -1,7 +1,6 @@
 package com.manikoske.guild.action
 
 import com.manikoske.guild.rules.Die
-import com.manikoske.guild.rules.Rollable
 import kotlin.math.max
 
 
@@ -203,7 +202,7 @@ sealed interface Effect {
             }
 
             override fun restrictedAction(action: Action): Boolean {
-                return action is Action.OutcomeAction.AttackAction.WeaponAttack
+                return action is Action.TargetedAction.AttackAction.WeaponAttack
             }
 
             override val category: Category
@@ -219,7 +218,7 @@ sealed interface Effect {
             }
 
             override fun restrictedAction(action: Action): Boolean {
-                return action is Action.OutcomeAction.AttackAction.WeaponAttack
+                return action is Action.TargetedAction.AttackAction.WeaponAttack
             }
 
             override val category: Category

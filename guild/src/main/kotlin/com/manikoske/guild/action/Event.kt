@@ -1,63 +1,63 @@
 package com.manikoske.guild.action
 
 import com.manikoske.guild.encounter.CharacterState
+import com.manikoske.guild.encounter.Target
 import com.manikoske.guild.rules.Die
 
 sealed interface Event {
 
     val updatedTarget: CharacterState
 
-    sealed interface WeaponAttackEvent : Event
-    sealed interface SpellAttackEvent : Event
+    sealed interface ResolutionEvent : Event
+
+    sealed interface WeaponAttackEvent : ResolutionEvent
+    sealed interface SpellAttackEvent : ResolutionEvent
+    sealed interface MovementEvent : ResolutionEvent
+    sealed interface ResourcesEvent : ResolutionEvent
 
     data class InitiativeRolled(
         override val updatedTarget: CharacterState,
         val initiativeRoll: InitiativeRoll
     ) : Event
 
+
+    data class Moved(
+        override val updatedTarget: CharacterState,
+        val newPositionNodeId: Int
+    ) : MovementEvent
+
+    data class DidNotMove(
+        override val updatedTarget: CharacterState,
+    ) : MovementEvent
+
     data class Healed(
         override val updatedTarget: CharacterState,
         val healRoll: HealRoll
-    ) : Event
+    ) : ResolutionEvent
 
     data class EffectAdded(
         override val updatedTarget: CharacterState,
         val category: Effect.Category
-    ) : Event
+    ) : ResolutionEvent
 
     data class EffectRemoved(
         override val updatedTarget: CharacterState,
         val category: Effect.Category
-    ) : Event
+    ) : ResolutionEvent
 
-    data class ResourceBoosted(
+    data class ResourceGained(
         override val updatedTarget: CharacterState,
         val amount: Int
-    ) : Event
+    ) : ResourcesEvent
 
-    data class ActionTaken(
+    data class ResourcesSpent(
         override val updatedTarget: CharacterState,
-        val resourceCost: Int,
-        val newPositionNodeId: Int
-    ) : Event
+        val amount: Int
+    ) : ResourcesEvent
 
-    data class NoOutcomeActionTaken(
+    data class NoResourcesSpent(
         override val updatedTarget: CharacterState,
-        val resourceCost: Int,
-        val newPositionNodeId: Int
-    ) : Event
-
-    data class SelfSupportActionTaken(
-        override val updatedTarget: CharacterState,
-        val resourceCost: Int,
-        val newPositionNodeId: Int
-    ) : Event
-
-    data class OutcomeActionTaken(
-        override val updatedTarget: CharacterState,
-        val resourceCost: Int,
-        val newPositionNodeId: Int
-    ) : Event
+    ) : ResourcesEvent
 
     data class EffectsTicked(
         override val updatedTarget: CharacterState,

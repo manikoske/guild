@@ -3,13 +3,11 @@ package com.manikoske.guild.log
 import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Effect
 import com.manikoske.guild.action.Event
-import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.encounter.CharacterState
 import com.manikoske.guild.encounter.Encounter
 import com.manikoske.guild.encounter.Round
 import com.manikoske.guild.encounter.Target
 import com.manikoske.guild.encounter.Turn
-import com.manikoske.guild.action.Resolution
 
 /**
  * An enhanced logger that provides detailed information about combat events
@@ -293,48 +291,48 @@ object DetailedCombatLogger {
 
         // Show resolution details based on action type
         when (action) {
-            is Action.OutcomeAction.AttackAction.WeaponAttack.WeaponSingleAttack -> {
+            is Action.TargetedAction.AttackAction.WeaponAttack.WeaponSingleAttack -> {
                 val resolution = action.resolution
                 println("    ${italic("Attack Modifier:")} ${formatModifier(resolution.attackRollModifier)}")
                 println("    ${italic("Damage Multiplier:")} ${resolution.damageRollMultiplier}x")
             }
-            is Action.OutcomeAction.AttackAction.WeaponAttack.WeaponDoubleAttack -> {
+            is Action.TargetedAction.AttackAction.WeaponAttack.WeaponDoubleAttack -> {
                 val resolution = action.resolution
                 println("    ${italic("Attack Modifier:")} ${formatModifier(resolution.attackRollModifier)}")
                 println("    ${italic("Damage Multiplier:")} ${resolution.damageRollMultiplier}x")
             }
-            is Action.OutcomeAction.AttackAction.WeaponAttack.WeaponNodeAttack -> {
+            is Action.TargetedAction.AttackAction.WeaponAttack.WeaponNodeAttack -> {
                 val resolution = action.resolution
                 println("    ${italic("Attack Modifier:")} ${formatModifier(resolution.attackRollModifier)}")
                 println("    ${italic("Damage Multiplier:")} ${resolution.damageRollMultiplier}x")
             }
-            is Action.OutcomeAction.AttackAction.SpellAttack.SpellSingleAttack -> {
+            is Action.TargetedAction.AttackAction.SpellAttack.SpellSingleAttack -> {
                 val resolution = action.resolution
                 println("    ${italic("Spell DC:")} ${resolution.baseDifficultyClass}")
                 println("    ${italic("Range:")} ${action.range}")
                 println("    ${italic("Executor Attribute:")} ${resolution.executorAttributeType}")
                 println("    ${italic("Target Attribute:")} ${resolution.targetAttributeType}")
             }
-            is Action.OutcomeAction.AttackAction.SpellAttack.SpellDoubleAttack -> {
+            is Action.TargetedAction.AttackAction.SpellAttack.SpellDoubleAttack -> {
                 val resolution = action.resolution
                 println("    ${italic("Spell DC:")} ${resolution.baseDifficultyClass}")
                 println("    ${italic("Range:")} ${action.range}")
                 println("    ${italic("Executor Attribute:")} ${resolution.executorAttributeType}")
                 println("    ${italic("Target Attribute:")} ${resolution.targetAttributeType}")
             }
-            is Action.OutcomeAction.AttackAction.SpellAttack.SpellNodeAttack -> {
+            is Action.TargetedAction.AttackAction.SpellAttack.SpellNodeAttack -> {
                 val resolution = action.resolution
                 println("    ${italic("Spell DC:")} ${resolution.baseDifficultyClass}")
                 println("    ${italic("Range:")} ${action.range}")
                 println("    ${italic("Executor Attribute:")} ${resolution.executorAttributeType}")
                 println("    ${italic("Target Attribute:")} ${resolution.targetAttributeType}")
             }
-            is Action.OutcomeAction.SupportAction -> {
+            is Action.TargetedAction.SupportAction -> {
                 // Show support details if they are accessible
                 println("    ${italic("Support Action Type:")} ${action.name}")
                 // Additional details could be shown here if resolution details are accessible
             }
-            is Action.NoOutcomeAction -> {
+            is Action.NoResolutionAction -> {
                 println("    ${italic("No Outcome Action:")} ${action.name}")
             }
             else -> {
@@ -347,19 +345,19 @@ object DetailedCombatLogger {
         return when (target) {
             is Target.Self -> "Self"
             is Target.SingleAlly -> {
-                val ally = target.others.first()
+                val ally = target.targetedCharacterStates.first()
                 "Ally ${bold(ally.character.bio.name)} (range: ${target.range})"
             }
             is Target.SingleEnemy -> {
-                val enemy = target.others.first()
+                val enemy = target.targetedCharacterStates.first()
                 "Enemy ${bold(enemy.character.bio.name)} (range: ${target.range})"
             }
             is Target.DoubleAlly -> {
-                val allies = target.others.joinToString(", ") { bold(it.character.bio.name) }
+                val allies = target.targetedCharacterStates.joinToString(", ") { bold(it.character.bio.name) }
                 "Allies: $allies (range: ${target.range})"
             }
             is Target.DoubleEnemy -> {
-                val enemies = target.others.joinToString(", ") { bold(it.character.bio.name) }
+                val enemies = target.targetedCharacterStates.joinToString(", ") { bold(it.character.bio.name) }
                 "Enemies: $enemies (range: ${target.range})"
             }
             is Target.NodeAlly -> "Node Allies (range: ${target.range})"

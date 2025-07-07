@@ -144,6 +144,22 @@ data class CharacterState(
         )
     }
 
+    fun actionMove(newPositionNodeId: Int) : Event.MovementEvent {
+        return if (newPositionNodeId == positionNodeId) {
+            Event.DidNotMove(updatedTarget = this)
+        } else {
+            Event.Moved(updatedTarget = moveTo(newPositionNodeId), newPositionNodeId = newPositionNodeId)
+        }
+    }
+
+    fun spendActionResources(amount: Int) : Event.ResourcesEvent {
+        return if (amount > 0) {
+            Event.ResourcesSpent(updatedTarget = spendResources(amount), amount = amount)
+        } else {
+            Event.NoResourcesSpent(updatedTarget = this)
+        }
+    }
+
     fun attackBy(
         attacker: CharacterState,
         baseDifficultyClass: Int,
@@ -267,19 +283,6 @@ data class CharacterState(
         }
     }
 
-    fun takeAction(
-        newPositionNodeId: Int,
-        resourceCost: Int
-    ) : Event.ActionTaken {
-        return Event.ActionTaken(
-            updatedTarget = this
-                .moveTo(newPositionNodeId)
-                .spendResources(resourceCost),
-            resourceCost = resourceCost,
-            newPositionNodeId = newPositionNodeId
-        )
-    }
-
     fun tickEffects(): Event.EffectsTicked {
         val healOverTimeRolls =
             effects.healOverTimeEffects.map {
@@ -312,8 +315,8 @@ data class CharacterState(
         )
     }
 
-    fun boostResources(amount: Int) : Event.ResourceBoosted {
-        return Event.ResourceBoosted(
+    fun boostResources(amount: Int) : Event.ResourceGained {
+        return Event.ResourceGained(
             updatedTarget = this.gainResources(amount),
             amount = amount
         )

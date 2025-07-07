@@ -6,7 +6,7 @@ import com.manikoske.guild.rules.Die
 
 sealed interface Resolution {
 
-    fun resolve(executor: CharacterState, target: CharacterState): Event
+    fun resolve(executor: CharacterState, target: CharacterState): Event.ResolutionEvent
 
     sealed interface AttackResolution : Resolution {
 
@@ -47,6 +47,22 @@ sealed interface Resolution {
         }
     }
 
+    data class MovementResolution(
+        val newPositionNodeId: Int
+    ) : Resolution {
+        override fun resolve(executor: CharacterState, target: CharacterState): Event.MovementEvent {
+            return target.actionMove(newPositionNodeId)
+        }
+    }
+
+    data class ResourcesResolution(
+        val amount: Int
+    ) : Resolution {
+        override fun resolve(executor: CharacterState, target: CharacterState): Event.ResourcesEvent {
+            return target.spendActionResources(amount)
+        }
+    }
+
     sealed interface SupportResolution : Resolution {
 
         data class Healing(
@@ -58,10 +74,10 @@ sealed interface Resolution {
             }
         }
 
-        data class ResourceBoost(
+        data class ResourceGain(
             val amount: Int
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): Event.ResourceBoosted {
+            override fun resolve(executor: CharacterState, target: CharacterState): Event.ResourceGained {
                 return target.boostResources(amount)
             }
         }
@@ -83,6 +99,7 @@ sealed interface Resolution {
                 return target.addEffect(effect)
             }
         }
+
     }
 
 

@@ -1,6 +1,5 @@
 package com.manikoske.guild.log
 
-import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Effect
 import com.manikoske.guild.action.Event
 import com.manikoske.guild.encounter.CharacterState
@@ -8,7 +7,6 @@ import com.manikoske.guild.encounter.Encounter
 import com.manikoske.guild.encounter.Round
 import com.manikoske.guild.encounter.Target
 import com.manikoske.guild.encounter.Turn
-import com.manikoske.guild.rules.Die
 
 /**
  * A logger that formats and prints combat events to the terminal
@@ -154,10 +152,10 @@ object CombatLogger {
     private fun formatTargetInfo(target: Target): String {
         return when (target) {
             is Target.Self -> "Self"
-            is Target.SingleAlly -> formatSingleTarget("Ally", target.others.first(), target.range)
-            is Target.SingleEnemy -> formatSingleTarget("Enemy", target.others.first(), target.range)
-            is Target.DoubleAlly -> formatMultipleTargets("Allies", target.others, target.range)
-            is Target.DoubleEnemy -> formatMultipleTargets("Enemies", target.others, target.range)
+            is Target.SingleAlly -> formatSingleTarget("Ally", target.targetedCharacterStates.first(), target.range)
+            is Target.SingleEnemy -> formatSingleTarget("Enemy", target.targetedCharacterStates.first(), target.range)
+            is Target.DoubleAlly -> formatMultipleTargets("Allies", target.targetedCharacterStates, target.range)
+            is Target.DoubleEnemy -> formatMultipleTargets("Enemies", target.targetedCharacterStates, target.range)
             is Target.NodeAlly -> formatNodeTarget("Node Allies", target.range)
             is Target.NodeEnemy -> formatNodeTarget("Node Enemies", target.range)
             is Target.NodeEveryone -> formatNodeTarget("Everyone in node", target.range)

@@ -5,6 +5,7 @@ import com.manikoske.guild.character.Class
 import com.manikoske.guild.encounter.*
 import com.manikoske.guild.encounter.Target
 import com.manikoske.guild.rules.Die
+import kotlin.collections.plus
 
 sealed interface Action {
 
@@ -13,7 +14,7 @@ sealed interface Action {
         val noClassRestriction = listOf(Class.Fighter, Class.Rogue, Class.Ranger, Class.Cleric, Class.Wizard)
 
         val basicActions = listOf(
-            OutcomeAction.AttackAction.WeaponAttack.WeaponSingleAttack(
+            TargetedAction.AttackAction.WeaponAttack.WeaponSingleAttack(
                 name = "Basic Attack",
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
                 classRestriction = noClassRestriction,
@@ -24,7 +25,7 @@ sealed interface Action {
                     effectsOnHit = listOf()
                 ),
             ),
-            OutcomeAction.AttackAction.SpellAttack.SpellSingleAttack(
+            TargetedAction.AttackAction.SpellAttack.SpellSingleAttack(
                 name = "Cantrip",
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
                 classRestriction = listOf(Class.Wizard),
@@ -38,42 +39,42 @@ sealed interface Action {
                 ),
                 range = 1
             ),
-            NoOutcomeAction(
+            SelfAction(
                 name = "Dash",
                 movement = Movement(type = Movement.Type.Normal, amount = 2),
                 resourceCost = 0,
-                classRestriction = noClassRestriction
+                classRestriction = noClassRestriction,
             ),
-            NoOutcomeAction(
+            SelfAction(
                 name = "Disengage",
                 movement = Movement(type = Movement.Type.Special, amount = 1),
                 resourceCost = 0,
-                classRestriction = noClassRestriction
+                classRestriction = noClassRestriction,
             ),
         )
 
-        val noAction = NoOutcomeAction(
+        val noAction = SelfAction(
             name = "No Action",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
-            classRestriction = noClassRestriction
+            classRestriction = noClassRestriction,
         )
 
-        val standUp = SelfSupportAction(
+        val standUp = SelfAction(
             name = "Stand Up",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
             classRestriction = noClassRestriction,
-            resolution = Resolution.SupportResolution.RemoveEffect(
+            selfResolution = Resolution.SupportResolution.RemoveEffect(
                 effect = Effect.ActionForcingEffect.Prone(dummy = 1)
             )
         )
 
-        val fightForLife = NoOutcomeAction(
+        val fightForLife = SelfAction(
             name = "Fight For Life",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
-            classRestriction = noClassRestriction
+            classRestriction = noClassRestriction,
         )
     }
 
@@ -81,29 +82,7 @@ sealed interface Action {
     val movement: Movement
     val resourceCost: Int
     val classRestriction: List<Class>
-
-    fun execute(
-        pointOfView: PointOfView,
-        target: Target,
-        newPositionNodeId: Int
-    ): Turn.State {
-
-        val actionTaken =
-            pointOfView.taker.takeAction(newPositionNodeId = newPositionNodeId, resourceCost = resourceCost)
-        val outcome = resolveOutcome(executor = actionTaken.updatedTarget, targets = target.others)
-        val effectsTicked = (outcome.selfEvent?.updatedTarget ?: actionTaken.updatedTarget).tickEffects()
-        val updatedPointOfView = pointOfView.updateWith(outcome.targetEvents.map { it.updatedTarget } + effectsTicked.updatedTarget)
-
-        return Turn.State(
-            updatedCharacterStates = updatedPointOfView.characterStates,
-            action = this,
-            target = target,
-            actionTaken = actionTaken,
-            outcome = outcome,
-            effectsTicked = effectsTicked,
-            utility = updatedPointOfView.utility()
-        )
-    }
+    val selfResolution : Resolution.SupportResolution?
 
     fun canAccess(executor: CharacterState, vantageNode: PointOfView.VantageNode) : Boolean {
         return when (movement.type) {
@@ -112,56 +91,78 @@ sealed interface Action {
         }
     }
 
-    data class Outcome(val selfEvent : Event? = null, val targetEvents: List<Event>)
-    fun resolveOutcome(executor: CharacterState, targets: List<CharacterState>) : Outcome
-    fun canTarget(executor: CharacterState, target: Target): Boolean
-
-    data class NoOutcomeAction(
-        override val name: String,
-        override val movement: Movement,
-        override val resourceCost: Int,
-        override val classRestriction: List<Class>,
-    ) : Action {
-        override fun resolveOutcome(executor: CharacterState, targets: List<CharacterState>): Outcome {
-            return Outcome(targetEvents = listOf())
-        }
-
-        override fun canTarget(executor: CharacterState, target: Target): Boolean {
-            return target is Target.Self
-        }
-
+    fun executeSelfResolution(taker: CharacterState, newPositionNodeId: Int) : List<Event.ResolutionEvent> {
+        val movementEvent = Resolution.MovementResolution(newPositionNodeId).resolve(executor = taker, target = taker)
+        val resourcesEvent = Resolution.ResourcesResolution(this.resourceCost).resolve(executor = movementEvent.updatedTarget, target = movementEvent.updatedTarget)
+        val selfResolutionEvent = selfResolution?.resolve(executor = resourcesEvent.updatedTarget, target = resourcesEvent.updatedTarget)
+        return listOf(movementEvent, resourcesEvent) + listOfNotNull(selfResolutionEvent)
     }
 
-    data class SelfSupportAction(
-        val resolution: Resolution.SupportResolution,
+    sealed interface Outcome {
+        val actionName: String
+        val selfResolutionEvents: List<Event.ResolutionEvent>
+    }
+
+    data class TargetedActionOutcome(
+        override val actionName: String,
+        override val selfResolutionEvents: List<Event.ResolutionEvent>,
+        val target: Target,
+        val targetEvents: List<Event.ResolutionEvent>,
+    ) : Outcome
+
+    data class SelfActionOutcome(
+        override val actionName: String,
+        override val selfResolutionEvents: List<Event.ResolutionEvent>,
+    ) : Outcome
+
+    data class SelfAction(
+        override val selfResolution: Resolution.SupportResolution? = null,
         override val name: String,
         override val movement: Movement,
         override val resourceCost: Int,
         override val classRestriction: List<Class>
     ) : Action {
-        override fun resolveOutcome(executor: CharacterState, targets: List<CharacterState>): Outcome {
-            return Outcome(selfEvent = resolution.resolve(executor = executor, target = executor), targetEvents = listOf())
-        }
 
-        override fun canTarget(executor: CharacterState, target: Target): Boolean {
-            return target is Target.Self
+        fun execute(
+            executor: CharacterState,
+            newPositionNodeId: Int
+        ) : SelfActionOutcome {
+
+            val selfResolutionEvents = executeSelfResolution(taker = executor, newPositionNodeId = newPositionNodeId)
+
+            return SelfActionOutcome(
+                actionName = this.name,
+                selfResolutionEvents = selfResolutionEvents,
+            )
         }
     }
 
-    sealed interface OutcomeAction : Action {
+    sealed interface TargetedAction : Action {
 
         val resolution: Resolution
-        val selfResolution: Resolution.SupportResolution?
+        override val selfResolution: Resolution.SupportResolution?
 
-        override fun resolveOutcome(executor: CharacterState, targets: List<CharacterState>): Outcome {
-            return Outcome(
-                selfEvent = selfResolution?.resolve(executor = executor, target = executor),
-                targetEvents = targets.map { resolution.resolve(executor = executor, target = it) }
+        fun canTarget(executor: CharacterState, target: Target): Boolean
+
+        fun execute(
+            executor: CharacterState,
+            target: Target,
+            newPositionNodeId: Int
+        ) : TargetedActionOutcome {
+
+            val selfResolutionEvents = executeSelfResolution(taker = executor, newPositionNodeId = newPositionNodeId)
+            val targetEvents = target.targetedCharacterStates
+                .map { resolution.resolve(executor = selfResolutionEvents.last().updatedTarget, target = it) }
+
+            return TargetedActionOutcome(
+                actionName = this.name,
+                target = target,
+                selfResolutionEvents = selfResolutionEvents,
+                targetEvents = targetEvents,
             )
         }
 
-
-        sealed class SupportAction : OutcomeAction {
+        sealed class SupportAction : TargetedAction {
 
             abstract override val resolution: Resolution.SupportResolution
 
@@ -171,7 +172,7 @@ sealed interface Action {
                 data class SingleSpellSupport(
                     override val resolution: Resolution.SupportResolution,
                     override val range: Int,
-                    override val selfResolution: Resolution.SupportResolution? = null,
+                    override val selfResolution: Resolution.SupportResolution,
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
@@ -185,7 +186,7 @@ sealed interface Action {
                 data class DoubleSpellSupport(
                     override val resolution: Resolution.SupportResolution,
                     override val range: Int,
-                    override val selfResolution: Resolution.SupportResolution? = null,
+                    override val selfResolution: Resolution.SupportResolution,
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
@@ -199,7 +200,7 @@ sealed interface Action {
                 data class NodeSpellSupport(
                     override val resolution: Resolution.SupportResolution,
                     override val range: Int,
-                    override val selfResolution: Resolution.SupportResolution? = null,
+                    override val selfResolution: Resolution.SupportResolution,
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
@@ -212,9 +213,7 @@ sealed interface Action {
             }
         }
 
-        sealed class AttackAction : OutcomeAction {
-
-
+        sealed class AttackAction : TargetedAction {
 
             sealed class WeaponAttack : AttackAction() {
 
