@@ -144,20 +144,12 @@ data class CharacterState(
         )
     }
 
-    fun actionMove(newPositionNodeId: Int) : Event.MovementEvent {
-        return if (newPositionNodeId == positionNodeId) {
-            Event.DidNotMove(updatedTarget = this)
-        } else {
-            Event.Moved(updatedTarget = moveTo(newPositionNodeId), newPositionNodeId = newPositionNodeId)
-        }
-    }
-
-    fun spendActionResources(amount: Int) : Event.ResourcesEvent {
-        return if (amount > 0) {
-            Event.ResourcesSpent(updatedTarget = spendResources(amount), amount = amount)
-        } else {
-            Event.NoResourcesSpent(updatedTarget = this)
-        }
+    fun startAction(newPositionNodeId: Int, resourcesSpent: Int) : Event.ActionStarted {
+        return Event.ActionStarted(
+            updatedTarget = moveTo(newPositionNodeId).spendResources(resourcesSpent),
+            newPositionNodeId = newPositionNodeId,
+            resourcesSpent = resourcesSpent
+        )
     }
 
     fun attackBy(
@@ -283,7 +275,7 @@ data class CharacterState(
         }
     }
 
-    fun tickEffects(): Event.EffectsTicked {
+    fun endAction(): Event.ActionEnded {
         val healOverTimeRolls =
             effects.healOverTimeEffects.map {
                 Event.HealOverTimeRoll(
@@ -302,7 +294,7 @@ data class CharacterState(
         val removedEffects = effects.all().filter { it.tick() == null }
         val updatedEffects = effects.all().mapNotNull { it.tick() }
 
-        return Event.EffectsTicked(
+        return Event.ActionEnded(
             updatedTarget = this
                 .heal(healOverTimeRolls.sumOf { it.roll.rolled })
                 .takeDamage(damageOverTimeRolls.sumOf { it.roll.rolled })
@@ -315,8 +307,8 @@ data class CharacterState(
         )
     }
 
-    fun boostResources(amount: Int) : Event.ResourceGained {
-        return Event.ResourceGained(
+    fun boostResources(amount: Int) : Event.ResourceBoosted {
+        return Event.ResourceBoosted(
             updatedTarget = this.gainResources(amount),
             amount = amount
         )

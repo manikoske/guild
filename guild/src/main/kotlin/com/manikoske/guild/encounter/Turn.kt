@@ -49,7 +49,7 @@ data class Turn(
             updatedCharacterStates = ,
             taker = pointOfView.taker,
             outcome = best,
-            effectsTicked = best.selfEvent.updatedTarget.tickEffects()
+            actionEnded = best.selfEvent.updatedTarget.tickEffects()
         )
     }
 
@@ -57,7 +57,7 @@ data class Turn(
         val updatedCharacterStates: List<CharacterState>,
         val taker: CharacterState,
         val outcome: Action.Outcome,
-        val effectsTicked: Event.EffectsTicked
+        val actionEnded: Event.ActionEnded
     )
 
 }

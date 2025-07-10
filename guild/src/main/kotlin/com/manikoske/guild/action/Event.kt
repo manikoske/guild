@@ -1,7 +1,6 @@
 package com.manikoske.guild.action
 
 import com.manikoske.guild.encounter.CharacterState
-import com.manikoske.guild.encounter.Target
 import com.manikoske.guild.rules.Die
 
 sealed interface Event {
@@ -12,8 +11,6 @@ sealed interface Event {
 
     sealed interface WeaponAttackEvent : ResolutionEvent
     sealed interface SpellAttackEvent : ResolutionEvent
-    sealed interface MovementEvent : ResolutionEvent
-    sealed interface ResourcesEvent : ResolutionEvent
 
     data class InitiativeRolled(
         override val updatedTarget: CharacterState,
@@ -21,14 +18,19 @@ sealed interface Event {
     ) : Event
 
 
-    data class Moved(
+    data class ActionStarted(
         override val updatedTarget: CharacterState,
-        val newPositionNodeId: Int
-    ) : MovementEvent
+        val newPositionNodeId: Int,
+        val resourcesSpent: Int,
+    ) : Event
 
-    data class DidNotMove(
+    data class ActionEnded(
         override val updatedTarget: CharacterState,
-    ) : MovementEvent
+        val removedEffects: List<Effect>,
+        val updatedEffects: List<Effect>,
+        val damageOverTimeRolls: List<DamageOverTimeRoll>,
+        val healOverTimeRolls: List<HealOverTimeRoll>,
+    ) : Event
 
     data class Healed(
         override val updatedTarget: CharacterState,
@@ -45,27 +47,10 @@ sealed interface Event {
         val category: Effect.Category
     ) : ResolutionEvent
 
-    data class ResourceGained(
+    data class ResourceBoosted(
         override val updatedTarget: CharacterState,
         val amount: Int
-    ) : ResourcesEvent
-
-    data class ResourcesSpent(
-        override val updatedTarget: CharacterState,
-        val amount: Int
-    ) : ResourcesEvent
-
-    data class NoResourcesSpent(
-        override val updatedTarget: CharacterState,
-    ) : ResourcesEvent
-
-    data class EffectsTicked(
-        override val updatedTarget: CharacterState,
-        val removedEffects: List<Effect>,
-        val updatedEffects: List<Effect>,
-        val damageOverTimeRolls: List<DamageOverTimeRoll>,
-        val healOverTimeRolls: List<HealOverTimeRoll>,
-    ) : Event
+    ) : ResolutionEvent
 
     data class WeaponAttackHit(
         override val updatedTarget: CharacterState,

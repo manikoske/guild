@@ -128,22 +128,22 @@ object CombatLogger {
         }
 
         // Log effects ticked
-        if (turn.effectsTicked.removedEffects.isNotEmpty() || turn.effectsTicked.updatedEffects.isNotEmpty()) {
+        if (turn.actionEnded.removedEffects.isNotEmpty() || turn.actionEnded.updatedEffects.isNotEmpty()) {
             println("  ${yellow("Effects Ticked:")}")
 
-            if (turn.effectsTicked.removedEffects.isNotEmpty()) {
-                println("    ${red("Removed:")} ${turn.effectsTicked.removedEffects.joinToString { formatEffect(it) }}")
+            if (turn.actionEnded.removedEffects.isNotEmpty()) {
+                println("    ${red("Removed:")} ${turn.actionEnded.removedEffects.joinToString { formatEffect(it) }}")
             }
 
-            if (turn.effectsTicked.updatedEffects.isNotEmpty()) {
-                println("    ${green("Updated:")} ${turn.effectsTicked.updatedEffects.joinToString { formatEffect(it) }}")
+            if (turn.actionEnded.updatedEffects.isNotEmpty()) {
+                println("    ${green("Updated:")} ${turn.actionEnded.updatedEffects.joinToString { formatEffect(it) }}")
             }
 
-            turn.effectsTicked.damageOverTimeRolls.forEach { roll ->
+            turn.actionEnded.damageOverTimeRolls.forEach { roll ->
                 println("    ${red("DoT (${formatCategory(roll.category)}):")} ${roll.roll.rolled} damage")
             }
 
-            turn.effectsTicked.healOverTimeRolls.forEach { roll ->
+            turn.actionEnded.healOverTimeRolls.forEach { roll ->
                 println("    ${green("HoT (${formatCategory(roll.category)}):")} ${roll.roll.rolled} healing")
             }
         }
@@ -219,7 +219,7 @@ object CombatLogger {
             is Event.EffectAdded -> purple(baseSummary)
             is Event.EffectRemoved -> yellow(baseSummary)
             is Event.ResourceBoosted -> blue(baseSummary)
-            is Event.ActionTaken, is Event.EffectsTicked, is Event.InitiativeRolled -> baseSummary
+            is Event.ActionTaken, is Event.ActionEnded, is Event.InitiativeRolled -> baseSummary
         }
     }
 

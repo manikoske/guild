@@ -101,7 +101,7 @@ object DetailedCombatLogger {
                     }
                 }
                 // Include DoT damage
-                damage += turn.effectsTicked.damageOverTimeRolls.sumOf { it.roll.rolled }
+                damage += turn.actionEnded.damageOverTimeRolls.sumOf { it.roll.rolled }
             }
         }
         return damage
@@ -115,7 +115,7 @@ object DetailedCombatLogger {
                     if (event is Event.Healed) healing += event.healRoll.heal
                 }
                 // Include HoT healing
-                healing += turn.effectsTicked.healOverTimeRolls.sumOf { it.roll.rolled }
+                healing += turn.actionEnded.healOverTimeRolls.sumOf { it.roll.rolled }
             }
         }
         return healing
@@ -259,7 +259,7 @@ object DetailedCombatLogger {
         }
 
         // Log effects ticked with enhanced details
-        val effectsTicked = turn.effectsTicked
+        val effectsTicked = turn.actionEnded
         if (effectsTicked.removedEffects.isNotEmpty() || effectsTicked.updatedEffects.isNotEmpty() || 
             effectsTicked.damageOverTimeRolls.isNotEmpty() || effectsTicked.healOverTimeRolls.isNotEmpty()) {
 
@@ -480,7 +480,7 @@ object DetailedCombatLogger {
                 val costText = if (event.resourceCost > 0) "used ${event.resourceCost} resources and " else ""
                 "$targetName ${costText}moved to node ${event.newPositionNodeId}"
             }
-            is Event.EffectsTicked -> {
+            is Event.ActionEnded -> {
                 val doT = event.damageOverTimeRolls.sumOf { it.roll.rolled }
                 val hoT = event.healOverTimeRolls.sumOf { it.roll.rolled }
                 when {

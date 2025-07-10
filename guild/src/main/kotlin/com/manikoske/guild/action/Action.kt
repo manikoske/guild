@@ -91,28 +91,27 @@ sealed interface Action {
         }
     }
 
-    fun executeSelfResolution(taker: CharacterState, newPositionNodeId: Int) : List<Event.ResolutionEvent> {
-        val movementEvent = Resolution.MovementResolution(newPositionNodeId).resolve(executor = taker, target = taker)
-        val resourcesEvent = Resolution.ResourcesResolution(this.resourceCost).resolve(executor = movementEvent.updatedTarget, target = movementEvent.updatedTarget)
-        val selfResolutionEvent = selfResolution?.resolve(executor = resourcesEvent.updatedTarget, target = resourcesEvent.updatedTarget)
-        return listOf(movementEvent, resourcesEvent) + listOfNotNull(selfResolutionEvent)
-    }
-
     sealed interface Outcome {
         val actionName: String
-        val selfResolutionEvents: List<Event.ResolutionEvent>
+        val actionStarted: Event.ActionStarted
+        val selfResolutionEvent: Event.ResolutionEvent?
+        val actionEnded: Event.ActionEnded
     }
 
     data class TargetedActionOutcome(
         override val actionName: String,
-        override val selfResolutionEvents: List<Event.ResolutionEvent>,
+        override val actionStarted: Event.ActionStarted,
+        override val selfResolutionEvent: Event.ResolutionEvent?,
         val target: Target,
         val targetEvents: List<Event.ResolutionEvent>,
+        override val actionEnded: Event.ActionEnded
     ) : Outcome
 
     data class SelfActionOutcome(
         override val actionName: String,
-        override val selfResolutionEvents: List<Event.ResolutionEvent>,
+        override val actionStarted: Event.ActionStarted,
+        override val selfResolutionEvent: Event.ResolutionEvent?,
+        override val actionEnded: Event.ActionEnded
     ) : Outcome
 
     data class SelfAction(
@@ -128,11 +127,15 @@ sealed interface Action {
             newPositionNodeId: Int
         ) : SelfActionOutcome {
 
-            val selfResolutionEvents = executeSelfResolution(taker = executor, newPositionNodeId = newPositionNodeId)
+            val actionStarted = executor.startAction(newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
+            val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
+            val actionEnded = selfResolutionEvent?.updatedTarget?.endAction() ?: executor.endAction()
 
             return SelfActionOutcome(
                 actionName = this.name,
-                selfResolutionEvents = selfResolutionEvents,
+                actionStarted = actionStarted,
+                selfResolutionEvent = selfResolutionEvent,
+                actionEnded = actionEnded,
             )
         }
     }
@@ -150,15 +153,20 @@ sealed interface Action {
             newPositionNodeId: Int
         ) : TargetedActionOutcome {
 
-            val selfResolutionEvents = executeSelfResolution(taker = executor, newPositionNodeId = newPositionNodeId)
-            val targetEvents = target.targetedCharacterStates
-                .map { resolution.resolve(executor = selfResolutionEvents.last().updatedTarget, target = it) }
+
+            val actionStarted = executor.startAction(newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
+            val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
+            val updatedExecutor = selfResolutionEvent?.updatedTarget ?: actionStarted.updatedTarget
+            val targetEvents = target.targetedCharacterStates.map { resolution.resolve(executor = updatedExecutor, target = it) }
+            val actionEnded = updatedExecutor.endAction()
 
             return TargetedActionOutcome(
                 actionName = this.name,
+                actionStarted = actionStarted,
+                selfResolutionEvent = selfResolutionEvent,
                 target = target,
-                selfResolutionEvents = selfResolutionEvents,
                 targetEvents = targetEvents,
+                actionEnded = actionEnded,
             )
         }
 

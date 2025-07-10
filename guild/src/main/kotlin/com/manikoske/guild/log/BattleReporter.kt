@@ -256,7 +256,7 @@ object BattleReporter {
         }
 
         // Track damage over time and healing over time
-        val effectsTicked = turn.effectsTicked
+        val effectsTicked = turn.actionEnded
         val dotDamage = effectsTicked.damageOverTimeRolls.sumOf { it.roll.rolled }
         val hotHealing = effectsTicked.healOverTimeRolls.sumOf { it.roll.rolled }
 
@@ -300,7 +300,7 @@ object BattleReporter {
                     }
                 } + 
                 // Add DoT damage
-                turn.effectsTicked.damageOverTimeRolls.sumOf { it.roll.rolled }
+                turn.actionEnded.damageOverTimeRolls.sumOf { it.roll.rolled }
             }
         }
 
@@ -314,7 +314,7 @@ object BattleReporter {
                     }
                 } + 
                 // Add HoT healing
-                turn.effectsTicked.healOverTimeRolls.sumOf { it.roll.rolled }
+                turn.actionEnded.healOverTimeRolls.sumOf { it.roll.rolled }
             }
         }
 

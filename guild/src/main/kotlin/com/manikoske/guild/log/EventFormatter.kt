@@ -2,7 +2,6 @@ package com.manikoske.guild.log
 
 import com.manikoske.guild.action.Effect
 import com.manikoske.guild.action.Event
-import com.manikoske.guild.rules.Die
 
 /**
  * Helper class for formatting events to text in a consistent way
@@ -40,7 +39,7 @@ object EventFormatter {
             is Event.EffectRemoved -> formatEffectRemoved(target, event.category)
             is Event.ResourceBoosted -> formatResourceBoost(target, event.amount)
             is Event.ActionTaken -> formatActionTaken(target, event.resourceCost, event.newPositionNodeId)
-            is Event.EffectsTicked -> formatEffectsTicked(target, event)
+            is Event.ActionEnded -> formatEffectsTicked(target, event)
             is Event.InitiativeRolled -> formatInitiativeRolled(target, event.initiativeRoll.initiative)
         }
     }
@@ -65,7 +64,7 @@ object EventFormatter {
 
     private fun formatInitiativeRolled(target: String, initiative: Int): String = "$target rolled $initiative for initiative"
 
-    private fun formatEffectsTicked(target: String, event: Event.EffectsTicked): String {
+    private fun formatEffectsTicked(target: String, event: Event.ActionEnded): String {
         val doT = event.damageOverTimeRolls.sumOf { it.roll.rolled }
         val hoT = event.healOverTimeRolls.sumOf { it.roll.rolled }
 

@@ -47,22 +47,6 @@ sealed interface Resolution {
         }
     }
 
-    data class MovementResolution(
-        val newPositionNodeId: Int
-    ) : Resolution {
-        override fun resolve(executor: CharacterState, target: CharacterState): Event.MovementEvent {
-            return target.actionMove(newPositionNodeId)
-        }
-    }
-
-    data class ResourcesResolution(
-        val amount: Int
-    ) : Resolution {
-        override fun resolve(executor: CharacterState, target: CharacterState): Event.ResourcesEvent {
-            return target.spendActionResources(amount)
-        }
-    }
-
     sealed interface SupportResolution : Resolution {
 
         data class Healing(
@@ -74,10 +58,10 @@ sealed interface Resolution {
             }
         }
 
-        data class ResourceGain(
+        data class ResourceBoost(
             val amount: Int
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): Event.ResourceGained {
+            override fun resolve(executor: CharacterState, target: CharacterState): Event.ResourceBoosted {
                 return target.boostResources(amount)
             }
         }
