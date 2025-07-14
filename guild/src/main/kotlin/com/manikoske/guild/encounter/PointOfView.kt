@@ -1,14 +1,13 @@
 package com.manikoske.guild.encounter
 
+import com.manikoske.guild.action.Action
+
 
 data class PointOfView(
-    private val takerId: Int,
-    val characterStates: List<CharacterState>,
+    private val taker: CharacterState,
+    private val allies: List<CharacterState>,
+    private val enemies: List<CharacterState>,
 ) {
-    val taker = characterStates.first {it.character.id == takerId}
-    val allies = characterStates.filter { it.character.id != takerId && it.allegiance == taker.allegiance }
-    val enemies = characterStates.filter { it.allegiance != taker.allegiance }
-
     fun allVantageNodes(battleground: Battleground): List<VantageNode> {
 
         val allyCountPerNode = livingCharacterCountPerNode(allies + taker)
@@ -53,11 +52,20 @@ data class PointOfView(
         val targets: List<Target>,
     )
 
-    fun updateWith(updatedCharacterStates: List<CharacterState>) : PointOfView {
-        return PointOfView(
-            takerId = takerId,
-            characterStates = (updatedCharacterStates + characterStates).distinctBy { it.character.id }
-        )
+    fun updateWith(actionOutcome: Action.Outcome) : PointOfView {
+        return if (actionOutcome is Action.TargetedActionOutcome) {
+            PointOfView(
+                taker = actionOutcome.actionEnded.updatedTarget,
+                allies = (actionOutcome.targetEvents.map { it.updatedTarget } + allies).distinctBy { it.character.id },
+                enemies = (actionOutcome.targetEvents.map { it.updatedTarget } + enemies).distinctBy { it.character.id }
+            )
+        } else {
+            this.copy(taker = actionOutcome.actionEnded.updatedTarget)
+        }
+    }
+
+    fun characterStates() : List<CharacterState> {
+        return enemies + allies + taker
     }
 
     fun utility(): Double {

@@ -4,35 +4,44 @@ import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Event
 
 data class Turn(
-    private val pointOfView: PointOfView
+    val takerId : Int,
+    val characterStates: List<CharacterState>
 ) {
 
     fun simulate(battleground: Battleground): State {
 
-        val allExecutableActions = pointOfView.taker.allExecutableActions()
+        val taker = characterStates.first {it.character.id == takerId}
+
+        val pointOfView = PointOfView(
+            taker = taker,
+            allies = characterStates.filter { it.character.id != takerId && it.allegiance == taker.allegiance },
+            enemies = characterStates.filter { it.allegiance != taker.allegiance }
+        )
+
+        val allExecutableActions = taker.allExecutableActions()
         val allVantageNodes = pointOfView.allVantageNodes(battleground = battleground)
 
         val possibleOutcomes: MutableList<() -> Action.Outcome> = mutableListOf()
 
         allExecutableActions.forEach { executableAction ->
             allVantageNodes
-                .filter { vantageNode -> executableAction.canAccess(pointOfView.taker, vantageNode) }
+                .filter { vantageNode -> executableAction.canAccess(taker, vantageNode) }
                 .forEach { accessibleVantageNode ->
                     when (executableAction) {
                         is Action.SelfAction -> possibleOutcomes.add {
                             executableAction.execute(
-                                executor = pointOfView.taker,
+                                executor = taker,
                                 newPositionNodeId = accessibleVantageNode.nodeId
                             )
                         }
 
                         is Action.TargetedAction ->  {
                             accessibleVantageNode.targets
-                                .filter { target -> executableAction.canTarget(pointOfView.taker, target) }
+                                .filter { target -> executableAction.canTarget(taker, target) }
                                 .forEach { validTarget ->
                                     possibleOutcomes.add {
                                         executableAction.execute(
-                                            executor = pointOfView.taker,
+                                            executor = taker,
                                             target = validTarget,
                                             newPositionNodeId = accessibleVantageNode.nodeId
                                         )
@@ -43,21 +52,17 @@ data class Turn(
                 }
         }
 
-        val best = possibleOutcomes.maxBy { it.invoke() }.invoke()
+        val best = possibleOutcomes.maxBy { pointOfView.updateWith(it.invoke()).utility() }.invoke()
 
         return State(
-            updatedCharacterStates = ,
-            taker = pointOfView.taker,
+            updatedCharacterStates = pointOfView.updateWith(best).characterStates(),
             outcome = best,
-            actionEnded = best.selfEvent.updatedTarget.tickEffects()
         )
     }
 
     data class State(
         val updatedCharacterStates: List<CharacterState>,
-        val taker: CharacterState,
         val outcome: Action.Outcome,
-        val actionEnded: Event.ActionEnded
     )
 
 }

@@ -93,6 +93,7 @@ sealed interface Action {
 
     sealed interface Outcome {
         val actionName: String
+        val executor: CharacterState
         val actionStarted: Event.ActionStarted
         val selfResolutionEvent: Event.ResolutionEvent?
         val actionEnded: Event.ActionEnded
@@ -100,15 +101,17 @@ sealed interface Action {
 
     data class TargetedActionOutcome(
         override val actionName: String,
+        override val executor: CharacterState,
+        val target: Target,
         override val actionStarted: Event.ActionStarted,
         override val selfResolutionEvent: Event.ResolutionEvent?,
-        val target: Target,
         val targetEvents: List<Event.ResolutionEvent>,
         override val actionEnded: Event.ActionEnded
     ) : Outcome
 
     data class SelfActionOutcome(
         override val actionName: String,
+        override val executor: CharacterState,
         override val actionStarted: Event.ActionStarted,
         override val selfResolutionEvent: Event.ResolutionEvent?,
         override val actionEnded: Event.ActionEnded
@@ -133,6 +136,7 @@ sealed interface Action {
 
             return SelfActionOutcome(
                 actionName = this.name,
+                executor = executor,
                 actionStarted = actionStarted,
                 selfResolutionEvent = selfResolutionEvent,
                 actionEnded = actionEnded,
@@ -162,9 +166,10 @@ sealed interface Action {
 
             return TargetedActionOutcome(
                 actionName = this.name,
+                executor = executor,
+                target = target,
                 actionStarted = actionStarted,
                 selfResolutionEvent = selfResolutionEvent,
-                target = target,
                 targetEvents = targetEvents,
                 actionEnded = actionEnded,
             )

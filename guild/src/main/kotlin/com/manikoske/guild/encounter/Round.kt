@@ -26,7 +26,7 @@ data class Round(
                 if (roundState.hasNoWinner()) {
 
                     val turn =
-                        Turn(PointOfView(takerId = turnTakerId, characterStates = roundState.updatedCharacterStates))
+                        Turn(takerId = turnTakerId, characterStates = roundState.updatedCharacterStates)
                             .simulate(battleground)
 
                     roundState.copy(
