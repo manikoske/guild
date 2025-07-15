@@ -5,6 +5,7 @@ import com.manikoske.guild.rules.Die
 
 sealed interface Event {
 
+    val target: CharacterState
     val updatedTarget: CharacterState
 
     sealed interface ResolutionEvent : Event
@@ -13,18 +14,21 @@ sealed interface Event {
     sealed interface SpellAttackEvent : ResolutionEvent
 
     data class InitiativeRolled(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val initiativeRoll: InitiativeRoll
     ) : Event
 
 
     data class ActionStarted(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val newPositionNodeId: Int,
         val resourcesSpent: Int,
     ) : Event
 
     data class ActionEnded(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val removedEffects: List<Effect>,
         val updatedEffects: List<Effect>,
@@ -33,26 +37,31 @@ sealed interface Event {
     ) : Event
 
     data class Healed(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val healRoll: HealRoll
     ) : ResolutionEvent
 
     data class EffectAdded(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val category: Effect.Category
     ) : ResolutionEvent
 
     data class EffectRemoved(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val category: Effect.Category
     ) : ResolutionEvent
 
     data class ResourceBoosted(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val amount: Int
     ) : ResolutionEvent
 
     data class WeaponAttackHit(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val armorClass: ArmorClass,
         val weaponAttackRoll: WeaponAttackRoll,
@@ -63,18 +72,21 @@ sealed interface Event {
     ) : WeaponAttackEvent
 
     data class WeaponAttackMissed(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val armorClass: ArmorClass,
         val weaponAttackRoll: WeaponAttackRoll,
     ) : WeaponAttackEvent
 
     data class SpellAttackMissed(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val spellDefenseRoll: SpellDefenseRoll,
         val spellAttackDifficultyClass: SpellAttackDifficultyClass,
     ) : SpellAttackEvent
 
     data class SpellAttackHit(
+        override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val spellDefenseRoll: SpellDefenseRoll,
         val spellAttackDifficultyClass: SpellAttackDifficultyClass,

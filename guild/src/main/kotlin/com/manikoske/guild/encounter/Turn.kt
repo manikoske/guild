@@ -28,13 +28,13 @@ data class Turn(
                 .filter { vantageNode -> executableAction.canAccess(taker, vantageNode) }
                 .forEach { accessibleVantageNode ->
                     when (executableAction) {
+
                         is Action.SelfAction -> possibleOutcomes.add {
                             executableAction.execute(
                                 executor = taker,
                                 newPositionNodeId = accessibleVantageNode.nodeId
                             )
                         }
-
                         is Action.TargetedAction ->  {
                             accessibleVantageNode.targets
                                 .filter { target -> executableAction.canTarget(taker, target) }

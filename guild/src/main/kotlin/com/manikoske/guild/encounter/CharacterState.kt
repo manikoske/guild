@@ -135,6 +135,7 @@ data class CharacterState(
 
     fun rollInitiative() : Event.InitiativeRolled {
         return Event.InitiativeRolled(
+            target = this,
             updatedTarget = this,
             initiativeRoll = Event.InitiativeRoll(
                 initiativeAttributeModifier = this.character.attributeModifier(Attribute.Type.dexterity),
@@ -146,6 +147,7 @@ data class CharacterState(
 
     fun startAction(newPositionNodeId: Int, resourcesSpent: Int) : Event.ActionStarted {
         return Event.ActionStarted(
+            target = this,
             updatedTarget = moveTo(newPositionNodeId).spendResources(resourcesSpent),
             newPositionNodeId = newPositionNodeId,
             resourcesSpent = resourcesSpent
@@ -184,6 +186,7 @@ data class CharacterState(
             val effectsAddedByDamage = effectsToAddByDamage(spellDamageRoll.damage, effectsOnHit)
 
             return Event.SpellAttackHit(
+                target = this,
                 updatedTarget = this
                     .takeDamage(spellDamageRoll.damage)
                     .removeEffects(effectsRemovedByDamage)
@@ -196,6 +199,7 @@ data class CharacterState(
             )
         } else {
             return Event.SpellAttackMissed(
+                target = this,
                 updatedTarget = this,
                 spellDefenseRoll = spellDefenseRoll,
                 spellAttackDifficultyClass = spellAttackDifficultyClass
@@ -216,6 +220,7 @@ data class CharacterState(
         )
 
         return Event.Healed(
+            target = this,
             updatedTarget = this.heal(healRoll.heal),
             healRoll = healRoll
         )
@@ -256,6 +261,7 @@ data class CharacterState(
             val effectsAddedByDamage = effectsToAddByDamage(weaponDamageRoll.damage, effectsOnHit)
 
             return Event.WeaponAttackHit(
+                target = this,
                 updatedTarget = this
                     .takeDamage(weaponDamageRoll.damage)
                     .removeEffects(effectsRemovedByDamage)
@@ -268,6 +274,7 @@ data class CharacterState(
             )
         } else {
             return Event.WeaponAttackMissed(
+                target = this,
                 updatedTarget = this,
                 weaponAttackRoll = weaponAttackRoll,
                 armorClass = armorClass
@@ -295,6 +302,7 @@ data class CharacterState(
         val updatedEffects = effects.all().mapNotNull { it.tick() }
 
         return Event.ActionEnded(
+            target = this,
             updatedTarget = this
                 .heal(healOverTimeRolls.sumOf { it.roll.rolled })
                 .takeDamage(damageOverTimeRolls.sumOf { it.roll.rolled })
@@ -309,6 +317,7 @@ data class CharacterState(
 
     fun boostResources(amount: Int) : Event.ResourceBoosted {
         return Event.ResourceBoosted(
+            target = this,
             updatedTarget = this.gainResources(amount),
             amount = amount
         )
@@ -316,6 +325,7 @@ data class CharacterState(
 
     fun addEffect(effect: Effect) : Event.EffectAdded {
         return Event.EffectAdded(
+            target = this,
             updatedTarget = this.addEffects(listOf(effect)),
             category = effect.category
         )
@@ -323,6 +333,7 @@ data class CharacterState(
 
     fun removeEffect(effect: Effect) : Event.EffectRemoved {
         return Event.EffectRemoved(
+            target = this,
             updatedTarget = this.removeEffects(listOf(effect)),
             category = effect.category
         )
