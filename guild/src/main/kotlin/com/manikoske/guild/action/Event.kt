@@ -21,6 +21,7 @@ sealed interface Event {
 
 
     data class ActionStarted(
+        val actionName: String,
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
         val newPositionNodeId: Int,
@@ -45,13 +46,13 @@ sealed interface Event {
     data class EffectAdded(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val category: Effect.Category
+        val effect: Effect
     ) : ResolutionEvent
 
     data class EffectRemoved(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val category: Effect.Category
+        val effect: Effect
     ) : ResolutionEvent
 
     data class ResourceBoosted(

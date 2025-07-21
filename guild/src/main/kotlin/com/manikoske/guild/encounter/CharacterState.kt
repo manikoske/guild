@@ -1,12 +1,11 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
-import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Effect
 import com.manikoske.guild.action.Event
+import com.manikoske.guild.action.Movement
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Character
-import com.manikoske.guild.log.AnsiColorUtil
 import com.manikoske.guild.rules.Die
 import kotlin.math.max
 import kotlin.math.min
@@ -145,8 +144,9 @@ data class CharacterState(
         )
     }
 
-    fun startAction(newPositionNodeId: Int, resourcesSpent: Int) : Event.ActionStarted {
+    fun startAction(actionName: String, newPositionNodeId: Int, resourcesSpent: Int) : Event.ActionStarted {
         return Event.ActionStarted(
+            actionName = actionName,
             target = this,
             updatedTarget = moveTo(newPositionNodeId).spendResources(resourcesSpent),
             newPositionNodeId = newPositionNodeId,
@@ -327,7 +327,7 @@ data class CharacterState(
         return Event.EffectAdded(
             target = this,
             updatedTarget = this.addEffects(listOf(effect)),
-            category = effect.category
+            effect = effect
         )
     }
 
@@ -335,113 +335,7 @@ data class CharacterState(
         return Event.EffectRemoved(
             target = this,
             updatedTarget = this.removeEffects(listOf(effect)),
-            category = effect.category
+            effect = effect
         )
-    }
-
-    /**
-     * Returns a brief one-line representation of character state
-     */
-    fun displayBrief(): String {
-        val effectSymbols = effects.all().map { AnsiColorUtil.getEffectSymbol(it.category) }.joinToString(" ")
-        val statusPrefix = when {
-            isDying() -> AnsiColorUtil.bgRed("DYING")
-            else -> AnsiColorUtil.bgGreen("${allegiance.name}")
-        }
-
-        val healthDisplay = AnsiColorUtil.formatHitPoints(currentHitPoints(), character.maxHitPoints())
-        val resourceDisplay = AnsiColorUtil.formatResources(currentResources(), character.maxResources())
-
-        return "$statusPrefix ${AnsiColorUtil.bold(character.bio.name)} [$healthDisplay | $resourceDisplay] ${if (effectSymbols.isNotEmpty()) "⟪$effectSymbols⟫" else ""}"
-    }
-
-    /**
-     * Returns a detailed multi-line representation of character state
-     */
-    fun displayDetailed(): String {
-        val sb = StringBuilder()
-
-        // Header with name and class
-        sb.appendLine(AnsiColorUtil.header("─── CHARACTER STATE: ${character.bio.name} (${character.clazz().name}) ───"))
-
-        // Basic stats
-        sb.appendLine("${AnsiColorUtil.bold("Position:")} Node $positionNodeId    ${AnsiColorUtil.bold("Side:")} ${allegiance.name}")
-        sb.appendLine("${AnsiColorUtil.bold("Health:")} ${AnsiColorUtil.formatHitPoints(currentHitPoints(), character.maxHitPoints())}    ${AnsiColorUtil.bold("Utility:")} ${String.format("%.2f", utility())}")
-        sb.appendLine("${AnsiColorUtil.bold("Resources:")} ${AnsiColorUtil.formatResources(currentResources(), character.maxResources())}")
-
-        // Character stats
-        sb.appendLine("\n${AnsiColorUtil.bold("Character Stats:")}")
-        sb.appendLine("${AnsiColorUtil.bold("Level:")} ${character.levelModifier() * 2}    ${AnsiColorUtil.bold("Armor Class:")} ${character.armorClassArmorModifier() + character.armorClassArmsModifier() + character.armorLimitedDexterityModifier() + character.levelModifier()}")
-
-        // Attributes
-        sb.appendLine("\n${AnsiColorUtil.bold("Attributes:")}")
-        val strMod = AnsiColorUtil.formatModifier(character.attributeModifier(Attribute.Type.strength))
-        val dexMod = AnsiColorUtil.formatModifier(character.attributeModifier(Attribute.Type.dexterity))
-        val conMod = AnsiColorUtil.formatModifier(character.attributeModifier(Attribute.Type.constitution))
-        val intMod = AnsiColorUtil.formatModifier(character.attributeModifier(Attribute.Type.intelligence))
-        val wisMod = AnsiColorUtil.formatModifier(character.attributeModifier(Attribute.Type.wisdom))
-        val chaMod = AnsiColorUtil.formatModifier(character.attributeModifier(Attribute.Type.charisma))
-        sb.appendLine("STR: $strMod  DEX: $dexMod  CON: $conMod  INT: $intMod  WIS: $wisMod  CHA: $chaMod")
-
-        // Weapon info
-        val arms = character.arms()
-        sb.appendLine("\n${AnsiColorUtil.bold("Weapons:")}")
-        when (arms) {
-            is com.manikoske.guild.inventory.Inventory.Arms.DualWeapon -> {
-                sb.appendLine("Dual-wielding: ${arms.mainHand.name} & ${arms.offHand.name}")
-            }
-            is com.manikoske.guild.inventory.Inventory.Arms.OneHandedWeaponAndShield -> {
-                sb.appendLine("One-handed weapon and shield: ${arms.mainHand.name}")
-            }
-            is com.manikoske.guild.inventory.Inventory.Arms.TwoHandedWeapon -> {
-                sb.appendLine("Two-handed weapon: ${arms.bothHands.name}")
-            }
-            is com.manikoske.guild.inventory.Inventory.Arms.RangedWeapon -> {
-                sb.appendLine("Ranged weapon: ${arms.bothHands.name} (Range: ${arms.range()})")
-            }
-        }
-
-        // Effects
-        if (effects.all().isNotEmpty()) {
-            sb.appendLine("\n${AnsiColorUtil.bold("Active Effects:")}")
-
-            // Action forcing effects
-            effects.actionForcingEffect?.let {
-                val duration = if (it is Effect.TimedEffect) "(${it.roundsLeft} rounds)" else ""
-                sb.appendLine("${AnsiColorUtil.getEffectSymbol(it.category)} ${it.javaClass.simpleName} $duration")
-            }
-
-            // Movement restricting effects
-            effects.movementRestrictingEffect?.let {
-                val duration = if (it is Effect.TimedEffect) "(${it.roundsLeft} rounds)" else ""
-                sb.appendLine("${AnsiColorUtil.getEffectSymbol(it.category)} ${it.javaClass.simpleName} $duration")
-            }
-
-            // Movement altering effects
-            effects.movementAlteringEffects.forEach { effect ->
-                val duration = if (effect is Effect.TimedEffect) "(${effect.roundsLeft} rounds)" else ""
-                sb.appendLine("${AnsiColorUtil.getEffectSymbol(effect.category)} ${effect.javaClass.simpleName} $duration")
-            }
-
-            // Action restricting effects
-            effects.actionRestrictingEffects.forEach { effect ->
-                val duration = if (effect is Effect.TimedEffect) "(${effect.roundsLeft} rounds)" else ""
-                sb.appendLine("${AnsiColorUtil.getEffectSymbol(effect.category)} ${effect.javaClass.simpleName} $duration")
-            }
-
-            // Damage over time effects
-            effects.damageOverTimeEffects.forEach { effect ->
-                val duration = if (effect is Effect.TimedEffect) "(${effect.roundsLeft} rounds)" else ""
-                sb.appendLine("${AnsiColorUtil.getEffectSymbol(effect.category)} ${effect.javaClass.simpleName} $duration - ${effect.damageDice}")
-            }
-
-            // Heal over time effects
-            effects.healOverTimeEffects.forEach { effect ->
-                val duration = if (effect is Effect.TimedEffect) "(${effect.roundsLeft} rounds)" else ""
-                sb.appendLine("${AnsiColorUtil.getEffectSymbol(effect.category)} ${effect.javaClass.simpleName} $duration - ${effect.healDice}")
-            }
-        }
-
-        return sb.toString()
     }
 }

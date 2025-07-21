@@ -252,15 +252,6 @@ class EncounterTest {
             defendersStartingNodeId = 6,
             attackers = setOf(khalid, kivan, anomen, imoen, xan),
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin)
-            // printOutput parameter removed as it's no longer used in the Encounter class
-        )
-
-        // Explicitly log the encounter results with all parameters
-        com.manikoske.guild.log.StatelessLoggingManager.logEncounter(
-            encounter = finalEncounterState,
-            logLevel = com.manikoske.guild.log.StatelessLoggingManager.LogLevel.ALL,
-            fileOutput = false,
-            outputDirectory = "logs",
         )
     }
 }

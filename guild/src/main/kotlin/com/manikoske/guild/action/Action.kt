@@ -92,7 +92,6 @@ sealed interface Action {
     }
 
     sealed interface Outcome {
-        val actionName: String
         val executor: CharacterState
         val actionStarted: Event.ActionStarted
         val selfResolutionEvent: Event.ResolutionEvent?
@@ -100,7 +99,6 @@ sealed interface Action {
     }
 
     data class TargetedActionOutcome(
-        override val actionName: String,
         override val executor: CharacterState,
         val target: Target,
         override val actionStarted: Event.ActionStarted,
@@ -110,7 +108,6 @@ sealed interface Action {
     ) : Outcome
 
     data class SelfActionOutcome(
-        override val actionName: String,
         override val executor: CharacterState,
         override val actionStarted: Event.ActionStarted,
         override val selfResolutionEvent: Event.ResolutionEvent?,
@@ -130,12 +127,11 @@ sealed interface Action {
             newPositionNodeId: Int
         ) : SelfActionOutcome {
 
-            val actionStarted = executor.startAction(newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
+            val actionStarted = executor.startAction(actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
             val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
             val actionEnded = selfResolutionEvent?.updatedTarget?.endAction() ?: executor.endAction()
 
             return SelfActionOutcome(
-                actionName = this.name,
                 executor = executor,
                 actionStarted = actionStarted,
                 selfResolutionEvent = selfResolutionEvent,
@@ -158,14 +154,13 @@ sealed interface Action {
         ) : TargetedActionOutcome {
 
 
-            val actionStarted = executor.startAction(newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
+            val actionStarted = executor.startAction(actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
             val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
             val updatedExecutor = selfResolutionEvent?.updatedTarget ?: actionStarted.updatedTarget
             val targetEvents = target.targetedCharacterStates.map { resolution.resolve(executor = updatedExecutor, target = it) }
             val actionEnded = updatedExecutor.endAction()
 
             return TargetedActionOutcome(
-                actionName = this.name,
                 executor = executor,
                 target = target,
                 actionStarted = actionStarted,
