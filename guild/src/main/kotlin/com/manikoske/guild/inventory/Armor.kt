@@ -2,7 +2,7 @@ package com.manikoske.guild.inventory
 
 import kotlin.math.min
 
-enum class Armor(val type: Type, val armorClassModifier: Int, val dexterityModifierLimit: (dexterityModifier: Int) -> Int) {
+enum class Armor(val type: Type, val armorDifficultyClass: Int, val dexterityModifierLimit: (dexterityModifier: Int) -> Int) {
 
     robe(Type.cloth, 10, { dexterityModifier: Int -> dexterityModifier }),
     clothes(Type.cloth, 10, { dexterityModifier: Int -> dexterityModifier }),

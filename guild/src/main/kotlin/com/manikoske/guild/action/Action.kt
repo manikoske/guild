@@ -92,15 +92,12 @@ sealed interface Action {
     }
 
     sealed interface Outcome {
-        val executor: CharacterState
         val actionStarted: Event.ActionStarted
         val selfResolutionEvent: Event.ResolutionEvent?
         val actionEnded: Event.ActionEnded
     }
 
     data class TargetedActionOutcome(
-        override val executor: CharacterState,
-        val target: Target,
         override val actionStarted: Event.ActionStarted,
         override val selfResolutionEvent: Event.ResolutionEvent?,
         val targetEvents: List<Event.ResolutionEvent>,
@@ -108,7 +105,6 @@ sealed interface Action {
     ) : Outcome
 
     data class SelfActionOutcome(
-        override val executor: CharacterState,
         override val actionStarted: Event.ActionStarted,
         override val selfResolutionEvent: Event.ResolutionEvent?,
         override val actionEnded: Event.ActionEnded
@@ -129,10 +125,9 @@ sealed interface Action {
 
             val actionStarted = executor.startAction(actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
             val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
-            val actionEnded = selfResolutionEvent?.updatedTarget?.endAction() ?: executor.endAction()
+            val actionEnded = selfResolutionEvent?.updatedTarget?.endAction() ?: actionStarted.updatedTarget.endAction()
 
             return SelfActionOutcome(
-                executor = executor,
                 actionStarted = actionStarted,
                 selfResolutionEvent = selfResolutionEvent,
                 actionEnded = actionEnded,
@@ -161,8 +156,6 @@ sealed interface Action {
             val actionEnded = updatedExecutor.endAction()
 
             return TargetedActionOutcome(
-                executor = executor,
-                target = target,
                 actionStarted = actionStarted,
                 selfResolutionEvent = selfResolutionEvent,
                 targetEvents = targetEvents,

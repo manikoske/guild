@@ -16,9 +16,8 @@ sealed interface Event {
     data class InitiativeRolled(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val initiativeRoll: InitiativeRoll
+        val initiativeRoll: Roll.InitiativeRoll
     ) : Event
-
 
     data class ActionStarted(
         val actionName: String,
@@ -33,14 +32,14 @@ sealed interface Event {
         override val updatedTarget: CharacterState,
         val removedEffects: List<Effect>,
         val updatedEffects: List<Effect>,
-        val damageOverTimeRolls: List<DamageOverTimeRoll>,
-        val healOverTimeRolls: List<HealOverTimeRoll>,
+        val damageOverTimeRolls: List<Roll.DamageOverTimeRoll>,
+        val healOverTimeRolls: List<Roll.HealOverTimeRoll>,
     ) : Event
 
     data class Healed(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val healRoll: HealRoll
+        val healRoll: Roll.HealRoll
     ) : ResolutionEvent
 
     data class EffectAdded(
@@ -64,9 +63,9 @@ sealed interface Event {
     data class WeaponAttackHit(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val armorClass: ArmorClass,
-        val weaponAttackRoll: WeaponAttackRoll,
-        val weaponDamageRoll: WeaponDamageRoll,
+        val armorClass: DifficultyClass.ArmorClass,
+        val weaponAttackRoll: Roll.WeaponAttackRoll,
+        val weaponDamageRoll: Roll.WeaponDamageRoll,
         val effectsRemovedByDamage: List<Effect>,
         val effectsAddedByDamage: List<Effect>
 
@@ -75,105 +74,139 @@ sealed interface Event {
     data class WeaponAttackMissed(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val armorClass: ArmorClass,
-        val weaponAttackRoll: WeaponAttackRoll,
+        val armorClass: DifficultyClass.ArmorClass,
+        val weaponAttackRoll: Roll.WeaponAttackRoll,
     ) : WeaponAttackEvent
 
     data class SpellAttackMissed(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val spellDefenseRoll: SpellDefenseRoll,
-        val spellAttackDifficultyClass: SpellAttackDifficultyClass,
+        val spellDefenseRoll: Roll.SpellDefenseRoll,
+        val spellAttackDifficultyClass: DifficultyClass.SpellAttackDifficultyClass,
     ) : SpellAttackEvent
 
     data class SpellAttackHit(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val spellDefenseRoll: SpellDefenseRoll,
-        val spellAttackDifficultyClass: SpellAttackDifficultyClass,
-        val spellDamageRoll: SpellDamageRoll,
+        val spellDefenseRoll: Roll.SpellDefenseRoll,
+        val spellAttackDifficultyClass: DifficultyClass.SpellAttackDifficultyClass,
+        val spellDamageRoll: Roll.SpellDamageRoll,
         val effectsRemovedByDamage: List<Effect>,
         val effectsAddedByDamage: List<Effect>
 
     ) : SpellAttackEvent
 
-    data class ArmorClass(
-        val armorModifier: Int,
-        val armsModifier: Int,
-        val levelModifier: Int,
-        val armorAttributeModifier: Int
-    ) {
-        val armorClass = armorModifier + armsModifier + levelModifier + armorAttributeModifier
-    }
+    sealed interface Roll {
 
-    data class WeaponAttackRoll(
-        val weaponAttributeModifier: Int,
-        val weaponAttackModifier: Int,
-        val actionAttackModifier: Int,
-        val levelModifier: Int,
-        val roll: Die.Roll,
-    ) {
-        val attack = roll.rolled + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
-    }
-
-    data class WeaponDamageRoll(
-        val weaponAttributeModifier: Int,
-        val actionDamageMultiplier: Int,
-        val levelModifier: Int,
-        val roll: Die.Roll,
-    ) {
-        val damage = roll.rolled * actionDamageMultiplier + weaponAttributeModifier + levelModifier
-    }
-
-
-    data class DamageOverTimeRoll(
-        val category: Effect.Category,
         val roll: Die.Roll
-    )
+        val result: Int
 
-    data class HealOverTimeRoll(
-        val category: Effect.Category,
-        val roll: Die.Roll
-    )
+        interface HasAttributeModifier {
+            val attributeModifier: Int
+        }
 
-    data class SpellAttackDifficultyClass(
-        val spellAttributeModifier: Int,
-        val spellDifficultyClass: Int,
-        val levelModifier: Int,
-    ) {
-        val attack = spellAttributeModifier + spellDifficultyClass + levelModifier
+        interface HasLevelModifier {
+            val levelModifier: Int
+        }
+
+        data class WeaponAttackRoll(
+            override val attributeModifier: Int,
+            val weaponAttackModifier: Int,
+            val actionAttackModifier: Int,
+            override val levelModifier: Int,
+            override val roll: Die.Roll,
+        ) : Roll, HasAttributeModifier, HasLevelModifier {
+            override val result = roll.rolled + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
+        }
+
+        data class WeaponDamageRoll(
+            override val attributeModifier: Int,
+            val actionDamageMultiplier: Int,
+            override val levelModifier: Int,
+            override val roll: Die.Roll,
+        ) : Roll, HasAttributeModifier, HasLevelModifier {
+            override val result = roll.rolled * actionDamageMultiplier + attributeModifier + levelModifier
+        }
+
+        data class DamageOverTimeRoll(
+            val category: Effect.Category,
+            override val roll: Die.Roll
+        ) : Roll {
+            override val result = roll.rolled
+        }
+
+        data class HealOverTimeRoll(
+            val category: Effect.Category,
+            override val roll: Die.Roll
+        ) : Roll {
+            override val result = roll.rolled
+        }
+
+        data class SpellDefenseRoll(
+            override val attributeModifier: Int,
+            override val levelModifier: Int,
+            override val roll: Die.Roll,
+        ) : Roll, HasAttributeModifier, HasLevelModifier {
+            override val result = roll.rolled + attributeModifier + levelModifier
+        }
+
+        data class SpellDamageRoll(
+            override val attributeModifier: Int,
+            override val levelModifier: Int,
+            override val roll: Die.Roll,
+        ) : Roll, HasAttributeModifier, HasLevelModifier {
+            override val result = roll.rolled + attributeModifier + levelModifier
+        }
+
+        data class HealRoll(
+            override val attributeModifier: Int,
+            override val levelModifier: Int,
+            override val roll: Die.Roll,
+        ) : Roll, HasAttributeModifier, HasLevelModifier {
+            override val result = roll.rolled + attributeModifier + levelModifier
+        }
+
+        data class InitiativeRoll(
+            override val attributeModifier: Int,
+            override val levelModifier: Int,
+            override val roll: Die.Roll,
+        ) : Roll, HasAttributeModifier, HasLevelModifier {
+            override val result = roll.rolled + attributeModifier + levelModifier
+        }
     }
 
-    data class SpellDefenseRoll(
-        val spellAttributeModifier: Int,
-        val levelModifier: Int,
-        val roll: Die.Roll,
-    ) {
-        val defense = roll.rolled + spellAttributeModifier + levelModifier
-    }
+    sealed interface DifficultyClass {
 
-    data class SpellDamageRoll(
-        val spellAttributeModifier: Int,
-        val levelModifier: Int,
-        val roll: Die.Roll,
-    ) {
-        val damage = roll.rolled + spellAttributeModifier + levelModifier
-    }
+        val result: Int
+        val levelModifier: Int
+        val attributeModifier: Int
+        val baseDifficultyClass: Int
 
-    data class HealRoll(
-        val healAttributeModifier: Int,
-        val levelModifier: Int,
-        val roll: Die.Roll,
-    ) {
-        val heal = roll.rolled + healAttributeModifier + levelModifier
-    }
+        data class ArmorClass(
+            val armorDifficultyClass: Int,
+            val armsModifier: Int,
+            override val levelModifier: Int,
+            val armorAttributeModifier: Int
+        ) : DifficultyClass {
+            override val result = armorDifficultyClass + armsModifier + levelModifier + armorAttributeModifier
+            override val attributeModifier: Int
+                get() = armorAttributeModifier
+            override val baseDifficultyClass: Int
+                get() = armorDifficultyClass
+        }
 
-    data class InitiativeRoll(
-        val initiativeAttributeModifier: Int,
-        val levelModifier: Int,
-        val roll: Die.Roll,
-    ) {
-        val initiative = roll.rolled + initiativeAttributeModifier + levelModifier
+        data class SpellAttackDifficultyClass(
+            val spellAttributeModifier: Int,
+            val spellDifficultyClass: Int,
+            override val levelModifier: Int,
+        ) : DifficultyClass {
+            override val result = spellAttributeModifier + spellDifficultyClass + levelModifier
+
+            override val attributeModifier: Int
+                get() = spellAttributeModifier
+            override val baseDifficultyClass: Int
+                get() = spellDifficultyClass
+        }
     }
 
 }

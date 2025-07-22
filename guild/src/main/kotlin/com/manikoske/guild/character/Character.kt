@@ -25,8 +25,8 @@ data class Character(
         return level.modifier()
     }
 
-    fun armorClassArmorModifier() : Int {
-        return inventory.armor.armorClassModifier
+    fun armorDifficultyClass() : Int {
+        return inventory.armor.armorDifficultyClass
     }
 
     fun armorClassArmsModifier() : Int {

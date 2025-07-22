@@ -11,7 +11,7 @@ data class Round(
     ): State {
 
         val initiativeRolls =
-            characterStates.map { it.rollInitiative() }.sortedByDescending { it.initiativeRoll.initiative }
+            characterStates.map { it.rollInitiative() }.sortedByDescending { it.initiativeRoll.result }
 
         return initiativeRolls
             .map { it.updatedTarget.character.id }
@@ -26,8 +26,7 @@ data class Round(
                 if (roundState.hasNoWinner()) {
 
                     val turn =
-                        Turn(takerId = turnTakerId, characterStates = roundState.updatedCharacterStates)
-                            .simulate(battleground)
+                        Turn(takerId = turnTakerId, characterStates = roundState.updatedCharacterStates).simulate(battleground)
 
                     roundState.copy(
                         updatedCharacterStates = turn.updatedCharacterStates,

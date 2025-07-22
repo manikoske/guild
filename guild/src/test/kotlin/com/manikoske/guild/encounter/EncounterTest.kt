@@ -20,6 +20,7 @@ import com.manikoske.guild.inventory.Armor
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.inventory.Shield
 import com.manikoske.guild.inventory.Weapon
+import com.manikoske.guild.log.LoggingUtils
 import org.junit.jupiter.api.RepeatedTest
 
 class EncounterTest {
@@ -253,5 +254,7 @@ class EncounterTest {
             attackers = setOf(khalid, kivan, anomen, imoen, xan),
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin)
         )
+
+        print(LoggingUtils.logEncounter(finalEncounterState))
     }
 }
