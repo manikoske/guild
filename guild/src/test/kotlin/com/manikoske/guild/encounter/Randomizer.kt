@@ -33,7 +33,9 @@ object Randomizer {
                 bio = randomBuilder.giveMeOne<Bio>().copy(name = name)
             ),
             resourcesSpent = 0,
-            damageTaken = 0
+            damageTaken = 0,
+            effects = CharacterState.noEffects()
+
         )
     }
 

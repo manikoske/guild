@@ -1,12 +1,10 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.action.Action
-import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Effect
+import com.manikoske.guild.action.Movement
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
-import kotlin.random.Random
+import kotlin.test.Test
 
 
 class CharacterStateTest {
@@ -24,55 +22,41 @@ class CharacterStateTest {
         val korgan = Randomizer.characterState("Korgan").copy(effects = CharacterState.noEffects())
 
         // no statuses, no alterations
-        assertThat(korgan.canMoveBy(normalMovement, ))
-            .usingRecursiveComparison().isEqualTo(normalMovement)
-        assertThat(korgan.canMoveBy(specialMovement))
-            .usingRecursiveComparison().isEqualTo(specialMovement)
+        assertThat(korgan.canMoveBy(normalMovement, normalMovement.amount)).isTrue()
+        assertThat(korgan.canMoveBy(specialMovement, specialMovement.amount)).isTrue()
 
         // movement prohibiting statuses only are present
-        assertThat(korgan.addEffect(entangled).canMoveBy(normalMovement))
-            .usingRecursiveComparison().isEqualTo(normalMovement.copy(amount = 0))
+        assertThat(korgan.addEffect(entangled).updatedTarget.canMoveBy(normalMovement, 1)).isFalse()
 
-        assertThat(korgan.addEffect(entangled).canMoveBy(specialMovement))
-            .usingRecursiveComparison().isEqualTo(specialMovement)
+        assertThat(korgan.addEffect(entangled).updatedTarget.canMoveBy(specialMovement, specialMovement.amount)).isTrue()
 
         // movement altering statuses only are present
 
-        assertThat(korgan.addEffect(slow).canMoveBy(normalMovement))
-            .usingRecursiveComparison().isEqualTo(normalMovement.copy(amount = 1))
+        assertThat(korgan.addEffect(slow).updatedTarget.canMoveBy(normalMovement, 2)).isFalse()
+        assertThat(korgan.addEffect(slow).updatedTarget.canMoveBy(specialMovement, 3)).isFalse()
 
-        assertThat(korgan.addEffect(slow).canMoveBy(specialMovement))
-            .usingRecursiveComparison().isEqualTo(specialMovement.copy(amount = 2))
+        assertThat(korgan.addEffect(haste).updatedTarget.canMoveBy(normalMovement, 3)).isTrue()
+        assertThat(korgan.addEffect(haste).updatedTarget.canMoveBy(specialMovement, 4)).isTrue()
 
-        assertThat(korgan.addEffect(haste).canMoveBy(normalMovement))
-            .usingRecursiveComparison().isEqualTo(normalMovement.copy(amount = 3))
+        // both movement statuses are present
 
-        assertThat(korgan.addEffect(haste).canMoveBy(specialMovement))
-            .usingRecursiveComparison().isEqualTo(specialMovement.copy(amount = 4))
+        assertThat(korgan.addEffect(haste).updatedTarget.addEffect(entangled).updatedTarget.canMoveBy(normalMovement, 1)).isFalse()
+        assertThat(korgan.addEffect(slow).updatedTarget.addEffect(entangled).updatedTarget.canMoveBy(normalMovement, 1)).isFalse()
+    }
 
+    @Test
+    fun testRollInitiative() {
 
-        // both movement statuses only are present
+        val irenicus = Randomizer.characterState("Jon")
+        val ellesime = Randomizer.characterState("Ellesime")
 
-        assertThat(korgan.addEffect(haste).addEffect(entangled).canMoveBy(normalMovement))
-            .usingRecursiveComparison().isEqualTo(normalMovement.copy(amount = 0))
-
-        assertThat(korgan.addEffect(slow).addEffect(entangled).canMoveBy(normalMovement))
-            .usingRecursiveComparison().isEqualTo(normalMovement.copy(amount = 0))
+        irenicus.attackBy(
+            attacker = ellesime,
+            attackRollModifier = 1,
+            damageRollMultiplier = 2,
+            effectsOnHit = listOf(Effect.MovementRestrictingEffect.Entangled(roundsLeft = 2))
+        )
 
     }
-//
-//    @Test
-//    fun allExecutableActions() {
-//        val araken = Randomizer.characterState("Araken").copy(effects = CharacterState.noEffects())
-//
-//        assertThat(araken.allExecutableActions())
-//            .usingRecursiveComparison()
-//            .isEqualTo(Action.Actions.basicActions)
-//
-//        assertThat(araken.addEffect(Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Stun>()).allExecutableActions())
-//            .usingRecursiveComparison()
-//            .isEqualTo(listOf(Action.Actions.noAction))
-//
-//
-//    }
+
 }
