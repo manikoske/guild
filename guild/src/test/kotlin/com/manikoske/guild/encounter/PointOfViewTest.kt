@@ -1,25 +1,21 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
-import com.manikoske.guild.action.Event
-import com.manikoske.guild.encounter.Randomizer.randomBuilder
-import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.RepeatedTest
 import kotlin.test.Test
 
 class PointOfViewTest {
 
-    @RepeatedTest(1)
+    @Test
     fun testAllVantageNodes() {
 
-        val minsc = Randomizer.characterState("Minsc").copy(positionNodeId = 2, )
-        val khalid = Randomizer.characterState("Khalid").copy(positionNodeId = 2)
-        val jaheira = Randomizer.characterState("Jaheira").copy(positionNodeId = 1)
-        val tazok = Randomizer.characterState("Tazok").copy(positionNodeId = 2)
-        val davaeorn = Randomizer.characterState("Davaeorn").copy(positionNodeId = 3)
+        val minsc = Randomizer.characterState("Minsc").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Attacker)
+        val khalid = Randomizer.characterState("Khalid").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Attacker)
+        val jaheira = Randomizer.characterState("Jaheira").copy(positionNodeId = 1, allegiance = CharacterState.Allegiance.Attacker)
+        val tazok = Randomizer.characterState("Tazok").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Defender)
+        val davaeorn = Randomizer.characterState("Davaeorn").copy(positionNodeId = 3, allegiance = CharacterState.Allegiance.Defender)
 
 
         val minscPointOfView = PointOfView(taker = minsc, others = listOf(khalid, jaheira, tazok, davaeorn))
@@ -60,8 +56,7 @@ class PointOfViewTest {
                             Target.SingleEnemy(range = 1, targetedCharacterStates = listOf(davaeorn)),
                             Target.NodeEnemy(range = 1, targetedCharacterStates = listOf(davaeorn)),
                             Target.NodeEveryone(range = 1, targetedCharacterStates = listOf(davaeorn)),
-
-                            )
+                        )
                     ),
                     PointOfView.VantageNode(
                         nodeId = 3,
@@ -76,8 +71,7 @@ class PointOfViewTest {
                             Target.NodeAlly(range = 1, targetedCharacterStates = listOf(khalid)),
                             Target.NodeEnemy(range = 1, targetedCharacterStates = listOf(tazok)),
                             Target.NodeEveryone(range = 1, targetedCharacterStates = listOf(khalid, tazok)),
-
-                            )
+                        )
                     )
                 )
             )
@@ -100,11 +94,11 @@ class PointOfViewTest {
                             Target.NodeEveryone(range = 0, targetedCharacterStates = listOf(jaheira)),
                             Target.SingleAlly(range = 1, targetedCharacterStates = listOf(tazok)),
                             Target.SingleEnemy(range = 1, targetedCharacterStates = listOf(khalid)),
-                            Target.NodeAlly(range = 1, targetedCharacterStates = listOf(tazok)),
-                            Target.NodeEnemy(range = 1, targetedCharacterStates = listOf(minsc, khalid)),
-                            Target.DoubleEnemy(range = 1, targetedCharacterStates = listOf(minsc, khalid)),
                             Target.SingleEnemy(range = 1, targetedCharacterStates = listOf(minsc)),
-                            Target.NodeEveryone(range = 1, targetedCharacterStates = listOf(minsc, khalid, tazok)),
+                            Target.DoubleEnemy(range = 1, targetedCharacterStates = listOf(khalid, minsc)),
+                            Target.NodeAlly(range = 1, targetedCharacterStates = listOf(tazok)),
+                            Target.NodeEnemy(range = 1, targetedCharacterStates = listOf(khalid, minsc)),
+                            Target.NodeEveryone(range = 1, targetedCharacterStates = listOf(khalid, tazok, minsc)),
                         )
                     ),
                     PointOfView.VantageNode(

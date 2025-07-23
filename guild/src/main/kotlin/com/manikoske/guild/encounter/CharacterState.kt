@@ -6,6 +6,7 @@ import com.manikoske.guild.action.Event
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Character
+import com.manikoske.guild.log.LoggingUtils
 import com.manikoske.guild.rules.Die
 import kotlin.math.max
 import kotlin.math.min
@@ -30,6 +31,10 @@ data class CharacterState(
                 healOverTimeEffects = listOf()
             )
         }
+    }
+
+    override fun toString(): String {
+        return LoggingUtils.formatCharacterState(this)
     }
 
 

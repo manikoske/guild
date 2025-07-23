@@ -255,6 +255,6 @@ class EncounterTest {
             defenders = setOf(dorn, valygar, viconia, yoshimo, edwin)
         )
 
-        print(LoggingUtils.logEncounter(finalEncounterState))
+        print(LoggingUtils.formatEncounter(finalEncounterState))
     }
 }

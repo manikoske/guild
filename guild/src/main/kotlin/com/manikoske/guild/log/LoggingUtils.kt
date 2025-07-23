@@ -66,11 +66,6 @@ object LoggingUtils {
     private fun header(text: String): String = colorize(text, "$BOLD$BG_BLACK$WHITE")
 
     /**
-     * Formats a modifier value with a + sign for positive values
-     */
-    private fun formatModifier(value: Int): String = if (value >= 0) "+$value" else "$value"
-
-    /**
      * Formats hit points with appropriate color based on percentage of max
      */
     private fun formatHitPoints(current: Int, max: Int): String {
@@ -112,7 +107,7 @@ object LoggingUtils {
         }
     }
 
-    private fun logDice(dice: Die.Dice) : String {
+    private fun formatDice(dice: Die.Dice) : String {
         val builder = StringBuilder()
         builder.append(dice.dice.map { it.sides }.joinToString(separator = "+", prefix = "d"))
         if (dice.modifier > 0) {
@@ -121,7 +116,7 @@ object LoggingUtils {
         return builder.toString()
     }
 
-    private fun logModifier(modifier: Int, label: String) : String {
+    private fun formatModifier(modifier: Int, label: String) : String {
         return if (modifier == 0) {
             ""
         } else if (modifier < 0) {
@@ -130,7 +125,7 @@ object LoggingUtils {
             "[+$modifier $label]"
         }
     }
-    private fun logMultiplier(multiplier: Int, label: String) : String {
+    private fun formatMultiplier(multiplier: Int, label: String) : String {
         return if (multiplier == 1) {
             ""
         } else {
@@ -138,23 +133,23 @@ object LoggingUtils {
         }
     }
 
-    private fun logRoll(roll: Event.Roll) : String {
+    private fun formatRoll(roll: Event.Roll) : String {
         val builder = StringBuilder()
-        builder.append("${roll.result} = \uD83C\uDFB2 ${roll.roll.rolled} (${logDice(roll.roll.dice)}) ")
+        builder.append("${roll.result} = \uD83C\uDFB2 ${roll.roll.rolled} (${formatDice(roll.roll.dice)}) ")
 
         if (roll is Event.Roll.HasLevelModifier) {
-            builder.append(logModifier(roll.levelModifier, "lvl"))
+            builder.append(formatModifier(roll.levelModifier, "lvl"))
         }
         if (roll is Event.Roll.HasAttributeModifier) {
-            builder.append(logModifier(roll.attributeModifier, "attr"))
+            builder.append(formatModifier(roll.attributeModifier, "attr"))
         }
         when (roll) {
             is Event.Roll.WeaponAttackRoll -> {
-                builder.append(logModifier(roll.actionAttackModifier, "actn"))
-                builder.append(logModifier(roll.weaponAttackModifier, "wpn"))
+                builder.append(formatModifier(roll.actionAttackModifier, "actn"))
+                builder.append(formatModifier(roll.weaponAttackModifier, "wpn"))
             }
             is Event.Roll.WeaponDamageRoll -> {
-                builder.append(logMultiplier(roll.actionDamageMultiplier, "actn"))
+                builder.append(formatMultiplier(roll.actionDamageMultiplier, "actn"))
             }
             is Event.Roll.DamageOverTimeRoll -> {}
             is Event.Roll.HealOverTimeRoll -> {}
@@ -166,11 +161,11 @@ object LoggingUtils {
         return builder.toString()
     }
 
-    private fun logDifficultyClass(difficultyClass: Event.DifficultyClass) : String {
+    private fun formatDifficultyClass(difficultyClass: Event.DifficultyClass) : String {
         val builder = StringBuilder()
         builder.append("${difficultyClass.result} = ${difficultyClass.baseDifficultyClass} ")
-        builder.append(logModifier(difficultyClass.levelModifier, "lvl"))
-        builder.append(logModifier(difficultyClass.attributeModifier, "attr"))
+        builder.append(formatModifier(difficultyClass.levelModifier, "lvl"))
+        builder.append(formatModifier(difficultyClass.attributeModifier, "attr"))
         when (difficultyClass) {
             is Event.DifficultyClass.SpellAttackDifficultyClass -> {}
             is Event.DifficultyClass.ArmorClass -> {}
@@ -178,23 +173,23 @@ object LoggingUtils {
         return builder.toString()
     }
 
-    private fun logEffect(effect: Effect) : String {
+    private fun formatEffect(effect: Effect) : String {
         val builder = StringBuilder()
         builder.append("${effect.category} ${getEffectSymbol(effect)}")
         if (effect is Effect.TimedEffect) {
             builder.append(" [${effect.roundsLeft} rounds left]")
         }
         if (effect is Effect.DamageOverTimeEffect) {
-            builder.append(" [${logDice(effect.damageDice)} damage]")
+            builder.append(" [${formatDice(effect.damageDice)} damage]")
         }
         if (effect is Effect.HealOverTimeEffect) {
-            builder.append(" [${logDice(effect.healDice)} healing]")
+            builder.append(" [${formatDice(effect.healDice)} healing]")
         }
 
         return builder.toString()
     }
 
-    private fun logCharacterState(characterState: CharacterState) : String {
+    fun formatCharacterState(characterState: CharacterState) : String {
         val name = characterState.character.bio.name
         val group = characterState.allegiance.name
         val position = characterState.positionNodeId
@@ -205,9 +200,9 @@ object LoggingUtils {
         return "${bold(name)} <$group> @$position [$health | $resources]${if (effects.isNotEmpty()) " ⟪$effects⟫" else ""}"
     }
 
-    private fun logActionStarted(actionStarted: Event.ActionStarted) : String {
+    private fun formatActionStarted(actionStarted: Event.ActionStarted) : String {
         val builder = StringBuilder()
-        builder.appendLine("▶\uFE0F ${logCharacterState(actionStarted.target)}")
+        builder.appendLine("▶\uFE0F ${formatCharacterState(actionStarted.target)}")
         builder.appendLine("\tExecutes: ${actionStarted.actionName}")
         if (actionStarted.newPositionNodeId != actionStarted.target.positionNodeId) {
             builder.appendLine("\tMoves to: ${actionStarted.newPositionNodeId}")
@@ -218,135 +213,135 @@ object LoggingUtils {
         return builder.toString()
     }
 
-    private fun logActionEnded(actionEnded: Event.ActionEnded) : String {
+    private fun formatActionEnded(actionEnded: Event.ActionEnded) : String {
         val builder = StringBuilder()
-        builder.appendLine("⏳ ${logCharacterState(actionEnded.updatedTarget)}")
+        builder.appendLine("⏳ ${formatCharacterState(actionEnded.updatedTarget)}")
         if (actionEnded.updatedEffects.isNotEmpty()) {
             builder.appendLine("\t Effects updated: ")
-            actionEnded.updatedEffects.forEach { it -> builder.appendLine("\t\t ${logEffect(it)}") }
+            actionEnded.updatedEffects.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
         }
         if (actionEnded.removedEffects.isNotEmpty()) {
             builder.appendLine("\t Effects removed: ")
-            actionEnded.updatedEffects.forEach { it -> builder.appendLine("\t\t ${logEffect(it)}") }
+            actionEnded.updatedEffects.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
         }
         if (actionEnded.healOverTimeRolls.isNotEmpty()) {
             builder.appendLine("\t Heal effects: ")
-            actionEnded.healOverTimeRolls.forEach { it -> builder.appendLine("\t\t ${logRoll(it)}") }
+            actionEnded.healOverTimeRolls.forEach { it -> builder.appendLine("\t\t ${formatRoll(it)}") }
         }
         if (actionEnded.damageOverTimeRolls.isNotEmpty()) {
             builder.appendLine("\t Damage effects: ")
-            actionEnded.damageOverTimeRolls.forEach { it -> builder.appendLine("\t\t ${logRoll(it)}") }
+            actionEnded.damageOverTimeRolls.forEach { it -> builder.appendLine("\t\t ${formatRoll(it)}") }
         }
         return builder.toString()
     }
 
-    private fun logResolutionEvent(event: Event.ResolutionEvent) : String {
+    private fun formatResolutionEvent(event: Event.ResolutionEvent) : String {
         val builder = StringBuilder()
-        builder.appendLine(logCharacterState(event.target))
+        builder.appendLine(formatCharacterState(event.target))
 
         when (event) {
             is Event.EffectAdded ->
-                builder.appendLine("\tEffect added: ${logEffect(event.effect)}")
+                builder.appendLine("\tEffect added: ${formatEffect(event.effect)}")
             is Event.EffectRemoved ->
-                builder.appendLine("\tEffect removed: ${logEffect(event.effect)}")
+                builder.appendLine("\tEffect removed: ${formatEffect(event.effect)}")
             is Event.Healed ->
-                builder.appendLine("\tHealed: ${logRoll(event.healRoll)}")
+                builder.appendLine("\tHealed: ${formatRoll(event.healRoll)}")
             is Event.ResourceBoosted ->
                 builder.appendLine("\tResources boosted by: ${event.amount}")
             is Event.SpellAttackHit -> {
                 builder.appendLine("\tSpell attack hit:")
-                builder.appendLine("\t\t Spell difficulty class: ${logDifficultyClass(event.spellAttackDifficultyClass)}")
-                builder.appendLine("\t\t Defense roll: ${logRoll(event.spellDefenseRoll)}")
-                builder.appendLine("\t\t Damage roll: ${logRoll(event.spellDamageRoll)}")
+                builder.appendLine("\t\t Spell difficulty class: ${formatDifficultyClass(event.spellAttackDifficultyClass)}")
+                builder.appendLine("\t\t Defense roll: ${formatRoll(event.spellDefenseRoll)}")
+                builder.appendLine("\t\t Damage roll: ${formatRoll(event.spellDamageRoll)}")
                 if (event.effectsAddedByDamage.isNotEmpty()) {
                     builder.appendLine("\t\t Effects added: ")
-                    event.effectsAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${logEffect(it)}") }
+                    event.effectsAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
                 }
                 if (event.effectsRemovedByDamage.isNotEmpty()) {
                     builder.appendLine("\t\t Effects removed: ")
-                    event.effectsRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${logEffect(it)}") }
+                    event.effectsRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
                 }
             }
             is Event.SpellAttackMissed -> {
                 builder.appendLine("\tSpell attack missed:")
-                builder.appendLine("\t\t Spell difficulty class: ${logDifficultyClass(event.spellAttackDifficultyClass)}")
-                builder.appendLine("\t\t Defense roll: ${logRoll(event.spellDefenseRoll)}")
+                builder.appendLine("\t\t Spell difficulty class: ${formatDifficultyClass(event.spellAttackDifficultyClass)}")
+                builder.appendLine("\t\t Defense roll: ${formatRoll(event.spellDefenseRoll)}")
             }
             is Event.WeaponAttackHit -> {
                 builder.appendLine("\tWeapon attack missed:")
-                builder.appendLine("\t\t Attack roll: ${logRoll(event.weaponAttackRoll)}")
-                builder.appendLine("\t\t Armor class: ${logDifficultyClass(event.armorClass)}")
-                builder.appendLine("\t\t Damage roll: ${logRoll(event.weaponDamageRoll)}")
+                builder.appendLine("\t\t Attack roll: ${formatRoll(event.weaponAttackRoll)}")
+                builder.appendLine("\t\t Armor class: ${formatDifficultyClass(event.armorClass)}")
+                builder.appendLine("\t\t Damage roll: ${formatRoll(event.weaponDamageRoll)}")
                 if (event.effectsAddedByDamage.isNotEmpty()) {
                     builder.appendLine("\t\t Effects added: ")
-                    event.effectsAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${logEffect(it)}") }
+                    event.effectsAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
                 }
                 if (event.effectsRemovedByDamage.isNotEmpty()) {
                     builder.appendLine("\t\t Effects removed: ")
-                    event.effectsRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${logEffect(it)}") }
+                    event.effectsRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
                 }
             }
             is Event.WeaponAttackMissed -> {
                 builder.appendLine("\tWeapon attack missed:")
-                builder.appendLine("\t\t Attack roll: ${logRoll(event.weaponAttackRoll)}")
-                builder.appendLine("\t\t Armor class: ${logDifficultyClass(event.armorClass)}")
+                builder.appendLine("\t\t Attack roll: ${formatRoll(event.weaponAttackRoll)}")
+                builder.appendLine("\t\t Armor class: ${formatDifficultyClass(event.armorClass)}")
             }
         }
 
-        builder.appendLine("\t\uD83D\uDCE6 ${logCharacterState(event.updatedTarget)}")
+        builder.appendLine("\t\uD83D\uDCE6 ${formatCharacterState(event.updatedTarget)}")
         return builder.toString()
     }
 
-    private fun logTargetEvents(targetEvents: List<Event.ResolutionEvent>) : String {
+    private fun formatTargetEvents(targetEvents: List<Event.ResolutionEvent>) : String {
         val builder = StringBuilder()
         builder.appendLine("Targets:")
         targetEvents.forEach { it ->
-            builder.appendLine("\t\uD83C\uDFAF ${logResolutionEvent(it)}")
+            builder.appendLine("\t\uD83C\uDFAF ${formatResolutionEvent(it)}")
         }
         return builder.toString()
     }
 
-    private fun logSelfResolutionEvent(selfResolutionEvent: Event.ResolutionEvent) : String {
+    private fun formatSelfEvent(selfResolutionEvent: Event.ResolutionEvent) : String {
         val builder = StringBuilder()
         builder.appendLine("Self:")
-        builder.appendLine("\t\uD83D\uDD30 ${logResolutionEvent(selfResolutionEvent)}:")
+        builder.appendLine("\t\uD83D\uDD30 ${formatResolutionEvent(selfResolutionEvent)}:")
         return builder.toString()
     }
 
-    private fun logTurn(state: Turn.State) : String {
+    private fun formatTurn(state: Turn.State) : String {
         val builder = StringBuilder()
         builder.appendLine("---------------- Next Turn ----------------")
-        builder.appendLine(logActionStarted(state.outcome.actionStarted))
+        builder.appendLine(formatActionStarted(state.outcome.actionStarted))
 
         if (state.outcome is Action.TargetedActionOutcome) {
-            builder.appendLine(logTargetEvents(state.outcome.targetEvents))
+            builder.appendLine(formatTargetEvents(state.outcome.targetEvents))
         }
 
         if (state.outcome.selfResolutionEvent != null) {
-            builder.appendLine(logSelfResolutionEvent(state.outcome.selfResolutionEvent!!))
+            builder.appendLine(formatSelfEvent(state.outcome.selfResolutionEvent!!))
         }
 
-        builder.appendLine(logActionEnded(state.outcome.actionEnded))
+        builder.appendLine(formatActionEnded(state.outcome.actionEnded))
         return builder.toString()
     }
 
-    private fun logRound(state: Round.State) : String {
+    private fun formatRound(state: Round.State) : String {
         val builder = StringBuilder()
         builder.appendLine("---------------- Round ${state.sequence} ----------------")
         builder.appendLine("\uD83D\uDCCB Initiative:")
         state.initiativeRolls.forEach {
-            builder.appendLine("\t ${logCharacterState(it.target)} - ${logRoll(it.initiativeRoll)}")
+            builder.appendLine("\t ${formatCharacterState(it.target)} - ${formatRoll(it.initiativeRoll)}")
         }
         state.turns.forEach {
-            builder.appendLine(logTurn(it))
+            builder.appendLine(formatTurn(it))
         }
         return builder.toString()
     }
 
-    fun logEncounter(state: Encounter.State) : String {
+    fun formatEncounter(state: Encounter.State) : String {
         val builder = StringBuilder()
         state.rounds.forEach {
-            builder.appendLine(logRound(it))
+            builder.appendLine(formatRound(it))
         }
         return builder.toString()
     }
