@@ -1,7 +1,6 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
-import com.manikoske.guild.action.Event
 
 data class Turn(
     val takerId : Int,
@@ -11,12 +10,7 @@ data class Turn(
     fun simulate(battleground: Battleground): State {
 
         val taker = characterStates.first {it.character.id == takerId}
-
-        val pointOfView = PointOfView(
-            taker = taker,
-            allies = characterStates.filter { it.character.id != takerId && it.allegiance == taker.allegiance },
-            enemies = characterStates.filter { it.allegiance != taker.allegiance }
-        )
+        val pointOfView = PointOfView(taker = taker, others = characterStates.filter { it.character.id != takerId })
 
         val allExecutableActions = taker.allExecutableActions()
         val allVantageNodes = pointOfView.allVantageNodes(battleground = battleground)

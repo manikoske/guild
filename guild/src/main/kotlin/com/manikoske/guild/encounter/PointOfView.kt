@@ -5,9 +5,11 @@ import com.manikoske.guild.action.Action
 
 data class PointOfView(
     private val taker: CharacterState,
-    private val allies: List<CharacterState>,
-    private val enemies: List<CharacterState>,
+    private val others: List<CharacterState>,
 ) {
+    private val allies = others.filter { it.allegiance == taker.allegiance }
+    private val enemies = others.filter { it.allegiance != taker.allegiance }
+
     fun allVantageNodes(battleground: Battleground): List<VantageNode> {
 
         val allyCountPerNode = livingCharacterCountPerNode(allies + taker)
@@ -56,8 +58,7 @@ data class PointOfView(
         return if (actionOutcome is Action.TargetedActionOutcome) {
             PointOfView(
                 taker = actionOutcome.actionEnded.updatedTarget,
-                allies = (actionOutcome.targetEvents.map { it.updatedTarget } + allies).distinctBy { it.character.id },
-                enemies = (actionOutcome.targetEvents.map { it.updatedTarget } + enemies).distinctBy { it.character.id }
+                others = (actionOutcome.targetEvents.map { it.updatedTarget } + others).distinctBy { it.character.id },
             )
         } else {
             this.copy(taker = actionOutcome.actionEnded.updatedTarget)

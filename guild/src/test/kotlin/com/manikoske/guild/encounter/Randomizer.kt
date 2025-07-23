@@ -31,9 +31,12 @@ object Randomizer {
         return randomBuilder.giveMeOne<CharacterState>().copy(
             character = randomBuilder.giveMeOne<Character>().copy(
                 bio = randomBuilder.giveMeOne<Bio>().copy(name = name)
-            )
+            ),
+            resourcesSpent = 0,
+            damageTaken = 0
         )
     }
+
 
     fun randomBuilder() : FixtureMonkey {
         return randomBuilder
