@@ -29,7 +29,7 @@ sealed interface Roll {
         override val levelModifier: Int,
         override val rolled: Rolled,
     ) : Roll, HasAttributeModifier, HasLevelModifier {
-        override val result = rolled.result + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
+        override val result = rolled.result + attributeModifier + weaponAttackModifier + weaponAttackModifier + actionAttackModifier + levelModifier
     }
 
     data class WeaponDamageRoll(

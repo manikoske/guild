@@ -36,6 +36,7 @@ object Randomizer {
             ),
             resourcesSpent = 0,
             damageTaken = 0,
+            positionNodeId = 1,
             effects = CharacterState.noEffects()
 
         )

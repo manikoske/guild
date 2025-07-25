@@ -5,6 +5,7 @@ import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.character.Effect
 import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Event
+import com.manikoske.guild.rules.Rules
 
 sealed interface Resolution {
 
@@ -19,8 +20,9 @@ sealed interface Resolution {
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.WeaponAttackEvent {
-                return target.weaponAttackBy(
-                    attacker = executor,
+                return Rules.weaponAttackBy(
+                    executor = executor,
+                    target = target,
                     attackRollModifier = attackRollModifier,
                     damageRollMultiplier = damageRollMultiplier,
                     effectsOnHit = effectsOnHit
@@ -37,8 +39,9 @@ sealed interface Resolution {
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.SpellAttackEvent {
-                return target.weaponAttackBy(
-                    attacker = executor,
+                return Rules.weaponAttackBy(
+                    executor = executor,
+                    target = target,
                     baseDifficultyClass = baseDifficultyClass,
                     executorAttributeType = executorAttributeType,
                     targetAttributeType = targetAttributeType,
@@ -56,7 +59,7 @@ sealed interface Resolution {
             val heal: Dice
         ) : SupportResolution {
             override fun resolve(executor: CharacterState, target: CharacterState): Event.Healed {
-                return target.healBy(healer = executor, executorAttributeType = executorAttributeType, heal = heal)
+                return Rules.healBy(executor = executor, target = target, executorAttributeType = executorAttributeType, heal = heal)
             }
         }
 
@@ -64,7 +67,7 @@ sealed interface Resolution {
             val amount: Int
         ) : SupportResolution {
             override fun resolve(executor: CharacterState, target: CharacterState): Event.ResourceBoosted {
-                return target.boostResources(amount)
+                return Rules.boostResources(target = target, amount = amount)
             }
         }
 
@@ -73,7 +76,7 @@ sealed interface Resolution {
             val effect: Effect
         ) : SupportResolution {
             override fun resolve(executor: CharacterState, target: CharacterState): Event.EffectRemoved {
-                return target.removeEffect(effect)
+                return Rules.removeEffect(target = target, effect = effect)
             }
         }
 
@@ -82,7 +85,7 @@ sealed interface Resolution {
         ) : SupportResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.EffectAdded {
-                return target.addEffect(effect)
+                return Rules.addEffect(target = target, effect = effect)
             }
         }
 

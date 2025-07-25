@@ -3,6 +3,7 @@ package com.manikoske.guild.encounter
 import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Target
 import com.manikoske.guild.character.CharacterState
+import com.manikoske.guild.rules.Rules
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -149,11 +150,11 @@ class PointOfViewTest {
 
         val minscPointOfView = PointOfView(taker = minsc, others = listOf(khalid, jaheira, tazok, davaeorn))
 
-        val minscEndAction = minsc.endAction()
-        val khalidTargetEvent = khalid.boostResources(1)
-        val jaheiraTargetEvent = jaheira.boostResources(2)
-        val tazokTargetEvent = tazok.weaponAttackBy(minsc, 0, 1, listOf())
-        val davaeornTargetEvent = davaeorn.weaponAttackBy(minsc, 0, 1, listOf())
+        val minscEndAction = Rules.endAction(minsc)
+        val khalidTargetEvent = Rules.boostResources(target = khalid, amount = 1)
+        val jaheiraTargetEvent = Rules.boostResources(target = jaheira, amount = 2)
+        val tazokTargetEvent = Rules.weaponAttackBy(executor = minsc, target = tazok, 0, 1, listOf())
+        val davaeornTargetEvent = Rules.weaponAttackBy(executor = minsc, target = davaeorn, 0, 1, listOf())
 
         val targetedActionOutcome = mockk<Action.TargetedActionOutcome>()
         every { targetedActionOutcome.actionEnded } returns minscEndAction

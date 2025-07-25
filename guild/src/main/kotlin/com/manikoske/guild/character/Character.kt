@@ -21,22 +21,6 @@ data class Character(
         }
     }
 
-    fun levelModifier() : Int {
-        return level.modifier()
-    }
-
-    fun armorDifficultyClass() : Int {
-        return inventory.armor.armorDifficultyClass
-    }
-
-    fun armorClassArmsModifier() : Int {
-        return inventory.arms.armorClassModifier()
-    }
-
-    fun armorLimitedDexterityModifier() : Int {
-        return inventory.armor.dexterityModifierLimit(attribute(Attribute.Type.dexterity).modifier())
-    }
-
     fun maxHitPoints(): Int {
         return (bio.clazz.hpDie.sides + attribute(Attribute.Type.constitution).modifier()) * level.level
     }
@@ -45,11 +29,11 @@ data class Character(
         return bio.clazz.baseResources * level.level
     }
 
-    fun weaponAttributeModifier(): Int {
+    private fun weaponAttributeModifier(): Int {
         return attribute(arms().attributeType()).modifier()
     }
 
-    fun weaponAttackModifier() : Int {
+    private fun weaponAttackModifier() : Int {
         return when (arms()) {
             is Inventory.Arms.DualWeapon -> -4
             is Inventory.Arms.OneHandedWeaponAndShield -> 0
@@ -58,7 +42,7 @@ data class Character(
         }
     }
 
-    fun weaponDamage() : Dice {
+    private fun weaponDamage() : Dice {
         return when (val arms = arms()) {
             is Inventory.Arms.DualWeapon -> Dice.combine(arms.mainHand.damageDice, arms.offHand.damageDice)
             is Inventory.Arms.OneHandedWeaponAndShield -> arms.mainHand.damageDice
@@ -67,7 +51,7 @@ data class Character(
         }
     }
 
-    fun attributeModifier(attributeType: Attribute.Type): Int {
+    private fun attributeModifier(attributeType: Attribute.Type): Int {
         return attribute(attributeType).modifier()
     }
 
@@ -80,5 +64,115 @@ data class Character(
     }
 
 
+    fun spellAttackDifficultyClass(
+        attributeType: Attribute.Type,
+        baseDifficultyClass: Int
+    ) : DifficultyClass.SpellAttackDifficultyClass {
+        return DifficultyClass.SpellAttackDifficultyClass(
+            spellAttributeModifier = attributeModifier(attributeType),
+            spellDifficultyClass = baseDifficultyClass,
+            levelModifier = level.modifier()
+        )
+    }
+
+    fun armorClass() : DifficultyClass.ArmorClass {
+        return DifficultyClass.ArmorClass(
+            armorDifficultyClass = inventory.armor.armorDifficultyClass,
+            armsModifier = inventory.arms.armorClassModifier(),
+            levelModifier = level.modifier(),
+            armorAttributeModifier = inventory.armor.dexterityModifierLimit(attribute(Attribute.Type.dexterity).modifier())
+        )
+    }
+
+    fun initiativeRoll(
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.InitiativeRoll {
+        return Roll.InitiativeRoll(
+            attributeModifier = attributeModifier(Attribute.Type.dexterity),
+            levelModifier = level.modifier(),
+            rolled = Roll.Rolled(dice = Dice.Companion.of(Die.d20), rollMethod = rollMethod)
+        )
+    }
+
+
+    fun spellDefenseRoll(
+        attributeType: Attribute.Type,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.SpellDefenseRoll {
+        return Roll.SpellDefenseRoll(
+            attributeModifier = attributeModifier(attributeType),
+            levelModifier = level.modifier(),
+            rolled = Roll.Rolled(dice = Dice.Companion.of(Die.d20), rollMethod = rollMethod)
+        )
+    }
+
+    fun spellDamageRoll(
+        attributeType: Attribute.Type,
+        damage: Dice,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.SpellDamageRoll {
+        return Roll.SpellDamageRoll(
+            attributeModifier = attributeModifier(attributeType),
+            levelModifier = level.modifier(),
+            rolled = Roll.Rolled(dice = damage, rollMethod = rollMethod)
+        )
+    }
+
+    fun healRoll(
+        attributeType: Attribute.Type,
+        heal: Dice,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.HealRoll {
+        return Roll.HealRoll(
+            attributeModifier = attributeModifier(attributeType),
+            levelModifier = level.modifier(),
+            rolled = Roll.Rolled(dice = heal, rollMethod = rollMethod)
+        )
+    }
+
+    fun weaponAttackRoll(
+        actionAttackRollModifier: Int,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.WeaponAttackRoll {
+        return Roll.WeaponAttackRoll(
+            attributeModifier = attribute(arms().attributeType()).modifier(),
+            weaponAttackModifier = weaponAttackModifier(),
+            actionAttackModifier = actionAttackRollModifier,
+            levelModifier = level.modifier(),
+            rolled = Roll.Rolled(dice = Dice.Companion.of(Die.d20), rollMethod = rollMethod)
+        )
+    }
+
+    fun weaponDamageRoll(
+        damageRollMultiplier: Int,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ): Roll.WeaponDamageRoll {
+        return Roll.WeaponDamageRoll(
+            attributeModifier = weaponAttributeModifier(),
+            actionDamageMultiplier = damageRollMultiplier,
+            levelModifier = level.modifier(),
+            rolled = Roll.Rolled(dice = weaponDamage(), rollMethod = rollMethod)
+        )
+    }
+
+    fun healOverTimeRoll(
+        effect: Effect.HealOverTimeEffect,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.HealOverTimeRoll {
+        return Roll.HealOverTimeRoll(
+            effect = effect,
+            rolled = Roll.Rolled(dice = effect.healDice, rollMethod = rollMethod)
+        )
+    }
+
+    fun damageOverTimeRoll(
+        effect: Effect.DamageOverTimeEffect,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.DamageOverTimeRoll {
+        return Roll.DamageOverTimeRoll(
+            effect = effect,
+            rolled = Roll.Rolled(dice = effect.damageDice, rollMethod = rollMethod)
+        )
+    }
 
 }

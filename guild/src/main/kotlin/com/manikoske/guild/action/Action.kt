@@ -9,6 +9,7 @@ import com.manikoske.guild.character.Effect
 import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Die
 import com.manikoske.guild.rules.Event
+import com.manikoske.guild.rules.Rules
 
 sealed interface Action {
 
@@ -126,9 +127,9 @@ sealed interface Action {
             newPositionNodeId: Int
         ) : SelfActionOutcome {
 
-            val actionStarted = executor.startAction(actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
+            val actionStarted = Rules.startAction(target = executor, actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
             val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
-            val actionEnded = selfResolutionEvent?.updatedTarget?.endAction() ?: actionStarted.updatedTarget.endAction()
+            val actionEnded = Rules.endAction(target = selfResolutionEvent?.updatedTarget ?: actionStarted.updatedTarget)
 
             return SelfActionOutcome(
                 actionStarted = actionStarted,
@@ -152,11 +153,11 @@ sealed interface Action {
         ) : TargetedActionOutcome {
 
 
-            val actionStarted = executor.startAction(actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
+            val actionStarted = Rules.startAction(target = executor, actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
             val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
             val updatedExecutor = selfResolutionEvent?.updatedTarget ?: actionStarted.updatedTarget
             val targetEvents = target.targetedCharacterStates.map { resolution.resolve(executor = updatedExecutor, target = it) }
-            val actionEnded = updatedExecutor.endAction()
+            val actionEnded = Rules.endAction(target = updatedExecutor)
 
             return TargetedActionOutcome(
                 actionStarted = actionStarted,

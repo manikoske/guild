@@ -111,7 +111,7 @@ object LoggingUtils {
 
     private fun formatDice(dice: Dice) : String {
         val builder = StringBuilder()
-        builder.append(dice.dice.map { it.sides }.joinToString(separator = "+", prefix = "d"))
+        builder.append(dice.dice.joinToString(separator = "+") { "d" + it.sides })
         if (dice.modifier > 0) {
             builder.append(" +${dice.modifier}")
         }
@@ -174,7 +174,9 @@ object LoggingUtils {
         builder.append(formatModifier(difficultyClass.attributeModifier, "attr"))
         when (difficultyClass) {
             is DifficultyClass.SpellAttackDifficultyClass -> {}
-            is DifficultyClass.ArmorClass -> {}
+            is DifficultyClass.ArmorClass -> {
+                builder.append(formatModifier(difficultyClass.armsModifier, "arms"))
+            }
         }
         return builder.toString()
     }
@@ -274,7 +276,7 @@ object LoggingUtils {
                 builder.appendLine("\t\t Defense roll: ${formatRoll(event.spellDefenseRoll)}")
             }
             is Event.WeaponAttackHit -> {
-                builder.appendLine("\tWeapon attack missed:")
+                builder.appendLine("\tWeapon attack hit:")
                 builder.appendLine("\t\t Attack roll: ${formatRoll(event.weaponAttackRoll)}")
                 builder.appendLine("\t\t Armor class: ${formatDifficultyClass(event.armorClass)}")
                 builder.appendLine("\t\t Damage roll: ${formatRoll(event.weaponDamageRoll)}")

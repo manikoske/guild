@@ -2,6 +2,7 @@ package com.manikoske.guild.encounter
 
 import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.rules.Event
+import com.manikoske.guild.rules.Rules
 
 data class Round(
     private val sequence: Int,
@@ -12,7 +13,7 @@ data class Round(
     ): State {
 
         val initiativeRolls =
-            characterStates.map { it.rollInitiative() }.sortedByDescending { it.initiativeRoll.result }
+            characterStates.map { Rules.rollInitiative(target = it) }.sortedByDescending { it.initiativeRoll.result }
 
         return initiativeRolls
             .map { it.updatedTarget.character.id }
