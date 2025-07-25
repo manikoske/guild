@@ -58,9 +58,9 @@ data class Character(
         }
     }
 
-    fun weaponDamage() : Die.Dice {
+    fun weaponDamage() : Dice {
         return when (val arms = arms()) {
-            is Inventory.Arms.DualWeapon -> Die.Dice.combine(arms.mainHand.damageDice, arms.offHand.damageDice)
+            is Inventory.Arms.DualWeapon -> Dice.combine(arms.mainHand.damageDice, arms.offHand.damageDice)
             is Inventory.Arms.OneHandedWeaponAndShield -> arms.mainHand.damageDice
             is Inventory.Arms.TwoHandedWeapon -> arms.bothHands.damageDice
             is Inventory.Arms.RangedWeapon -> arms.bothHands.damageDice

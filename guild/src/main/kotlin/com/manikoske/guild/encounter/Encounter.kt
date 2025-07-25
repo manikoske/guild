@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.character.Character
+import com.manikoske.guild.character.CharacterState
 
 class Encounter(
     private val battleground: Battleground

@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.action.Effect
+import com.manikoske.guild.character.Effect
+import com.manikoske.guild.character.CharacterState
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.RepeatedTest

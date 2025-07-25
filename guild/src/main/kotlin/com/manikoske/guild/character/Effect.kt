@@ -1,8 +1,9 @@
-package com.manikoske.guild.action
+package com.manikoske.guild.character
 
-import com.manikoske.guild.rules.Die
+import com.manikoske.guild.action.Action
+import com.manikoske.guild.action.Movement
+import com.manikoske.guild.rules.Dice
 import kotlin.math.max
-
 
 sealed interface Effect {
 
@@ -228,7 +229,7 @@ sealed interface Effect {
 
     sealed class DamageOverTimeEffect : ManyDeterminedByCategory<DamageOverTimeEffect>{
 
-        abstract val damageDice: Die.Dice
+        abstract val damageDice: Dice
 
         override fun self(): DamageOverTimeEffect {
             return this
@@ -240,7 +241,7 @@ sealed interface Effect {
 
         data class Bleed(
             override val roundsLeft: Int,
-            override val damageDice: Die.Dice,
+            override val damageDice: Dice,
         ) : DamageOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {
@@ -254,7 +255,7 @@ sealed interface Effect {
 
         data class Poison(
             override val roundsLeft: Int,
-            override val damageDice: Die.Dice,
+            override val damageDice: Dice,
         ) : DamageOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {
@@ -269,7 +270,7 @@ sealed interface Effect {
 
     sealed class HealOverTimeEffect : ManyDeterminedByCategory<HealOverTimeEffect> {
 
-        abstract val healDice: Die.Dice
+        abstract val healDice: Dice
 
         override fun self(): HealOverTimeEffect {
             return this
@@ -281,7 +282,7 @@ sealed interface Effect {
 
         data class Regeneration(
             override val roundsLeft: Int,
-            override val healDice: Die.Dice,
+            override val healDice: Dice,
         ) : HealOverTimeEffect(), TimedEffect {
 
             override fun nextRoundEffect(roundsLeft: Int): Effect {

@@ -1,6 +1,4 @@
-package com.manikoske.guild.encounter
-
-import com.manikoske.guild.action.Effect
+package com.manikoske.guild.character
 
 data class Effects(
     val actionForcingEffect: Effect.ActionForcingEffect?,

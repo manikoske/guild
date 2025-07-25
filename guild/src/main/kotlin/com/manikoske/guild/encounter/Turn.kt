@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
+import com.manikoske.guild.character.CharacterState
 
 data class Turn(
     val takerId : Int,

@@ -1,13 +1,15 @@
-package com.manikoske.guild.encounter
+package com.manikoske.guild.character
 
 import com.manikoske.guild.action.Action
-import com.manikoske.guild.action.Effect
-import com.manikoske.guild.action.Event
+import com.manikoske.guild.character.Effect
 import com.manikoske.guild.action.Movement
-import com.manikoske.guild.character.Attribute
-import com.manikoske.guild.character.Character
+import com.manikoske.guild.character.Effects
 import com.manikoske.guild.log.LoggingUtils
+import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Die
+import com.manikoske.guild.rules.DifficultyClass
+import com.manikoske.guild.rules.Event
+import com.manikoske.guild.rules.Roll
 import kotlin.math.max
 import kotlin.math.min
 
@@ -137,15 +139,121 @@ data class CharacterState(
         return finalMovement.amount >= requiredMovementAmount
     }
 
-    fun rollInitiative() : Event.InitiativeRolled {
+    fun spellAttackDifficultyClass(
+        attributeType: Attribute.Type,
+        baseDifficultyClass: Int
+    ) : DifficultyClass.SpellAttackDifficultyClass {
+        return DifficultyClass.SpellAttackDifficultyClass(
+            spellAttributeModifier = character.attributeModifier(attributeType),
+            spellDifficultyClass = baseDifficultyClass,
+            levelModifier = character.levelModifier()
+        )
+    }
+
+    fun armorClass() : DifficultyClass.ArmorClass {
+        return DifficultyClass.ArmorClass(
+            armorDifficultyClass = character.armorDifficultyClass(),
+            armsModifier = character.armorClassArmsModifier(),
+            levelModifier = character.levelModifier(),
+            armorAttributeModifier = character.armorLimitedDexterityModifier()
+        )
+    }
+
+    fun initiativeRoll(
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.InitiativeRoll {
+        return Roll.InitiativeRoll(
+            attributeModifier = character.attributeModifier(Attribute.Type.dexterity),
+            levelModifier = character.levelModifier(),
+            rolled = Roll.Rolled(dice = Dice.Companion.of(Die.d20), rollMethod = rollMethod)
+        )
+    }
+
+    fun spellDefenseRoll(
+        attributeType: Attribute.Type,
+        rollMethod: Dice.RollMethod
+    ) : Roll.SpellDefenseRoll {
+        return Roll.SpellDefenseRoll(
+            attributeModifier = this.character.attributeModifier(attributeType),
+            levelModifier = this.character.levelModifier(),
+            rolled = Roll.Rolled(dice = Dice.Companion.of(Die.d20), rollMethod = rollMethod)
+        )
+    }
+
+    fun spellDamageRoll(
+        attributeType: Attribute.Type,
+        damage: Dice,
+        rollMethod: Dice.RollMethod
+    ) : Roll.SpellDamageRoll {
+        return Roll.SpellDamageRoll(
+            attributeModifier = character.attributeModifier(attributeType),
+            levelModifier = character.levelModifier(),
+            rolled = Roll.Rolled(dice = damage, rollMethod = rollMethod)
+        )
+    }
+
+    fun healRoll(
+        attributeType: Attribute.Type,
+        heal: Dice,
+        rollMethod: Dice.RollMethod
+    ) : Roll.HealRoll {
+        return Roll.HealRoll(
+            attributeModifier = character.attributeModifier(attributeType),
+            levelModifier = character.levelModifier(),
+            rolled = Roll.Rolled(dice = heal, rollMethod = rollMethod)
+        )
+    }
+
+    fun weaponAttackRoll(
+        attackRollModifier: Int,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ) : Roll.WeaponAttackRoll {
+        return Roll.WeaponAttackRoll(
+            attributeModifier = character.weaponAttributeModifier(),
+            weaponAttackModifier = character.weaponAttackModifier(),
+            actionAttackModifier = attackRollModifier,
+            levelModifier = character.levelModifier(),
+            rolled = Roll.Rolled(dice = Dice.Companion.of(Die.d20), rollMethod = rollMethod)
+        )
+    }
+
+    fun weaponDamageRoll(
+        damageRollMultiplier: Int,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ): Roll.WeaponDamageRoll {
+        return Roll.WeaponDamageRoll(
+            attributeModifier = character.weaponAttributeModifier(),
+            actionDamageMultiplier = damageRollMultiplier,
+            levelModifier = character.levelModifier(),
+            rolled = Roll.Rolled(dice = character.weaponDamage(), rollMethod = rollMethod)
+        )
+    }
+
+    fun healOverTimeRoll(
+        effect: Effect.HealOverTimeEffect,
+        rollMethod: Dice.RollMethod
+    ) : Roll.HealOverTimeRoll {
+        return Roll.HealOverTimeRoll(
+            effect = effect,
+            rolled = Roll.Rolled(dice = effect.healDice, rollMethod = rollMethod)
+        )
+    }
+
+    fun damageOverTimeRoll(
+        effect: Effect.DamageOverTimeEffect,
+        rollMethod: Dice.RollMethod
+    ) : Roll.DamageOverTimeRoll {
+        return Roll.DamageOverTimeRoll(
+            effect = effect,
+            rolled = Roll.Rolled(dice = effect.damageDice, rollMethod = rollMethod)
+        )
+    }
+
+    fun rollInitiative(method: Dice.RollMethod = Dice.RollMethod.Normal) : Event.InitiativeRolled {
         return Event.InitiativeRolled(
             target = this,
             updatedTarget = this,
-            initiativeRoll = Event.Roll.InitiativeRoll(
-                attributeModifier = this.character.attributeModifier(Attribute.Type.dexterity),
-                levelModifier = this.character.levelModifier(),
-                roll = Die.Roll(Die.Dice.of(Die.d20))
-            )
+            initiativeRoll = initiativeRoll(method)
         )
     }
 
@@ -159,32 +267,32 @@ data class CharacterState(
         )
     }
 
-    fun attackBy(
+    fun weaponAttackBy(
         attacker: CharacterState,
         baseDifficultyClass: Int,
         executorAttributeType: Attribute.Type,
         targetAttributeType: Attribute.Type,
-        damage: Die.Dice,
-        effectsOnHit: List<Effect>
+        damage: Dice,
+        effectsOnHit: List<Effect>,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ): Event.SpellAttackEvent {
-        val spellAttackDifficultyClass = Event.DifficultyClass.SpellAttackDifficultyClass(
-            spellAttributeModifier = attacker.character.attributeModifier(executorAttributeType),
-            spellDifficultyClass = baseDifficultyClass,
-            levelModifier = attacker.character.levelModifier()
+
+        val spellAttackDifficultyClass = attacker.spellAttackDifficultyClass(
+            attributeType = executorAttributeType,
+            baseDifficultyClass = baseDifficultyClass
         )
 
-        val spellDefenseRoll = Event.Roll.SpellDefenseRoll(
-            attributeModifier = this.character.attributeModifier(targetAttributeType),
-            levelModifier = this.character.levelModifier(),
-            roll = Die.Roll(Die.Dice.of(Die.d20))
+        val spellDefenseRoll = this.spellDefenseRoll(
+            attributeType = targetAttributeType,
+            rollMethod = rollMethod
         )
 
         if (spellAttackDifficultyClass.result >= spellDefenseRoll.result) {
 
-            val spellDamageRoll = Event.Roll.SpellDamageRoll(
-                attributeModifier = attacker.character.attributeModifier(executorAttributeType),
-                levelModifier = attacker.character.levelModifier(),
-                roll = Die.Roll(damage)
+            val spellDamageRoll = attacker.spellDamageRoll(
+                attributeType = executorAttributeType,
+                damage = damage,
+                rollMethod = rollMethod
             )
 
             val effectsRemovedByDamage = effectsToRemoveByDamage()
@@ -215,13 +323,14 @@ data class CharacterState(
     fun healBy(
         healer: CharacterState,
         executorAttributeType: Attribute.Type,
-        heal: Die.Dice
+        heal: Dice,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ): Event.Healed {
 
-        val healRoll = Event.Roll.HealRoll(
-            attributeModifier = healer.character.attributeModifier(executorAttributeType),
-            levelModifier = healer.character.levelModifier(),
-            roll = Die.Roll(heal)
+        val healRoll = healer.healRoll(
+            attributeType = executorAttributeType,
+            heal = heal,
+            rollMethod = rollMethod
         )
 
         return Event.Healed(
@@ -231,35 +340,26 @@ data class CharacterState(
         )
     }
 
-    fun attackBy(
+    fun weaponAttackBy(
         attacker: CharacterState,
         attackRollModifier: Int,
         damageRollMultiplier: Int,
-        effectsOnHit: List<Effect>
+        effectsOnHit: List<Effect>,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ): Event.WeaponAttackEvent {
 
-        val armorClass = Event.DifficultyClass.ArmorClass(
-            armorDifficultyClass = character.armorDifficultyClass(),
-            armsModifier = character.armorClassArmsModifier(),
-            levelModifier = character.levelModifier(),
-            armorAttributeModifier = character.armorLimitedDexterityModifier()
-        )
+        val armorClass = this.armorClass()
 
-        val weaponAttackRoll = Event.Roll.WeaponAttackRoll(
-            attributeModifier = attacker.character.weaponAttributeModifier(),
-            weaponAttackModifier = attacker.character.weaponAttackModifier(),
-            actionAttackModifier = attackRollModifier,
-            levelModifier = attacker.character.levelModifier(),
-            roll = Die.Roll(Die.Dice.of(Die.d20))
+        val weaponAttackRoll = attacker.weaponAttackRoll(
+            attackRollModifier = attackRollModifier,
+            rollMethod = rollMethod
         )
 
         if (weaponAttackRoll.result >= armorClass.result) {
 
-            val weaponDamageRoll = Event.Roll.WeaponDamageRoll(
-                attributeModifier = attacker.character.weaponAttributeModifier(),
-                actionDamageMultiplier = damageRollMultiplier,
-                levelModifier = attacker.character.levelModifier(),
-                roll = Die.Roll(attacker.character.weaponDamage())
+            val weaponDamageRoll = attacker.weaponDamageRoll(
+                damageRollMultiplier = damageRollMultiplier,
+                rollMethod = rollMethod
             )
 
             val effectsRemovedByDamage = effectsToRemoveByDamage()
@@ -287,21 +387,11 @@ data class CharacterState(
         }
     }
 
-    fun endAction(): Event.ActionEnded {
+    fun endAction(rollMethod: Dice.RollMethod = Dice.RollMethod.Normal): Event.ActionEnded {
         val healOverTimeRolls =
-            effects.healOverTimeEffects.map {
-                Event.Roll.HealOverTimeRoll(
-                    category = it.category,
-                    roll = Die.Roll(it.healDice)
-                )
-            }
+            effects.healOverTimeEffects.map { this.healOverTimeRoll(effect = it, rollMethod = rollMethod) }
         val damageOverTimeRolls =
-            effects.damageOverTimeEffects.map {
-                Event.Roll.DamageOverTimeRoll(
-                    category = it.category,
-                    roll = Die.Roll(it.damageDice)
-                )
-            }
+            effects.damageOverTimeEffects.map { this.damageOverTimeRoll(effect = it, rollMethod = rollMethod) }
 
         val removedEffects = effects.all().filter { it.tick() == null }
         val updatedEffects = effects.all().mapNotNull { it.tick() }

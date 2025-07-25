@@ -3,9 +3,12 @@ package com.manikoske.guild.action
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Class
 import com.manikoske.guild.encounter.*
-import com.manikoske.guild.encounter.Target
+import com.manikoske.guild.action.Target
+import com.manikoske.guild.character.CharacterState
+import com.manikoske.guild.character.Effect
+import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Die
-import kotlin.collections.plus
+import com.manikoske.guild.rules.Event
 
 sealed interface Action {
 
@@ -34,7 +37,7 @@ sealed interface Action {
                     baseDifficultyClass = 10,
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
-                    damage =  Die.Dice.of(Die.d6),
+                    damage =  Dice.of(Die.d6),
                     effectsOnHit = listOf()
                 ),
                 range = 1

@@ -1,6 +1,6 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.action.Effect
+import com.manikoske.guild.character.Effect
 import com.manikoske.guild.character.Bio
 import com.manikoske.guild.character.Character
 import com.navercorp.fixturemonkey.FixtureMonkey

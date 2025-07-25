@@ -1,8 +1,10 @@
 package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
-import com.manikoske.guild.encounter.CharacterState
-import com.manikoske.guild.rules.Die
+import com.manikoske.guild.character.CharacterState
+import com.manikoske.guild.character.Effect
+import com.manikoske.guild.rules.Dice
+import com.manikoske.guild.rules.Event
 
 sealed interface Resolution {
 
@@ -17,7 +19,7 @@ sealed interface Resolution {
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.WeaponAttackEvent {
-                return target.attackBy(
+                return target.weaponAttackBy(
                     attacker = executor,
                     attackRollModifier = attackRollModifier,
                     damageRollMultiplier = damageRollMultiplier,
@@ -30,12 +32,12 @@ sealed interface Resolution {
             val baseDifficultyClass: Int,
             val executorAttributeType: Attribute.Type,
             val targetAttributeType: Attribute.Type,
-            val damage: Die.Dice,
+            val damage: Dice,
             val effectsOnHit: List<Effect>
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.SpellAttackEvent {
-                return target.attackBy(
+                return target.weaponAttackBy(
                     attacker = executor,
                     baseDifficultyClass = baseDifficultyClass,
                     executorAttributeType = executorAttributeType,
@@ -51,7 +53,7 @@ sealed interface Resolution {
 
         data class Healing(
             val executorAttributeType: Attribute.Type,
-            val heal: Die.Dice
+            val heal: Dice
         ) : SupportResolution {
             override fun resolve(executor: CharacterState, target: CharacterState): Event.Healed {
                 return target.healBy(healer = executor, executorAttributeType = executorAttributeType, heal = heal)

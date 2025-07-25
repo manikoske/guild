@@ -1,6 +1,8 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
+import com.manikoske.guild.action.Target
+import com.manikoske.guild.character.CharacterState
 
 
 data class PointOfView(

@@ -1,4 +1,6 @@
-package com.manikoske.guild.encounter
+package com.manikoske.guild.action
+
+import com.manikoske.guild.character.CharacterState
 
 sealed interface Target {
 

@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
-import com.manikoske.guild.action.Event
+import com.manikoske.guild.character.CharacterState
+import com.manikoske.guild.rules.Event
 
 data class Round(
     private val sequence: Int,

@@ -2,6 +2,8 @@ package com.manikoske.guild.encounter
 
 import com.manikoske.guild.character.Bio
 import com.manikoske.guild.character.Character
+import com.manikoske.guild.character.CharacterState
+import com.manikoske.guild.character.Effects
 import com.navercorp.fixturemonkey.FixtureMonkey
 import com.navercorp.fixturemonkey.api.arbitrary.CombinableArbitrary
 import com.navercorp.fixturemonkey.api.introspector.ArbitraryIntrospectorResult
@@ -27,7 +29,7 @@ object Randomizer {
 //        }
         .build()
 
-    fun characterState(name: String) : CharacterState  {
+    fun characterState(name: String = "") : CharacterState {
         return randomBuilder.giveMeOne<CharacterState>().copy(
             character = randomBuilder.giveMeOne<Character>().copy(
                 bio = randomBuilder.giveMeOne<Bio>().copy(name = name)

@@ -1,13 +1,15 @@
 package com.manikoske.guild.log
 
 import com.manikoske.guild.action.Action
-import com.manikoske.guild.action.Effect
-import com.manikoske.guild.action.Event
-import com.manikoske.guild.encounter.CharacterState
+import com.manikoske.guild.rules.DifficultyClass
+import com.manikoske.guild.character.Effect
+import com.manikoske.guild.rules.Event
+import com.manikoske.guild.rules.Roll
+import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.encounter.Encounter
 import com.manikoske.guild.encounter.Round
 import com.manikoske.guild.encounter.Turn
-import com.manikoske.guild.rules.Die
+import com.manikoske.guild.rules.Dice
 
 /**
  * Utility object for ANSI color formatting in terminal output
@@ -107,7 +109,7 @@ object LoggingUtils {
         }
     }
 
-    private fun formatDice(dice: Die.Dice) : String {
+    private fun formatDice(dice: Dice) : String {
         val builder = StringBuilder()
         builder.append(dice.dice.map { it.sides }.joinToString(separator = "+", prefix = "d"))
         if (dice.modifier > 0) {
@@ -133,42 +135,46 @@ object LoggingUtils {
         }
     }
 
-    private fun formatRoll(roll: Event.Roll) : String {
+    private fun formatRoll(roll: Roll) : String {
         val builder = StringBuilder()
-        builder.append("${roll.result} = \uD83C\uDFB2 ${roll.roll.rolled} (${formatDice(roll.roll.dice)}) ")
+        builder.append("${roll.result} = \uD83C\uDFB2 ${roll.rolled.result} (${formatDice(roll.rolled.dice)}) ")
 
-        if (roll is Event.Roll.HasLevelModifier) {
+        if (roll is Roll.HasLevelModifier) {
             builder.append(formatModifier(roll.levelModifier, "lvl"))
         }
-        if (roll is Event.Roll.HasAttributeModifier) {
+        if (roll is Roll.HasAttributeModifier) {
             builder.append(formatModifier(roll.attributeModifier, "attr"))
         }
         when (roll) {
-            is Event.Roll.WeaponAttackRoll -> {
+            is Roll.WeaponAttackRoll -> {
                 builder.append(formatModifier(roll.actionAttackModifier, "actn"))
                 builder.append(formatModifier(roll.weaponAttackModifier, "wpn"))
             }
-            is Event.Roll.WeaponDamageRoll -> {
+            is Roll.WeaponDamageRoll -> {
                 builder.append(formatMultiplier(roll.actionDamageMultiplier, "actn"))
             }
-            is Event.Roll.DamageOverTimeRoll -> {}
-            is Event.Roll.HealOverTimeRoll -> {}
-            is Event.Roll.HealRoll -> {}
-            is Event.Roll.InitiativeRoll -> {}
-            is Event.Roll.SpellDamageRoll -> {}
-            is Event.Roll.SpellDefenseRoll -> {}
+            is Roll.DamageOverTimeRoll -> {
+                builder.append(formatEffect(roll.effect))
+            }
+            is Roll.HealOverTimeRoll -> {
+                builder.append(formatEffect(roll.effect))
+            }
+            is Roll.HealRoll -> {}
+            is Roll.InitiativeRoll -> {}
+            is Roll.SpellDamageRoll -> {}
+            is Roll.SpellDefenseRoll -> {}
         }
         return builder.toString()
     }
 
-    private fun formatDifficultyClass(difficultyClass: Event.DifficultyClass) : String {
+    private fun formatDifficultyClass(difficultyClass: DifficultyClass) : String {
         val builder = StringBuilder()
         builder.append("${difficultyClass.result} = ${difficultyClass.baseDifficultyClass} ")
         builder.append(formatModifier(difficultyClass.levelModifier, "lvl"))
         builder.append(formatModifier(difficultyClass.attributeModifier, "attr"))
         when (difficultyClass) {
-            is Event.DifficultyClass.SpellAttackDifficultyClass -> {}
-            is Event.DifficultyClass.ArmorClass -> {}
+            is DifficultyClass.SpellAttackDifficultyClass -> {}
+            is DifficultyClass.ArmorClass -> {}
         }
         return builder.toString()
     }
