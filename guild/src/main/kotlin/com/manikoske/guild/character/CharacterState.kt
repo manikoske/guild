@@ -1,15 +1,8 @@
 package com.manikoske.guild.character
 
 import com.manikoske.guild.action.Action
-import com.manikoske.guild.character.Effect
 import com.manikoske.guild.action.Movement
-import com.manikoske.guild.character.Effects
 import com.manikoske.guild.log.LoggingUtils
-import com.manikoske.guild.rules.Dice
-import com.manikoske.guild.rules.Die
-import com.manikoske.guild.rules.DifficultyClass
-import com.manikoske.guild.rules.Event
-import com.manikoske.guild.rules.Roll
 import kotlin.math.max
 import kotlin.math.min
 
@@ -45,7 +38,7 @@ data class CharacterState(
     }
 
     fun isDying(): Boolean {
-        return effects.actionForcingEffect is Effect.ActionForcingEffect.Dying
+        return effects.actionForcingEffect is Effect.ActionForcingEffect.Downed
     }
 
     fun utility(): Double {
@@ -111,7 +104,7 @@ data class CharacterState(
     }
 
     fun effectsToAddByDamage(damage: Int, effectsOnHit: List<Effect>): List<Effect> {
-        return effectsOnHit + if (damage >= currentHitPoints()) listOf(Effect.ActionForcingEffect.Dying(0)) else listOf()
+        return effectsOnHit + if (damage >= currentHitPoints()) listOf(Effect.ActionForcingEffect.Downed(0)) else listOf()
     }
 
     private fun canExecuteAction(eventualAction: Action): Boolean {

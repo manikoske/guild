@@ -66,7 +66,7 @@ sealed interface Effect {
         }
 
         // TODO remove dummy when fixture monkey is fixed
-        data class Dying(val dummy: Int) : ActionForcingEffect() {
+        data class Downed(val dummy: Int) : ActionForcingEffect() {
             override fun severity(): Int {
                 return 5
             }
@@ -294,6 +294,8 @@ sealed interface Effect {
         }
 
     }
+
+    
 
     sealed interface OnlyOneDeterminedBySeverity<T : OnlyOneDeterminedBySeverity<T>> : Effect {
         fun severity(): Int

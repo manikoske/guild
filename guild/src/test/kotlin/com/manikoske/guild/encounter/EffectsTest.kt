@@ -14,14 +14,14 @@ class EffectsTest {
         val noEffects = CharacterState.noEffects()
 
         val prone = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Prone>()
-        val dying = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Dying>()
+        val downed = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Downed>()
         val firstStun = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Stun>()
         val secondStun = Randomizer.randomBuilder().giveMeOne<Effect.ActionForcingEffect.Stun>()
 
-        val effects1 = noEffects.add(firstStun).add(prone).add(dying)
+        val effects1 = noEffects.add(firstStun).add(prone).add(downed)
 
         assertThat(effects1.all())
-            .isEqualTo(listOf(dying))
+            .isEqualTo(listOf(downed))
 
         val effects2 = noEffects.add(prone).remove(prone).add(firstStun).add(secondStun)
 

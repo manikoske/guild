@@ -94,7 +94,7 @@ object LoggingUtils {
 
     private fun getEffectSymbol(effect: Effect): String {
         return when(effect) {
-            is Effect.ActionForcingEffect.Dying -> red(SYMBOL_DYING)
+            is Effect.ActionForcingEffect.Downed -> red(SYMBOL_DYING)
             is Effect.ActionForcingEffect.Stun -> yellow(SYMBOL_STUN)
             is Effect.ActionForcingEffect.Prone -> yellow(SYMBOL_PRONE)
             is Effect.DamageOverTimeEffect.Bleed -> red(SYMBOL_BLEED)
