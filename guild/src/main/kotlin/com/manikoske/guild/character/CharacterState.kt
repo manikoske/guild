@@ -37,10 +37,6 @@ data class CharacterState(
         Attacker, Defender
     }
 
-    fun isDying(): Boolean {
-        return effects.actionForcingEffect is Effect.ActionForcingEffect.Downed
-    }
-
     fun utility(): Double {
         val hitPointRatio = currentHitPoints() / character.maxHitPoints().toDouble()
         val resourceRatio = currentResources() / character.maxResources().toDouble()
@@ -101,6 +97,10 @@ data class CharacterState(
 
     fun effectsToRemoveByDamage(): List<Effect> {
         return effects.all().filter { it.removeOnDamageTaken() }
+    }
+
+    fun effectsToRemoveByMovement(): List<Effect> {
+        return effects.all().filter { it.removeOnMovement() }
     }
 
     fun effectsToAddByDamage(damage: Int, effectsOnHit: List<Effect>): List<Effect> {

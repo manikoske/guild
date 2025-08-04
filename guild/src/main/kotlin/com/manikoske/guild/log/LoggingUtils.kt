@@ -44,6 +44,9 @@ object LoggingUtils {
     const val SYMBOL_HELD = "◉"
     const val SYMBOL_DISARMED = "⚔"
     const val SYMBOL_SILENCED = "♪"
+    const val SYMBOL_HIDDEN = "⛶"
+    const val SYMBOL_INVISIBLE = "∅"
+    const val SYMBOL_ETHEREAL = "\uD83D\uDF04"
 
     /**
      * Applies color formatting to text if color output is enabled
@@ -106,6 +109,9 @@ object LoggingUtils {
             is Effect.MovementRestrictingEffect.Held -> purple(SYMBOL_HELD)
             is Effect.ActionRestrictingEffect.Disarmed -> yellow(SYMBOL_DISARMED)
             is Effect.ActionRestrictingEffect.Silenced -> yellow(SYMBOL_SILENCED)
+            is Effect.TargetabilityRestrictingEffect.Ethereal -> blue(SYMBOL_ETHEREAL)
+            is Effect.TargetabilityRestrictingEffect.Hidden -> blue(SYMBOL_HIDDEN)
+            is Effect.TargetabilityRestrictingEffect.Invisible -> blue(SYMBOL_INVISIBLE)
         }
     }
 
@@ -183,7 +189,7 @@ object LoggingUtils {
 
     private fun formatEffect(effect: Effect) : String {
         val builder = StringBuilder()
-        builder.append("${effect.category} ${getEffectSymbol(effect)}")
+        builder.append(getEffectSymbol(effect))
         if (effect is Effect.TimedEffect) {
             builder.append(" [${effect.roundsLeft} rounds left]")
         }
@@ -218,6 +224,10 @@ object LoggingUtils {
         if (actionStarted.resourcesSpent > 0) {
             builder.appendLine("\tSpends: ${actionStarted.resourcesSpent} resources")
         }
+        if (actionStarted.effectsRemovedByMovement.isNotEmpty()) {
+            builder.appendLine("\t Effects removed by movement: ")
+            actionStarted.effectsRemovedByMovement.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+        }
         return builder.toString()
     }
 
@@ -248,10 +258,14 @@ object LoggingUtils {
         builder.appendLine(formatCharacterState(event.target))
 
         when (event) {
-            is Event.EffectAdded ->
-                builder.appendLine("\tEffect added: ${formatEffect(event.effect)}")
-            is Event.EffectRemoved ->
-                builder.appendLine("\tEffect removed: ${formatEffect(event.effect)}")
+            is Event.EffectAdded -> {
+                builder.appendLine("\tEffects added:")
+                event.effects.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+            }
+            is Event.EffectRemoved -> {
+                builder.appendLine("\tEffects removed:")
+                event.effects.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+            }
             is Event.Healed ->
                 builder.appendLine("\tHealed: ${formatRoll(event.healRoll)}")
             is Event.ResourceBoosted ->

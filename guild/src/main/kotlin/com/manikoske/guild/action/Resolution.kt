@@ -72,20 +72,20 @@ sealed interface Resolution {
         }
 
 
-        data class RemoveEffect(
-            val effect: Effect
+        data class RemoveEffects(
+            val effects: List<Effect>
         ) : SupportResolution {
             override fun resolve(executor: CharacterState, target: CharacterState): Event.EffectRemoved {
-                return Rules.removeEffect(target = target, effect = effect)
+                return Rules.removeEffect(target = target, effects = effects)
             }
         }
 
-        data class AddEffect(
-            val effect: Effect
+        data class AddEffects(
+            val effects: List<Effect>
         ) : SupportResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.EffectAdded {
-                return Rules.addEffect(target = target, effect = effect)
+                return Rules.addEffect(target = target, effects = effects)
             }
         }
 

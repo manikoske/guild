@@ -40,8 +40,8 @@ class ActionTest {
                         Effect.ActionForcingEffect.Stun(roundsLeft = 2)
                     )
                 ),
-                selfResolution = Resolution.SupportResolution.AddEffect(
-                    effect = Effect.MovementAlteringEffect.Haste(roundsLeft = 1)
+                selfResolution = Resolution.SupportResolution.AddEffects(
+                    effects = listOf(Effect.MovementAlteringEffect.Haste(roundsLeft = 1))
                 ),
                 resourceCost = 1
             )

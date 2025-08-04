@@ -23,6 +23,9 @@ object Rules {
         newPositionNodeId: Int,
         resourcesSpent: Int
     ) : Event.ActionStarted {
+
+        val effectsRemovedByMovement = if (target.positionNodeId != newPositionNodeId) target.effectsToRemoveByMovement() else listOf()
+
         return Event.ActionStarted(
             actionName = actionName,
             target = target,
@@ -30,7 +33,8 @@ object Rules {
                 .moveTo(newPositionNodeId)
                 .spendResources(resourcesSpent),
             newPositionNodeId = newPositionNodeId,
-            resourcesSpent = resourcesSpent
+            resourcesSpent = resourcesSpent,
+            effectsRemovedByMovement = effectsRemovedByMovement
         )
     }
 
@@ -196,23 +200,23 @@ object Rules {
 
     fun addEffect(
         target: CharacterState,
-        effect: Effect
+        effects: List<Effect>
     ) : Event.EffectAdded {
         return Event.EffectAdded(
             target = target,
-            updatedTarget = target.addEffects(listOf(effect)),
-            effect = effect
+            updatedTarget = target.addEffects(effects),
+            effects = effects
         )
     }
 
     fun removeEffect(
         target: CharacterState,
-        effect: Effect
+        effects: List<Effect>
     ) : Event.EffectRemoved {
         return Event.EffectRemoved(
             target = target,
-            updatedTarget = target.removeEffects(listOf(effect)),
-            effect = effect
+            updatedTarget = target.removeEffects(effects),
+            effects = effects
         )
     }
 }

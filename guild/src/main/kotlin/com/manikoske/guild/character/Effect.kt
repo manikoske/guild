@@ -7,10 +7,6 @@ import kotlin.math.max
 
 sealed interface Effect {
 
-    val category: Category
-
-    sealed interface Category
-
     fun tick() : Effect? {
         return this
     }
@@ -19,15 +15,51 @@ sealed interface Effect {
         return false
     }
 
+    fun removeOnMovement(): Boolean {
+        return false
+    }
+
+    sealed class TargetabilityRestrictingEffect : OnlyOneDeterminedBySeverity<TargetabilityRestrictingEffect> {
+
+        override fun self(): TargetabilityRestrictingEffect {
+            return this
+        }
+
+        override fun removeOnMovement(): Boolean {
+            return true
+        }
+
+
+        data class Hidden(val dummy: Int) : TargetabilityRestrictingEffect() {
+            override fun severity(): Int {
+                return 1
+            }
+        }
+
+        data class Invisible(override val roundsLeft: Int) : TargetabilityRestrictingEffect(), TimedEffect {
+
+            override fun nextRoundEffect(roundsLeft: Int): Effect {
+                return copy(roundsLeft = roundsLeft)
+            }
+
+            override fun severity(): Int {
+                return 2
+            }
+        }
+
+        data class Ethereal(val dummy: Int) : TargetabilityRestrictingEffect() {
+            override fun severity(): Int {
+                return 3
+            }
+        }
+
+    }
+
     sealed class ActionForcingEffect : OnlyOneDeterminedBySeverity<ActionForcingEffect> {
         abstract fun forcedAction(): Action
 
         override fun self(): ActionForcingEffect {
             return this
-        }
-
-        enum class Category : Effect.Category {
-            Prone, Stun, Dying
         }
 
         // TODO remove dummy when fixture monkey is fixed
@@ -39,9 +71,6 @@ sealed interface Effect {
             override fun forcedAction(): Action {
                 return Action.Actions.standUp
             }
-
-            override val category: Category
-                get() = Category.Prone
         }
 
         data class Stun(
@@ -60,9 +89,6 @@ sealed interface Effect {
                 return Action.Actions.noAction
             }
 
-            override val category: Category
-                get() = Category.Stun
-
         }
 
         // TODO remove dummy when fixture monkey is fixed
@@ -75,8 +101,6 @@ sealed interface Effect {
                 return Action.Actions.fightForLife
             }
 
-            override val category: Category
-                get() = Category.Dying
         }
     }
 
@@ -88,10 +112,6 @@ sealed interface Effect {
             return this
         }
 
-        enum class Category : Effect.Category {
-            Slow, Haste
-        }
-
         data class Slow(
             override val roundsLeft: Int
         ) : MovementAlteringEffect(), TimedEffect {
@@ -99,9 +119,6 @@ sealed interface Effect {
             override fun nextRoundEffect(roundsLeft: Int): Effect {
                 return copy(roundsLeft = roundsLeft)
             }
-
-            override val category: Category
-                get() = Category.Slow
 
             override fun alterActionMovement(movement: Movement): Movement {
                 return movement.let { it.copy(amount = max(it.amount - 1, 0)) }
@@ -115,9 +132,6 @@ sealed interface Effect {
             override fun nextRoundEffect(roundsLeft: Int): Effect {
                 return copy(roundsLeft = roundsLeft)
             }
-
-            override val category: Category
-                get() = Category.Haste
 
             override fun alterActionMovement(movement: Movement): Movement {
                 return movement.let { it.copy(amount = max(it.amount + 1, 0)) }
@@ -133,10 +147,6 @@ sealed interface Effect {
             return this
         }
 
-        enum class Category : Effect.Category {
-            Entangled, Held
-        }
-
         data class Entangled(
             override val roundsLeft: Int
         ) : MovementRestrictingEffect(), TimedEffect {
@@ -144,9 +154,6 @@ sealed interface Effect {
             override fun nextRoundEffect(roundsLeft: Int): Effect {
                 return copy(roundsLeft = roundsLeft)
             }
-
-            override val category: Category
-                get() = Category.Entangled
 
             override fun restrictActionMovement(movement: Movement): Movement {
                 return movement.let { if (it.type == Movement.Type.Normal) it.copy(amount = 0) else it }
@@ -170,9 +177,6 @@ sealed interface Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: Category
-                get() = Category.Held
-
             override fun restrictActionMovement(movement: Movement): Movement {
                 return movement.copy(amount = 0)
             }
@@ -190,10 +194,6 @@ sealed interface Effect {
             return this
         }
 
-        enum class Category : Effect.Category {
-            Disarmed, Silenced
-        }
-
         data class Disarmed(
             override val roundsLeft: Int
         ) : ActionRestrictingEffect(), TimedEffect {
@@ -205,9 +205,6 @@ sealed interface Effect {
             override fun restrictedAction(action: Action): Boolean {
                 return action is Action.TargetedAction.AttackAction.WeaponAttack
             }
-
-            override val category: Category
-                get() = Category.Disarmed
         }
 
         data class Silenced(
@@ -221,9 +218,6 @@ sealed interface Effect {
             override fun restrictedAction(action: Action): Boolean {
                 return action is Action.TargetedAction.AttackAction.WeaponAttack
             }
-
-            override val category: Category
-                get() = Category.Silenced
         }
     }
 
@@ -235,10 +229,6 @@ sealed interface Effect {
             return this
         }
 
-        enum class Category : Effect.Category {
-            Bleed, Poison
-        }
-
         data class Bleed(
             override val roundsLeft: Int,
             override val damageDice: Dice,
@@ -247,9 +237,6 @@ sealed interface Effect {
             override fun nextRoundEffect(roundsLeft: Int): Effect {
                 return copy(roundsLeft = roundsLeft)
             }
-
-            override val category: Category
-                get() = Category.Bleed
 
         }
 
@@ -262,9 +249,6 @@ sealed interface Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: Category
-                get() = Category.Poison
-
         }
     }
 
@@ -276,9 +260,6 @@ sealed interface Effect {
             return this
         }
 
-        enum class Category : Effect.Category {
-            Regeneration
-        }
 
         data class Regeneration(
             override val roundsLeft: Int,
@@ -289,8 +270,6 @@ sealed interface Effect {
                 return copy(roundsLeft = roundsLeft)
             }
 
-            override val category: Category
-                get() = Category.Regeneration
         }
 
     }
@@ -303,7 +282,7 @@ sealed interface Effect {
 
         fun add(existingEffect: T?) : T {
             return if (existingEffect != null) {
-                if (existingEffect.category == this.category) {
+                if (existingEffect.javaClass.name == this.javaClass.name) {
                     self()
                 } else {
                     if (existingEffect.severity() > this.severity()) existingEffect else self()
@@ -315,7 +294,7 @@ sealed interface Effect {
 
         fun remove(existingEffect: T?) : T? {
             return if (existingEffect != null) {
-                if (existingEffect.category== this.category) {
+                if (existingEffect.javaClass.name == this.javaClass.name) {
                     null
                 } else {
                     existingEffect
@@ -330,11 +309,11 @@ sealed interface Effect {
         fun self(): T
 
         fun add(existingEffects: List<T>): List<T> {
-            return (existingEffects + self()).groupBy { it.category }.mapValues { it.value.last() }.values.toList()
+            return (existingEffects + self()).groupBy { it.javaClass.name }.mapValues { it.value.last() }.values.toList()
         }
 
         fun remove(existingEffects: List<T>): List<T> {
-            return existingEffects.filter { it.category != this.category }
+            return existingEffects.filter { it.javaClass.name != this.javaClass.name }
         }
     }
 

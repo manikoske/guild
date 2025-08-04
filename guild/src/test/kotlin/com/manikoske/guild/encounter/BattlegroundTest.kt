@@ -113,18 +113,14 @@ class BattlegroundTest {
 
     @Test
     fun `test getAllNodeNormalMovementRequirements`() {
-        val allyCount = mapOf(1 to 2, 2 to 1, 3 to 1, 4 to 0, 5 to 0)
-        val enemyCount = mapOf(1 to 1, 2 to 0, 3 to 0, 4 to 1, 5 to 1)
 
         val result = battleground.getAllNodeNormalMovementRequirements(
             startNodeId = 1,
-            allyCountPerNode = allyCount,
-            enemyCountPerNode = enemyCount,
         )
 
         assertEquals(0, result[1], "start node => cost=0")
         assertEquals(2, result[2], "Node2 is reachable")
-        assertEquals(Int.MAX_VALUE, result[3], "Node3 unreachable because of full capacity")
+        assertEquals(4, result[3], "Node3 is reachable")
         assertEquals(1, result[4], "Node4 reachable")
         assertEquals(4, result[5], "Node5 is reachable, but not via node4")
 
@@ -134,20 +130,11 @@ class BattlegroundTest {
 
     @Test
     fun `test getAllNodeSpecialMovementRequirements`() {
-        /**
-         * If Movement.Type.Special means we can ignore canNotLeaveFrom,
-         * we can see how the capacity logic might still block entering Node3 if it's full.
-         */
-        val allyCount = mapOf(1 to 1, 2 to 0, 3 to 1, 4 to 0, 5 to 0)
-        val enemyCount = mapOf(1 to 1, 2 to 1, 3 to 0, 4 to 0, 5 to 0)
-
         // Node2 has capacity=2 => but there's 1 enemy, so 1 slot left.
         // We start from node1 => cost=0 => we can leave node1 since movement=Special => canNotLeaveFrom= false
 
         val result = battleground.getAllNodeSpecialMovementRequirements(
             startNodeId = 1,
-            allyCountPerNode = allyCount,
-            enemyCountPerNode = enemyCount,
         )
 
         // Node1 => cost=0
@@ -156,7 +143,7 @@ class BattlegroundTest {
         assertEquals(1, result[2], "Node2 cost=2 from Node1 with special movement")
 
         // Node3 => capacity=1 => hasNoCapacityLeft= true => we can't move in => expect Int.MAX_VALUE
-        assertEquals(Int.MAX_VALUE, result[3], "Node3 is full => can't enter => Int.MAX_VALUE")
+        assertEquals(2, result[3], "Node3 is reachable")
 
         // Node4 => from setUp => 1->4 cost=1 => plus we can leave node1. So cost=1
         assertEquals(1, result[4], "Node4 is reachable with cost=1 from Node1")

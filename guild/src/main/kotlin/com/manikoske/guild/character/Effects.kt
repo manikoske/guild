@@ -2,6 +2,7 @@ package com.manikoske.guild.character
 
 data class Effects(
     val actionForcingEffect: Effect.ActionForcingEffect?,
+    val targetabilityRestrictingEffect: Effect.TargetabilityRestrictingEffect?,
     val movementRestrictingEffect: Effect.MovementRestrictingEffect?,
     val movementAlteringEffects: List<Effect.MovementAlteringEffect>,
     val actionRestrictingEffects: List<Effect.ActionRestrictingEffect>,
@@ -12,18 +13,9 @@ data class Effects(
     fun add(effect: Effect): Effects {
         return when (effect) {
             is Effect.ActionForcingEffect -> this.copy(actionForcingEffect = effect.add(actionForcingEffect))
-            is Effect.MovementRestrictingEffect -> this.copy(
-                movementRestrictingEffect = effect.add(
-                    movementRestrictingEffect
-                )
-            )
-
-            is Effect.ActionRestrictingEffect -> this.copy(
-                actionRestrictingEffects = effect.add(
-                    actionRestrictingEffects
-                )
-            )
-
+            is Effect.TargetabilityRestrictingEffect ->  this.copy(targetabilityRestrictingEffect = effect.add(targetabilityRestrictingEffect))
+            is Effect.MovementRestrictingEffect -> this.copy(movementRestrictingEffect = effect.add(movementRestrictingEffect))
+            is Effect.ActionRestrictingEffect -> this.copy(actionRestrictingEffects = effect.add(actionRestrictingEffects))
             is Effect.DamageOverTimeEffect -> this.copy(damageOverTimeEffects = effect.add(damageOverTimeEffects))
             is Effect.MovementAlteringEffect -> this.copy(movementAlteringEffects = effect.add(movementAlteringEffects))
             is Effect.HealOverTimeEffect -> this.copy(healOverTimeEffects = effect.add(healOverTimeEffects))
@@ -33,6 +25,7 @@ data class Effects(
     fun remove(effect: Effect): Effects {
         return when (effect) {
             is Effect.ActionForcingEffect -> this.copy(actionForcingEffect = effect.remove(actionForcingEffect))
+            is Effect.TargetabilityRestrictingEffect -> this.copy(targetabilityRestrictingEffect = effect.remove(targetabilityRestrictingEffect))
             is Effect.MovementRestrictingEffect -> this.copy(
                 movementRestrictingEffect = effect.remove(
                     movementRestrictingEffect
@@ -69,6 +62,7 @@ data class Effects(
         return (
                 movementAlteringEffects +
                         actionRestrictingEffects +
+                        targetabilityRestrictingEffect +
                         damageOverTimeEffects +
                         healOverTimeEffects +
                         listOf(actionForcingEffect) +

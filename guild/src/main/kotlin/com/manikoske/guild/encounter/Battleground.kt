@@ -56,8 +56,6 @@ class Battleground(
 
     fun getAllNodeNormalMovementRequirements(
         startNodeId: Int,
-        allyCountPerNode: Map<Int, Int>,
-        enemyCountPerNode: Map<Int, Int>,
     ): Map<Int, Int> {
         // We'll store the minimal known cost to reach each node
          val dist = mutableMapOf<Int, Int>()
@@ -85,11 +83,6 @@ class Battleground(
             // Explore neighbors
             for (path in currentNode.paths) {
                 val neighbor = nodeBy(path.toNodeId)
-                if (
-                    hasNoCapacityLeft(neighbor.id, allyCountPerNode, enemyCountPerNode) ||
-                    canNotLeaveFrom(currentNode.id, allyCountPerNode, enemyCountPerNode)
-
-                ) continue
 
                 // cost so far + edge cost
                 val newCost = currentCost + path.cost
@@ -107,12 +100,10 @@ class Battleground(
 
     fun getAllNodeSpecialMovementRequirements(
         startNodeId: Int,
-        allyCountPerNode: Map<Int, Int>,
-        enemyCountPerNode: Map<Int, Int>,
     ): Map<Int, Int> {
         return nodeBy(startNodeId).lineOfSight.associateBy(
             { it.toNodeId },
-            { if (startNodeId != it.toNodeId && hasNoCapacityLeft(it.toNodeId, allyCountPerNode, enemyCountPerNode)) Int.MAX_VALUE else it.range}
+            { it.range}
         )
     }
 

@@ -3,7 +3,6 @@ package com.manikoske.guild.action
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Class
 import com.manikoske.guild.encounter.*
-import com.manikoske.guild.action.Target
 import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.character.Effect
 import com.manikoske.guild.rules.Dice
@@ -69,8 +68,8 @@ sealed interface Action {
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
             classRestriction = noClassRestriction,
-            selfResolution = Resolution.SupportResolution.RemoveEffect(
-                effect = Effect.ActionForcingEffect.Prone(dummy = 1)
+            selfResolution = Resolution.SupportResolution.RemoveEffects(
+                effects = listOf(Effect.ActionForcingEffect.Prone(dummy = 1))
             )
         )
 

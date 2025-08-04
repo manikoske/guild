@@ -14,19 +14,12 @@ data class PointOfView(
 
     fun allVantageNodes(battleground: Battleground): List<VantageNode> {
 
-        val allyCountPerNode = livingCharacterCountPerNode(allies + taker)
-        val enemyCountPerNode = livingCharacterCountPerNode(enemies)
-
         val requiredNodeNormalMovements = battleground.getAllNodeNormalMovementRequirements(
             startNodeId = taker.positionNodeId,
-            allyCountPerNode = allyCountPerNode,
-            enemyCountPerNode = enemyCountPerNode,
         )
 
         val requiredNodeSpecialMovements = battleground.getAllNodeSpecialMovementRequirements(
             startNodeId = taker.positionNodeId,
-            allyCountPerNode = allyCountPerNode,
-            enemyCountPerNode = enemyCountPerNode
         )
 
         return battleground.allBattlegroundNodes().map { node ->
@@ -45,11 +38,7 @@ data class PointOfView(
         }
     }
 
-    private fun livingCharacterCountPerNode(characterStates: List<CharacterState>): Map<Int, Int> {
-        return characterStates.filter { !it.isDying() }.groupingBy { it.positionNodeId }.eachCount()
-    }
-
-    data class VantageNode(
+     data class VantageNode(
         val nodeId: Int,
         val requiredNormalMovement: Int,
         val requiredSpecialMovement: Int,
