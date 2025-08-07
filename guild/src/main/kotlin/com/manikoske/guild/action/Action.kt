@@ -25,7 +25,7 @@ sealed interface Action {
                 resolution = Resolution.AttackResolution.WeaponDamageResolution(
                     attackRollModifier = 0,
                     damageRollMultiplier = 1,
-                    effectsOnHit = listOf()
+                    statusOnHit = listOf()
                 ),
             ),
             TargetedAction.AttackAction.SpellAttack.SpellSingleAttack(
@@ -38,7 +38,7 @@ sealed interface Action {
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
                     damage =  Dice.of(Die.d6),
-                    effectsOnHit = listOf()
+                    statusOnHit = listOf()
                 ),
                 range = 1
             ),
@@ -68,8 +68,8 @@ sealed interface Action {
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
             classRestriction = noClassRestriction,
-            selfResolution = Resolution.SupportResolution.RemoveEffects(
-                effects = listOf(Effect.ActionForcingEffect.Prone(dummy = 1))
+            selfResolution = Resolution.SupportResolution.RemoveStatus(
+                category = listOf(Effect.ActionForcingEffect.Prone(dummy = 1))
             )
         )
 

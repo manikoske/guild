@@ -234,13 +234,13 @@ object LoggingUtils {
     private fun formatActionEnded(actionEnded: Event.ActionEnded) : String {
         val builder = StringBuilder()
         builder.appendLine("⏳ ${formatCharacterState(actionEnded.updatedTarget)}")
-        if (actionEnded.updatedEffects.isNotEmpty()) {
+        if (actionEnded.updatedStatuses.isNotEmpty()) {
             builder.appendLine("\t Effects updated: ")
-            actionEnded.updatedEffects.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+            actionEnded.updatedStatuses.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
         }
-        if (actionEnded.removedEffects.isNotEmpty()) {
+        if (actionEnded.removedStatuses.isNotEmpty()) {
             builder.appendLine("\t Effects removed: ")
-            actionEnded.updatedEffects.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+            actionEnded.updatedStatuses.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
         }
         if (actionEnded.healOverTimeRolls.isNotEmpty()) {
             builder.appendLine("\t Heal effects: ")
@@ -258,13 +258,13 @@ object LoggingUtils {
         builder.appendLine(formatCharacterState(event.target))
 
         when (event) {
-            is Event.EffectAdded -> {
+            is Event.StatusAdded -> {
                 builder.appendLine("\tEffects added:")
-                event.effects.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+                event.status.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
             }
-            is Event.EffectRemoved -> {
+            is Event.StatusesRemoved -> {
                 builder.appendLine("\tEffects removed:")
-                event.effects.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+                event.statuses.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
             }
             is Event.Healed ->
                 builder.appendLine("\tHealed: ${formatRoll(event.healRoll)}")
@@ -275,13 +275,13 @@ object LoggingUtils {
                 builder.appendLine("\t\t Spell difficulty class: ${formatDifficultyClass(event.spellAttackDifficultyClass)}")
                 builder.appendLine("\t\t Defense roll: ${formatRoll(event.spellDefenseRoll)}")
                 builder.appendLine("\t\t Damage roll: ${formatRoll(event.spellDamageRoll)}")
-                if (event.effectsAddedByDamage.isNotEmpty()) {
+                if (event.statusAddedByDamage.isNotEmpty()) {
                     builder.appendLine("\t\t Effects added: ")
-                    event.effectsAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
+                    event.statusAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
                 }
-                if (event.effectsRemovedByDamage.isNotEmpty()) {
+                if (event.statusesRemovedByDamage.isNotEmpty()) {
                     builder.appendLine("\t\t Effects removed: ")
-                    event.effectsRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
+                    event.statusesRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
                 }
             }
             is Event.SpellAttackMissed -> {
@@ -294,13 +294,13 @@ object LoggingUtils {
                 builder.appendLine("\t\t Attack roll: ${formatRoll(event.weaponAttackRoll)}")
                 builder.appendLine("\t\t Armor class: ${formatDifficultyClass(event.armorClass)}")
                 builder.appendLine("\t\t Damage roll: ${formatRoll(event.weaponDamageRoll)}")
-                if (event.effectsAddedByDamage.isNotEmpty()) {
+                if (event.statusAddedByDamage.isNotEmpty()) {
                     builder.appendLine("\t\t Effects added: ")
-                    event.effectsAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
+                    event.statusAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
                 }
-                if (event.effectsRemovedByDamage.isNotEmpty()) {
+                if (event.statusesRemovedByDamage.isNotEmpty()) {
                     builder.appendLine("\t\t Effects removed: ")
-                    event.effectsRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
+                    event.statusesRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
                 }
             }
             is Event.WeaponAttackMissed -> {

@@ -12,26 +12,12 @@ data class CharacterState(
     val allegiance: Allegiance,
     private val damageTaken: Int,
     private val resourcesSpent: Int,
-    val effects: Effects,
+    val statuses: List<Status>,
 ) {
-    companion object {
-
-        fun noEffects(): Effects {
-            return Effects(
-                actionForcingEffect = null,
-                movementRestrictingEffect = null,
-                movementAlteringEffects = listOf(),
-                actionRestrictingEffects = listOf(),
-                damageOverTimeEffects = listOf(),
-                healOverTimeEffects = listOf()
-            )
-        }
-    }
 
     override fun toString(): String {
         return LoggingUtils.formatCharacterState(this)
     }
-
 
     enum class Allegiance {
         Attacker, Defender
@@ -67,16 +53,14 @@ data class CharacterState(
         return this.copy(damageTaken = min(character.maxHitPoints(), damageTaken + damageToTake))
     }
 
-    fun addEffects(addedEffects: List<Effect>): CharacterState {
-        return this.copy(effects = addedEffects.fold(effects) { effects: Effects, effect: Effect -> effects.add(effect) })
+    //todo TICK? alebo len do endAction?
+
+    fun addStatus(status: Status): CharacterState {
+        return this.copy(statuses = statuses.map { if (it.name == status.name) status else it } )
     }
 
-    fun removeEffects(removedEffects: List<Effect>): CharacterState {
-        return this.copy(effects = removedEffects.fold(effects) { effects: Effects, effect: Effect ->
-            effects.remove(
-                effect
-            )
-        })
+    fun removeStatuses(statusesToRemove: List<Status>): CharacterState {
+        return this.copy(statuses = statuses - statusesToRemove)
     }
 
     fun heal(amountToHeal: Int): CharacterState {
@@ -95,16 +79,16 @@ data class CharacterState(
         return this.copy(positionNodeId = newPositionNodeIde)
     }
 
-    fun effectsToRemoveByDamage(): List<Effect> {
-        return effects.all().filter { it.removeOnDamageTaken() }
+    fun statusesToRemoveByCategory(category: Status.Category): List<Status> {
+        return statuses.filter { it.category == category }
     }
 
-    fun effectsToRemoveByMovement(): List<Effect> {
-        return effects.all().filter { it.removeOnMovement() }
+    fun statusesToRemoveByDamage(): List<Status> {
+        return statuses.filter { it.removedOnDamageTaken }
     }
 
-    fun effectsToAddByDamage(damage: Int, effectsOnHit: List<Effect>): List<Effect> {
-        return effectsOnHit + if (damage >= currentHitPoints()) listOf(Effect.ActionForcingEffect.Downed(0)) else listOf()
+    fun statusesToRemoveByMovement(): List<Status> {
+        return statuses.filter { it.removedOnMovement }
     }
 
     private fun canExecuteAction(eventualAction: Action): Boolean {

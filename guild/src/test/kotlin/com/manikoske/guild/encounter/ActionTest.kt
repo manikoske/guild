@@ -36,12 +36,12 @@ class ActionTest {
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
                     damage =  Dice.of(Die.d10),
-                    effectsOnHit = listOf(
+                    statusOnHit = listOf(
                         Effect.ActionForcingEffect.Stun(roundsLeft = 2)
                     )
                 ),
-                selfResolution = Resolution.SupportResolution.AddEffects(
-                    effects = listOf(Effect.MovementAlteringEffect.Haste(roundsLeft = 1))
+                selfResolution = Resolution.SupportResolution.AddStatus(
+                    status = listOf(Effect.MovementAlteringEffect.Haste(roundsLeft = 1))
                 ),
                 resourceCost = 1
             )

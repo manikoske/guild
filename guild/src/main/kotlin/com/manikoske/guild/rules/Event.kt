@@ -1,7 +1,7 @@
 package com.manikoske.guild.rules
 
-import com.manikoske.guild.character.Effect
 import com.manikoske.guild.character.CharacterState
+import com.manikoske.guild.character.Status
 
 sealed interface Event {
 
@@ -25,14 +25,14 @@ sealed interface Event {
         override val updatedTarget: CharacterState,
         val newPositionNodeId: Int,
         val resourcesSpent: Int,
-        val effectsRemovedByMovement: List<Effect>,
+        val statusesRemovedOnMovement: List<Status>,
     ) : Event
 
     data class ActionEnded(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val removedEffects: List<Effect>,
-        val updatedEffects: List<Effect>,
+        val removedStatuses: List<Status>,
+        val updatedStatuses: List<Status>,
         val damageOverTimeRolls: List<Roll.DamageOverTimeRoll>,
         val healOverTimeRolls: List<Roll.HealOverTimeRoll>,
     ) : Event
@@ -43,16 +43,16 @@ sealed interface Event {
         val healRoll: Roll.HealRoll
     ) : ResolutionEvent
 
-    data class EffectAdded(
+    data class StatusAdded(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val effects: List<Effect>
+        val status: Status
     ) : ResolutionEvent
 
-    data class EffectRemoved(
+    data class StatusesRemoved(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val effects: List<Effect>
+        val statuses: List<Status>
     ) : ResolutionEvent
 
     data class ResourceBoosted(
@@ -67,8 +67,8 @@ sealed interface Event {
         val armorClass: DifficultyClass.ArmorClass,
         val weaponAttackRoll: Roll.WeaponAttackRoll,
         val weaponDamageRoll: Roll.WeaponDamageRoll,
-        val effectsRemovedByDamage: List<Effect>,
-        val effectsAddedByDamage: List<Effect>
+        val statusesRemovedByDamage: List<Status>,
+        val statusAddedByDamage: Status
 
     ) : WeaponAttackEvent
 
@@ -92,8 +92,8 @@ sealed interface Event {
         val spellDefenseRoll: Roll.SpellDefenseRoll,
         val spellAttackDifficultyClass: DifficultyClass.SpellAttackDifficultyClass,
         val spellDamageRoll: Roll.SpellDamageRoll,
-        val effectsRemovedByDamage: List<Effect>,
-        val effectsAddedByDamage: List<Effect>
+        val statusesRemovedByDamage: List<Status>,
+        val statusAddedByDamage: Status
 
     ) : SpellAttackEvent
 

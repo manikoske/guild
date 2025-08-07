@@ -3,6 +3,7 @@ package com.manikoske.guild.rules
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.character.Effect
+import com.manikoske.guild.character.Status
 
 object Rules {
 
@@ -24,7 +25,7 @@ object Rules {
         resourcesSpent: Int
     ) : Event.ActionStarted {
 
-        val effectsRemovedByMovement = if (target.positionNodeId != newPositionNodeId) target.effectsToRemoveByMovement() else listOf()
+        val statusesRemovedOnMovement = if (target.positionNodeId != newPositionNodeId) target.statusesToRemoveByMovement() else listOf()
 
         return Event.ActionStarted(
             actionName = actionName,
@@ -34,18 +35,18 @@ object Rules {
                 .spendResources(resourcesSpent),
             newPositionNodeId = newPositionNodeId,
             resourcesSpent = resourcesSpent,
-            effectsRemovedByMovement = effectsRemovedByMovement
+            statusesRemovedOnMovement = statusesRemovedOnMovement
         )
     }
 
-    fun weaponAttackBy(
+    fun spellAttackBy(
         executor: CharacterState,
         target: CharacterState,
         baseDifficultyClass: Int,
         executorAttributeType: Attribute.Type,
         targetAttributeType: Attribute.Type,
         damage: Dice,
-        effectsOnHit: List<Effect>,
+        statusOnHit: Status?,
         rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ): Event.SpellAttackEvent {
 
@@ -67,20 +68,19 @@ object Rules {
                 rollMethod = rollMethod
             )
 
-            val effectsRemovedByDamage = target.effectsToRemoveByDamage()
-            val effectsAddedByDamage = target.effectsToAddByDamage(spellDamageRoll.result, effectsOnHit)
+            val statusesToRemoveByDamage = target.statusesToRemoveByDamage()
 
             return Event.SpellAttackHit(
                 target = target,
                 updatedTarget = target
                     .takeDamage(spellDamageRoll.result)
-                    .removeEffects(effectsRemovedByDamage)
-                    .addEffects(effectsAddedByDamage),
+                    .removeStatuses(statusesToRemoveByDamage)
+                    .add(effectsAddedByDamage),
                 spellAttackDifficultyClass = spellAttackDifficultyClass,
                 spellDefenseRoll = spellDefenseRoll,
                 spellDamageRoll = spellDamageRoll,
-                effectsRemovedByDamage = effectsRemovedByDamage,
-                effectsAddedByDamage = effectsAddedByDamage
+                statusesRemovedByDamage = statusesToRemoveByDamage,
+                statusAddedByDamage = effectsAddedByDamage
             )
         } else {
             return Event.SpellAttackMissed(
@@ -118,7 +118,7 @@ object Rules {
         target: CharacterState,
         attackRollModifier: Int,
         damageRollMultiplier: Int,
-        effectsOnHit: List<Effect>,
+        statusOnHit: Status?,
         rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ): Event.WeaponAttackEvent {
 
@@ -136,8 +136,8 @@ object Rules {
                 rollMethod = rollMethod
             )
 
-            val effectsRemovedByDamage = target.effectsToRemoveByDamage()
-            val effectsAddedByDamage = target.effectsToAddByDamage(weaponDamageRoll.result, effectsOnHit)
+            val effectsRemovedByDamage = target.statusesToRemoveByDamage()
+            val effectsAddedByDamage = target.effectsToAddByDamage(weaponDamageRoll.result, statusOnHit)
 
             return Event.WeaponAttackHit(
                 target = target,
@@ -148,8 +148,8 @@ object Rules {
                 weaponAttackRoll = weaponAttackRoll,
                 armorClass = armorClass,
                 weaponDamageRoll = weaponDamageRoll,
-                effectsRemovedByDamage = effectsRemovedByDamage,
-                effectsAddedByDamage = effectsAddedByDamage
+                statusesRemovedByDamage = effectsRemovedByDamage,
+                statusAddedByDamage = effectsAddedByDamage
             )
         } else {
             return Event.WeaponAttackMissed(
@@ -180,8 +180,8 @@ object Rules {
                 .takeDamage(damageOverTimeRolls.sumOf { it.result })
                 .removeEffects(removedEffects)
                 .addEffects(updatedEffects),
-            removedEffects = removedEffects,
-            updatedEffects = updatedEffects,
+            removedStatuses = removedEffects,
+            updatedStatuses = updatedEffects,
             damageOverTimeRolls = damageOverTimeRolls,
             healOverTimeRolls = healOverTimeRolls
         )
@@ -198,25 +198,30 @@ object Rules {
         )
     }
 
-    fun addEffect(
+    fun addStatus(
         target: CharacterState,
-        effects: List<Effect>
-    ) : Event.EffectAdded {
-        return Event.EffectAdded(
+        status: Status
+    ) : Event.StatusAdded {
+        return Event.StatusAdded(
             target = target,
-            updatedTarget = target.addEffects(effects),
-            effects = effects
+            updatedTarget = target.addStatus(status),
+            status = status
         )
     }
 
-    fun removeEffect(
+    fun removeStatus(
         target: CharacterState,
-        effects: List<Effect>
-    ) : Event.EffectRemoved {
-        return Event.EffectRemoved(
+        category: Status.Category
+    ) : Event.StatusesRemoved {
+
+        val statusesToBeRemoved = target.statusesToRemoveByCategory(category)
+
+        return Event.StatusesRemoved(
             target = target,
-            updatedTarget = target.removeEffects(effects),
-            effects = effects
+            updatedTarget = target.removeStatuses(statusesToBeRemoved),
+            statuses = statusesToBeRemoved
         )
     }
+
+    private fun resolveDowned() : Status? {}
 }

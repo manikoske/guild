@@ -3,6 +3,7 @@ package com.manikoske.guild.action
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.character.Effect
+import com.manikoske.guild.character.Status
 import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Event
 import com.manikoske.guild.rules.Rules
@@ -16,7 +17,7 @@ sealed interface Resolution {
         data class WeaponDamageResolution(
             val attackRollModifier: Int,
             val damageRollMultiplier: Int,
-            val effectsOnHit: List<Effect>
+            val statusOnHit: Status?
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.WeaponAttackEvent {
@@ -25,7 +26,7 @@ sealed interface Resolution {
                     target = target,
                     attackRollModifier = attackRollModifier,
                     damageRollMultiplier = damageRollMultiplier,
-                    effectsOnHit = effectsOnHit
+                    statusOnHit = statusOnHit
                 )
             }
         }
@@ -35,18 +36,18 @@ sealed interface Resolution {
             val executorAttributeType: Attribute.Type,
             val targetAttributeType: Attribute.Type,
             val damage: Dice,
-            val effectsOnHit: List<Effect>
+            val statusOnHit: Status?
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.SpellAttackEvent {
-                return Rules.weaponAttackBy(
+                return Rules.spellAttackBy(
                     executor = executor,
                     target = target,
                     baseDifficultyClass = baseDifficultyClass,
                     executorAttributeType = executorAttributeType,
                     targetAttributeType = targetAttributeType,
                     damage = damage,
-                    effectsOnHit = effectsOnHit
+                    statusOnHit = statusOnHit
                 )
             }
         }
@@ -72,20 +73,20 @@ sealed interface Resolution {
         }
 
 
-        data class RemoveEffects(
-            val effects: List<Effect>
+        data class RemoveStatus(
+            val category: Status.Category
         ) : SupportResolution {
-            override fun resolve(executor: CharacterState, target: CharacterState): Event.EffectRemoved {
-                return Rules.removeEffect(target = target, effects = effects)
+            override fun resolve(executor: CharacterState, target: CharacterState): Event.StatusesRemoved {
+                return Rules.removeStatus(target = target, category = category)
             }
         }
 
-        data class AddEffects(
-            val effects: List<Effect>
+        data class AddStatus(
+            val status: Status
         ) : SupportResolution {
 
-            override fun resolve(executor: CharacterState, target: CharacterState): Event.EffectAdded {
-                return Rules.addEffect(target = target, effects = effects)
+            override fun resolve(executor: CharacterState, target: CharacterState): Event.StatusAdded {
+                return Rules.addStatus(target = target, status = status)
             }
         }
 
