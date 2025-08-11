@@ -5,6 +5,7 @@ import com.manikoske.guild.character.Class
 import com.manikoske.guild.encounter.*
 import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.character.Effect
+import com.manikoske.guild.character.Status
 import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Die
 import com.manikoske.guild.rules.Event
@@ -14,13 +15,11 @@ sealed interface Action {
 
     object Actions {
 
-        val noClassRestriction = listOf(Class.Fighter, Class.Rogue, Class.Ranger, Class.Cleric, Class.Wizard)
 
         val basicActions = listOf(
             TargetedAction.AttackAction.WeaponAttack.WeaponSingleAttack(
                 name = "Basic Attack",
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
-                classRestriction = noClassRestriction,
                 resourceCost = 0,
                 resolution = Resolution.AttackResolution.WeaponDamageResolution(
                     attackRollModifier = 0,
@@ -31,7 +30,6 @@ sealed interface Action {
             TargetedAction.AttackAction.SpellAttack.SpellSingleAttack(
                 name = "Cantrip",
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
-                classRestriction = listOf(Class.Wizard),
                 resourceCost = 0,
                 resolution = Resolution.AttackResolution.SpellDamageResolution(
                     baseDifficultyClass = 10,
@@ -46,13 +44,11 @@ sealed interface Action {
                 name = "Dash",
                 movement = Movement(type = Movement.Type.Normal, amount = 2),
                 resourceCost = 0,
-                classRestriction = noClassRestriction,
             ),
             SelfAction(
                 name = "Disengage",
                 movement = Movement(type = Movement.Type.Special, amount = 1),
                 resourceCost = 0,
-                classRestriction = noClassRestriction,
             ),
         )
 
@@ -60,14 +56,12 @@ sealed interface Action {
             name = "No Action",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
-            classRestriction = noClassRestriction,
         )
 
         val standUp = SelfAction(
             name = "Stand Up",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
-            classRestriction = noClassRestriction,
             selfResolution = Resolution.SupportResolution.RemoveStatus(
                 category = listOf(Effect.ActionForcingEffect.Prone(dummy = 1))
             )
@@ -77,15 +71,14 @@ sealed interface Action {
             name = "Fight For Life",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
-            classRestriction = noClassRestriction,
         )
     }
 
     val name: String
     val movement: Movement
     val resourceCost: Int
-    val classRestriction: List<Class>
     val selfResolution : Resolution.SupportResolution?
+    val requiredStatus : Status?
 
     fun canAccess(executor: CharacterState, vantageNode: PointOfView.VantageNode) : Boolean {
         return when (movement.type) {
@@ -118,7 +111,7 @@ sealed interface Action {
         override val name: String,
         override val movement: Movement,
         override val resourceCost: Int,
-        override val classRestriction: List<Class>
+        override val requiredStatus: Status? = null,
     ) : Action {
 
         fun execute(
@@ -180,7 +173,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>
+                    override val requiredStatus: Status? = null,
                 ) : SpellSupportAction() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.SingleAlly && target.range <= range
@@ -194,7 +187,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>
+                    override val requiredStatus: Status? = null,
                 ) : SpellSupportAction() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.DoubleAlly && target.range <= range
@@ -208,7 +201,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>
+                    override val requiredStatus: Status? = null,
                 ) : SpellSupportAction() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.NodeAlly && target.range <= range
@@ -229,7 +222,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>,
+                    override val requiredStatus: Status? = null,
 
                 ) : WeaponAttack() {
 
@@ -245,7 +238,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>,
+                    override val requiredStatus: Status? = null,
                 ) : WeaponAttack() {
 
                     // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
@@ -260,7 +253,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>,
+                    override val requiredStatus: Status? = null,
                 ) : WeaponAttack() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target is Target.NodeEveryone &&
@@ -282,7 +275,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>,
+                    override val requiredStatus: Status? = null,
                 ) : SpellAttack() {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
@@ -298,7 +291,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>,
+                    override val requiredStatus: Status? = null,
                 ) : SpellAttack() {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
@@ -314,7 +307,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val classRestriction: List<Class>,
+                    override val requiredStatus: Status? = null,
                 ) : SpellAttack() {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
