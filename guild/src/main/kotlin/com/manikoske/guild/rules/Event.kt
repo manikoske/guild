@@ -1,7 +1,6 @@
 package com.manikoske.guild.rules
 
 import com.manikoske.guild.character.CharacterState
-import com.manikoske.guild.character.Status
 
 sealed interface Event {
 
@@ -23,42 +22,43 @@ sealed interface Event {
         val actionName: String,
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val newPositionNodeId: Int,
-        val resourcesSpent: Int,
-        val statusesRemovedOnMovement: List<Status>,
+        val movementResult: CharacterState.Result.MovementResult,
+        val spendResourcesResult: CharacterState.Result.SpendResourcesResult
     ) : Event
 
     data class ActionEnded(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val removedStatuses: List<Status>,
-        val updatedStatuses: List<Status>,
         val damageOverTimeRolls: List<Roll.DamageOverTimeRoll>,
         val healOverTimeRolls: List<Roll.HealOverTimeRoll>,
+        val receiveHealingResult: CharacterState.Result.ReceiveHealingResult,
+        val takeDamageResult: CharacterState.Result.TakeDamageResult,
+        val tickStatusesResult: CharacterState.Result.TickStatusesResult
     ) : Event
 
     data class Healed(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val healRoll: Roll.HealRoll
+        val healRoll: Roll.HealRoll,
+        val receiveHealingResult: CharacterState.Result.ReceiveHealingResult,
     ) : ResolutionEvent
 
     data class StatusAdded(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val status: Status
+        val addStatusResult: CharacterState.Result.AddStatusResult
     ) : ResolutionEvent
 
     data class StatusesRemoved(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val statuses: List<Status>
+        val removeStatusesResult: CharacterState.Result.RemoveStatusesResult
     ) : ResolutionEvent
 
     data class ResourceBoosted(
         override val target: CharacterState,
         override val updatedTarget: CharacterState,
-        val amount: Int
+        val boostResourcesResult: CharacterState.Result.BoostResourcesResult
     ) : ResolutionEvent
 
     data class WeaponAttackHit(
@@ -67,9 +67,7 @@ sealed interface Event {
         val armorClass: DifficultyClass.ArmorClass,
         val weaponAttackRoll: Roll.WeaponAttackRoll,
         val weaponDamageRoll: Roll.WeaponDamageRoll,
-        val statusesRemovedByDamage: List<Status>,
-        val statusAddedByDamage: Status
-
+        val takeDamageResult: CharacterState.Result.TakeDamageResult
     ) : WeaponAttackEvent
 
     data class WeaponAttackMissed(
@@ -79,12 +77,6 @@ sealed interface Event {
         val weaponAttackRoll: Roll.WeaponAttackRoll,
     ) : WeaponAttackEvent
 
-    data class SpellAttackMissed(
-        override val target: CharacterState,
-        override val updatedTarget: CharacterState,
-        val spellDefenseRoll: Roll.SpellDefenseRoll,
-        val spellAttackDifficultyClass: DifficultyClass.SpellAttackDifficultyClass,
-    ) : SpellAttackEvent
 
     data class SpellAttackHit(
         override val target: CharacterState,
@@ -92,9 +84,15 @@ sealed interface Event {
         val spellDefenseRoll: Roll.SpellDefenseRoll,
         val spellAttackDifficultyClass: DifficultyClass.SpellAttackDifficultyClass,
         val spellDamageRoll: Roll.SpellDamageRoll,
-        val statusesRemovedByDamage: List<Status>,
-        val statusAddedByDamage: Status
+        val takeDamageResult: CharacterState.Result.TakeDamageResult
 
+    ) : SpellAttackEvent
+
+    data class SpellAttackMissed(
+        override val target: CharacterState,
+        override val updatedTarget: CharacterState,
+        val spellDefenseRoll: Roll.SpellDefenseRoll,
+        val spellAttackDifficultyClass: DifficultyClass.SpellAttackDifficultyClass,
     ) : SpellAttackEvent
 
 }

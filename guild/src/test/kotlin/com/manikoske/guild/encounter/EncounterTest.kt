@@ -45,7 +45,8 @@ class EncounterTest {
                     mainHand = Weapon.Weapons.longSword,
                     shield = Shield.smallShield
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val kivan = Character(
@@ -66,7 +67,8 @@ class EncounterTest {
                 arms = Inventory.Arms.RangedWeapon(
                     bothHands = Weapon.Weapons.longBow
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val anomen = Character(
@@ -88,7 +90,8 @@ class EncounterTest {
                     mainHand = Weapon.Weapons.mace,
                     shield = Shield.smallShield
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val imoen = Character(
@@ -110,7 +113,8 @@ class EncounterTest {
                     mainHand = Weapon.Weapons.shortSword,
                     offHand = Weapon.Weapons.dagger
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val xan = Character(
@@ -131,7 +135,8 @@ class EncounterTest {
                 arms = Inventory.Arms.TwoHandedWeapon(
                     bothHands = Weapon.Weapons.quarterStaff
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val dorn = Character(
@@ -152,7 +157,8 @@ class EncounterTest {
                 arms = Inventory.Arms.TwoHandedWeapon(
                     bothHands = Weapon.Weapons.greatSword
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val valygar = Character(
@@ -173,7 +179,8 @@ class EncounterTest {
                 arms = Inventory.Arms.RangedWeapon(
                     bothHands = Weapon.Weapons.longBow
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val viconia = Character(
@@ -195,7 +202,8 @@ class EncounterTest {
                     mainHand = Weapon.Weapons.warHammer,
                     shield = Shield.smallShield
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val yoshimo = Character(
@@ -217,7 +225,8 @@ class EncounterTest {
                     mainHand = Weapon.Weapons.shortSword,
                     offHand = Weapon.Weapons.dagger
                 )
-            )
+            ),
+            availableActions = listOf()
         )
 
         val edwin = Character(
@@ -238,7 +247,8 @@ class EncounterTest {
                 arms = Inventory.Arms.TwoHandedWeapon(
                     bothHands = Weapon.Weapons.quarterStaff
                 )
-            )
+            ),
+            availableActions = listOf()
         )
     }
 

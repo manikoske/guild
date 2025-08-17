@@ -5,6 +5,7 @@ import com.manikoske.guild.action.Resolution
 import com.manikoske.guild.action.Target
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.Effect
+import com.manikoske.guild.character.Status
 import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Die
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
@@ -36,12 +37,10 @@ class ActionTest {
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
                     damage =  Dice.of(Die.d10),
-                    statusOnHit = listOf(
-                        Effect.ActionForcingEffect.Stun(roundsLeft = 2)
-                    )
+                    statusOnHit = Status.StatusFactory.stun(3)
                 ),
                 selfResolution = Resolution.SupportResolution.AddStatus(
-                    status = listOf(Effect.MovementAlteringEffect.Haste(roundsLeft = 1))
+                    status = Status.StatusFactory.haste(1)
                 ),
                 resourceCost = 1
             )

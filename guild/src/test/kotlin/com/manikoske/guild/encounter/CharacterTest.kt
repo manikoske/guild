@@ -307,7 +307,7 @@ class CharacterTest {
         val expectedResult = healDice.roll(Dice.RollMethod.Median)
 
         // Mock the effect
-        val effect = mockk<Effect.HealOverTimeEffect>()
+        val effect = mockk<Effect.HpAffectingOverTimeEffect.HealingOverTimeEffect>()
         every { effect.healDice } returns healDice
 
         val character = Randomizer.randomBuilder().giveMeOne<Character>()
@@ -319,7 +319,6 @@ class CharacterTest {
         )
 
         // Verify results
-        assertThat(healOverTimeRoll.effect).isEqualTo(effect)
         assertThat(healOverTimeRoll.rolled.dice).isEqualTo(healDice)
         assertThat(healOverTimeRoll.result).isEqualTo(expectedResult)
     }
@@ -331,7 +330,7 @@ class CharacterTest {
         val expectedResult = damageDice.roll(Dice.RollMethod.Median)
 
         // Mock the effect
-        val effect = mockk<Effect.DamageOverTimeEffect>()
+        val effect = mockk<Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect>()
         every { effect.damageDice } returns damageDice
 
         val character = Randomizer.randomBuilder().giveMeOne<Character>()
@@ -343,7 +342,6 @@ class CharacterTest {
         )
 
         // Verify results
-        assertThat(healOverTimeRoll.effect).isEqualTo(effect)
         assertThat(healOverTimeRoll.rolled.dice).isEqualTo(damageDice)
         assertThat(healOverTimeRoll.result).isEqualTo(expectedResult)
     }

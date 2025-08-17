@@ -1,11 +1,13 @@
 package com.manikoske.guild.character
 
+import com.manikoske.guild.action.Action
 import com.manikoske.guild.inventory.Inventory
 import com.manikoske.guild.rules.*
 
 data class Character(
     val id: Int,
     val bio: Bio,
+    val availableActions: List<Action>,
     private val level: Level,
     private val inventory: Inventory,
 ) {
@@ -53,10 +55,6 @@ data class Character(
 
     private fun attributeModifier(attributeType: Attribute.Type): Int {
         return attribute(attributeType).modifier()
-    }
-
-    fun clazz(): Class {
-        return bio.clazz
     }
 
     fun arms(): Inventory.Arms {
@@ -156,21 +154,19 @@ data class Character(
     }
 
     fun healOverTimeRoll(
-        effect: Effect.HealOverTimeEffect,
+        effect: Effect.HpAffectingOverTimeEffect.HealingOverTimeEffect,
         rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ) : Roll.HealOverTimeRoll {
         return Roll.HealOverTimeRoll(
-            effect = effect,
             rolled = Roll.Rolled(dice = effect.healDice, rollMethod = rollMethod)
         )
     }
 
     fun damageOverTimeRoll(
-        effect: Effect.DamageOverTimeEffect,
+        effect: Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect,
         rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ) : Roll.DamageOverTimeRoll {
         return Roll.DamageOverTimeRoll(
-            effect = effect,
             rolled = Roll.Rolled(dice = effect.damageDice, rollMethod = rollMethod)
         )
     }

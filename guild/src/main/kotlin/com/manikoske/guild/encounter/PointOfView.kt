@@ -1,6 +1,7 @@
 package com.manikoske.guild.encounter
 
 import com.manikoske.guild.action.Action
+import com.manikoske.guild.action.Movement
 import com.manikoske.guild.action.Target
 import com.manikoske.guild.character.CharacterState
 
@@ -43,7 +44,14 @@ data class PointOfView(
         val requiredNormalMovement: Int,
         val requiredSpecialMovement: Int,
         val targets: List<Target>,
-    )
+    ) {
+         fun canBeAccessedWith(movement: Movement) : Boolean {
+             return when (movement.type) {
+                 Movement.Type.Normal -> movement.amount >= requiredNormalMovement
+                 Movement.Type.Special -> movement.amount >= requiredSpecialMovement
+             }
+         }
+     }
 
     fun updateWith(actionOutcome: Action.Outcome) : PointOfView {
         return if (actionOutcome is Action.TargetedActionOutcome) {

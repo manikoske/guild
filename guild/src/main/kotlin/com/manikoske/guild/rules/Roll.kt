@@ -1,6 +1,6 @@
 package com.manikoske.guild.rules
 
-import com.manikoske.guild.character.Effect
+import com.manikoske.guild.character.Status
 
 sealed interface Roll {
 
@@ -42,14 +42,12 @@ sealed interface Roll {
     }
 
     data class DamageOverTimeRoll(
-        val effect: Effect,
         override val rolled: Rolled
     ) : Roll {
         override val result = rolled.result
     }
 
     data class HealOverTimeRoll(
-        val effect: Effect,
         override val rolled: Rolled
     ) : Roll {
         override val result = rolled.result

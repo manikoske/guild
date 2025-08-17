@@ -153,8 +153,8 @@ class PointOfViewTest {
         val minscEndAction = Rules.endAction(minsc)
         val khalidTargetEvent = Rules.boostResources(target = khalid, amount = 1)
         val jaheiraTargetEvent = Rules.boostResources(target = jaheira, amount = 2)
-        val tazokTargetEvent = Rules.weaponAttackBy(executor = minsc, target = tazok, 0, 1, listOf())
-        val davaeornTargetEvent = Rules.weaponAttackBy(executor = minsc, target = davaeorn, 0, 1, listOf())
+        val tazokTargetEvent = Rules.weaponAttackBy(executor = minsc, target = tazok, 0, 1, null)
+        val davaeornTargetEvent = Rules.weaponAttackBy(executor = minsc, target = davaeorn, 0, 1, null)
 
         val targetedActionOutcome = mockk<Action.TargetedActionOutcome>()
         every { targetedActionOutcome.actionEnded } returns minscEndAction

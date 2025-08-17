@@ -1,7 +1,6 @@
 package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
-import com.manikoske.guild.character.Class
 import com.manikoske.guild.encounter.*
 import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.character.Effect
@@ -15,7 +14,6 @@ sealed interface Action {
 
     object Actions {
 
-
         val basicActions = listOf(
             TargetedAction.AttackAction.WeaponAttack.WeaponSingleAttack(
                 name = "Basic Attack",
@@ -24,7 +22,6 @@ sealed interface Action {
                 resolution = Resolution.AttackResolution.WeaponDamageResolution(
                     attackRollModifier = 0,
                     damageRollMultiplier = 1,
-                    statusOnHit = listOf()
                 ),
             ),
             TargetedAction.AttackAction.SpellAttack.SpellSingleAttack(
@@ -32,11 +29,10 @@ sealed interface Action {
                 movement = Movement(type = Movement.Type.Normal, amount = 1),
                 resourceCost = 0,
                 resolution = Resolution.AttackResolution.SpellDamageResolution(
-                    baseDifficultyClass = 10,
+                    baseDifficultyClass = 8,
                     executorAttributeType = Attribute.Type.intelligence,
                     targetAttributeType = Attribute.Type.dexterity,
                     damage =  Dice.of(Die.d6),
-                    statusOnHit = listOf()
                 ),
                 range = 1
             ),
@@ -58,19 +54,17 @@ sealed interface Action {
             resourceCost = 0,
         )
 
+        val crawl = SelfAction(
+            name = "Crawl",
+            movement = Movement(type = Movement.Type.Normal, amount = 1),
+            resourceCost = 0,
+        )
+
         val standUp = SelfAction(
             name = "Stand Up",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
-            selfResolution = Resolution.SupportResolution.RemoveStatus(
-                category = listOf(Effect.ActionForcingEffect.Prone(dummy = 1))
-            )
-        )
-
-        val fightForLife = SelfAction(
-            name = "Fight For Life",
-            movement = Movement(type = Movement.Type.Normal, amount = 0),
-            resourceCost = 0,
+            selfResolution = Resolution.SupportResolution.RemoveStatus(Status.Name.Prone)
         )
     }
 
@@ -79,13 +73,6 @@ sealed interface Action {
     val resourceCost: Int
     val selfResolution : Resolution.SupportResolution?
     val requiredStatus : Status?
-
-    fun canAccess(executor: CharacterState, vantageNode: PointOfView.VantageNode) : Boolean {
-        return when (movement.type) {
-            Movement.Type.Normal -> executor.canMoveBy(movement, vantageNode.requiredNormalMovement)
-            Movement.Type.Special -> executor.canMoveBy(movement, vantageNode.requiredSpecialMovement)
-        }
-    }
 
     sealed interface Outcome {
         val actionStarted: Event.ActionStarted

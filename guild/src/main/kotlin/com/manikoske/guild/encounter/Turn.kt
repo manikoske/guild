@@ -19,8 +19,9 @@ data class Turn(
         val possibleOutcomes: MutableList<() -> Action.Outcome> = mutableListOf()
 
         allExecutableActions.forEach { executableAction ->
+            val actionMovement = taker.actualMovement(executableAction.movement)
             allVantageNodes
-                .filter { vantageNode -> executableAction.canAccess(taker, vantageNode) }
+                .filter { vantageNode -> vantageNode.canBeAccessedWith(actionMovement) }
                 .forEach { accessibleVantageNode ->
                     when (executableAction) {
 

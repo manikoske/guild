@@ -2,7 +2,6 @@ package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
 import com.manikoske.guild.character.CharacterState
-import com.manikoske.guild.character.Effect
 import com.manikoske.guild.character.Status
 import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Event
@@ -17,7 +16,7 @@ sealed interface Resolution {
         data class WeaponDamageResolution(
             val attackRollModifier: Int,
             val damageRollMultiplier: Int,
-            val statusOnHit: Status?
+            val statusOnHit: Status? = null
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.WeaponAttackEvent {
@@ -36,7 +35,7 @@ sealed interface Resolution {
             val executorAttributeType: Attribute.Type,
             val targetAttributeType: Attribute.Type,
             val damage: Dice,
-            val statusOnHit: Status?
+            val statusOnHit: Status? = null
         ) : AttackResolution {
 
             override fun resolve(executor: CharacterState, target: CharacterState): Event.SpellAttackEvent {
@@ -74,10 +73,10 @@ sealed interface Resolution {
 
 
         data class RemoveStatus(
-            val category: Status.Category
+            val name: Status.Name
         ) : SupportResolution {
             override fun resolve(executor: CharacterState, target: CharacterState): Event.StatusesRemoved {
-                return Rules.removeStatus(target = target, category = category)
+                return Rules.removeStatusByName(target = target, name = name)
             }
         }
 

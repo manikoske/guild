@@ -23,19 +23,18 @@ object Rules {
         actionName: String,
         newPositionNodeId: Int,
         resourcesSpent: Int
+
     ) : Event.ActionStarted {
 
-        val statusesRemovedOnMovement = if (target.positionNodeId != newPositionNodeId) target.statusesToRemoveByMovement() else listOf()
+        val movementResult = target.moveTo(newPositionNodeId)
+        val spendResourcesResult = movementResult.updatedTarget.spendResources(resourcesSpent)
 
         return Event.ActionStarted(
             actionName = actionName,
             target = target,
-            updatedTarget = target
-                .moveTo(newPositionNodeId)
-                .spendResources(resourcesSpent),
-            newPositionNodeId = newPositionNodeId,
-            resourcesSpent = resourcesSpent,
-            statusesRemovedOnMovement = statusesRemovedOnMovement
+            updatedTarget = spendResourcesResult.updatedTarget,
+            movementResult = movementResult,
+            spendResourcesResult = spendResourcesResult
         )
     }
 
@@ -68,19 +67,15 @@ object Rules {
                 rollMethod = rollMethod
             )
 
-            val statusesToRemoveByDamage = target.statusesToRemoveByDamage()
+            val damageResult = target.takeDamage(damageToTake = spellDamageRoll.result, statusOnHit = statusOnHit)
 
             return Event.SpellAttackHit(
                 target = target,
-                updatedTarget = target
-                    .takeDamage(spellDamageRoll.result)
-                    .removeStatuses(statusesToRemoveByDamage)
-                    .add(effectsAddedByDamage),
+                updatedTarget = damageResult.updatedTarget,
                 spellAttackDifficultyClass = spellAttackDifficultyClass,
                 spellDefenseRoll = spellDefenseRoll,
                 spellDamageRoll = spellDamageRoll,
-                statusesRemovedByDamage = statusesToRemoveByDamage,
-                statusAddedByDamage = effectsAddedByDamage
+                takeDamageResult = damageResult
             )
         } else {
             return Event.SpellAttackMissed(
@@ -106,10 +101,13 @@ object Rules {
             rollMethod = rollMethod
         )
 
+        val healResult = target.heal(healRoll.result)
+
         return Event.Healed(
             target = target,
-            updatedTarget = target.heal(healRoll.result),
-            healRoll = healRoll
+            updatedTarget = healResult.updatedTarget,
+            healRoll = healRoll,
+            receiveHealingResult = healResult
         )
     }
 
@@ -136,20 +134,15 @@ object Rules {
                 rollMethod = rollMethod
             )
 
-            val effectsRemovedByDamage = target.statusesToRemoveByDamage()
-            val effectsAddedByDamage = target.effectsToAddByDamage(weaponDamageRoll.result, statusOnHit)
+            val damageResult = target.takeDamage(damageToTake = weaponDamageRoll.result, statusOnHit = statusOnHit)
 
             return Event.WeaponAttackHit(
                 target = target,
-                updatedTarget = target
-                    .takeDamage(weaponDamageRoll.result)
-                    .removeEffects(effectsRemovedByDamage)
-                    .addEffects(effectsAddedByDamage),
+                updatedTarget = damageResult.updatedTarget,
                 weaponAttackRoll = weaponAttackRoll,
                 armorClass = armorClass,
                 weaponDamageRoll = weaponDamageRoll,
-                statusesRemovedByDamage = effectsRemovedByDamage,
-                statusAddedByDamage = effectsAddedByDamage
+                takeDamageResult = damageResult
             )
         } else {
             return Event.WeaponAttackMissed(
@@ -165,25 +158,30 @@ object Rules {
         target: CharacterState,
         rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ): Event.ActionEnded {
-        val healOverTimeRolls =
-            target.effects.healOverTimeEffects.map { target.character.healOverTimeRoll(effect = it, rollMethod = rollMethod) }
-        val damageOverTimeRolls =
-            target.effects.damageOverTimeEffects.map { target.character.damageOverTimeRoll(effect = it, rollMethod = rollMethod) }
 
-        val removedEffects = target.effects.all().filter { it.tick() == null }
-        val updatedEffects = target.effects.all().mapNotNull { it.tick() }
+        val healOverTimeRolls = target.statuses
+                .mapNotNull { it.hpAffectingOverTimeEffect }
+                .filterIsInstance<Effect.HpAffectingOverTimeEffect.HealingOverTimeEffect>()
+                .map { target.character.healOverTimeRoll(effect = it, rollMethod = rollMethod) }
+
+        val damageOverTimeRolls =
+            target.statuses
+                .mapNotNull { it.hpAffectingOverTimeEffect }
+                .filterIsInstance<Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect>()
+                .map { target.character.damageOverTimeRoll(effect = it, rollMethod = rollMethod) }
+
+        val healResult = target.heal(healOverTimeRolls.sumOf { it.result })
+        val damageResult = healResult.updatedTarget.takeDamage(damageOverTimeRolls.sumOf { it.result })
+        val statusesTickResult = damageResult.updatedTarget.tickStatuses()
 
         return Event.ActionEnded(
             target = target,
-            updatedTarget = target
-                .heal(healOverTimeRolls.sumOf { it.result })
-                .takeDamage(damageOverTimeRolls.sumOf { it.result })
-                .removeEffects(removedEffects)
-                .addEffects(updatedEffects),
-            removedStatuses = removedEffects,
-            updatedStatuses = updatedEffects,
+            updatedTarget = statusesTickResult.updatedTarget,
             damageOverTimeRolls = damageOverTimeRolls,
-            healOverTimeRolls = healOverTimeRolls
+            healOverTimeRolls = healOverTimeRolls,
+            receiveHealingResult = healResult,
+            takeDamageResult = damageResult,
+            tickStatusesResult = statusesTickResult
         )
     }
 
@@ -191,10 +189,12 @@ object Rules {
         target: CharacterState,
         amount: Int
     ) : Event.ResourceBoosted {
+
+        val boostResourcesResult = target.boostResources(amount)
         return Event.ResourceBoosted(
             target = target,
-            updatedTarget = target.gainResources(amount),
-            amount = amount
+            updatedTarget = boostResourcesResult.updatedTarget,
+            boostResourcesResult = boostResourcesResult
         )
     }
 
@@ -202,26 +202,27 @@ object Rules {
         target: CharacterState,
         status: Status
     ) : Event.StatusAdded {
+
+        val addStatusResult = target.addStatus(status)
+
         return Event.StatusAdded(
             target = target,
-            updatedTarget = target.addStatus(status),
-            status = status
+            updatedTarget = addStatusResult.updatedTarget,
+            addStatusResult = addStatusResult
         )
     }
 
-    fun removeStatus(
+    fun removeStatusByName(
         target: CharacterState,
-        category: Status.Category
+        name: Status.Name
     ) : Event.StatusesRemoved {
 
-        val statusesToBeRemoved = target.statusesToRemoveByCategory(category)
+        val removeStatusesResult = target.removeStatuses(name)
 
         return Event.StatusesRemoved(
             target = target,
-            updatedTarget = target.removeStatuses(statusesToBeRemoved),
-            statuses = statusesToBeRemoved
+            updatedTarget = removeStatusesResult.updatedTarget,
+            removeStatusesResult = removeStatusesResult
         )
     }
-
-    private fun resolveDowned() : Status? {}
 }

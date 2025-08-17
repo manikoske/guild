@@ -6,6 +6,7 @@ import com.manikoske.guild.character.Effect
 import com.manikoske.guild.rules.Event
 import com.manikoske.guild.rules.Roll
 import com.manikoske.guild.character.CharacterState
+import com.manikoske.guild.character.Status
 import com.manikoske.guild.encounter.Encounter
 import com.manikoske.guild.encounter.Round
 import com.manikoske.guild.encounter.Turn
@@ -95,23 +96,32 @@ object LoggingUtils {
         }
     }
 
-    private fun getEffectSymbol(effect: Effect): String {
+    private fun getEffectSymbol(effect: Effect.TargetabilityAlteringEffect): String {
         return when(effect) {
-            is Effect.ActionForcingEffect.Downed -> red(SYMBOL_DYING)
-            is Effect.ActionForcingEffect.Stun -> yellow(SYMBOL_STUN)
-            is Effect.ActionForcingEffect.Prone -> yellow(SYMBOL_PRONE)
-            is Effect.DamageOverTimeEffect.Bleed -> red(SYMBOL_BLEED)
-            is Effect.DamageOverTimeEffect.Poison -> green(SYMBOL_POISON)
-            is Effect.HealOverTimeEffect.Regeneration -> green(SYMBOL_REGENERATION)
-            is Effect.MovementAlteringEffect.Slow -> cyan(SYMBOL_SLOW)
-            is Effect.MovementAlteringEffect.Haste -> cyan(SYMBOL_HASTE)
-            is Effect.MovementRestrictingEffect.Entangled -> purple(SYMBOL_ENTANGLED)
-            is Effect.MovementRestrictingEffect.Held -> purple(SYMBOL_HELD)
-            is Effect.ActionRestrictingEffect.Disarmed -> yellow(SYMBOL_DISARMED)
-            is Effect.ActionRestrictingEffect.Silenced -> yellow(SYMBOL_SILENCED)
-            is Effect.TargetabilityRestrictingEffect.Ethereal -> blue(SYMBOL_ETHEREAL)
-            is Effect.TargetabilityRestrictingEffect.Hidden -> blue(SYMBOL_HIDDEN)
-            is Effect.TargetabilityRestrictingEffect.Invisible -> blue(SYMBOL_INVISIBLE)
+            Effect.TargetabilityAlteringEffect.TargetabilityPreventingEffect -> blue(SYMBOL_INVISIBLE)
+            is Effect.TargetabilityAlteringEffect.TargetabilityRestrictingEffect -> cyan(SYMBOL_HIDDEN)
+        }
+    }
+
+    private fun getEffectSymbol(effect: Effect.ActionMovementAlteringEffect): String {
+        return when(effect) {
+            is Effect.ActionMovementAlteringEffect.ActionMovementAmountAlteringEffect -> yellow(SYMBOL_ENTANGLED)
+            is Effect.ActionMovementAlteringEffect.ActionMovementRestrictingEffect -> purple(SYMBOL_HELD)
+        }
+    }
+
+    private fun getEffectSymbol(effect: Effect.ActionAvailabilityAlteringEffect): String {
+        return when(effect) {
+            Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect -> red(SYMBOL_STUN)
+            is Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect -> yellow(SYMBOL_STUN)
+            is Effect.ActionAvailabilityAlteringEffect.ActionsForcingEffect -> yellow(SYMBOL_PRONE)
+        }
+    }
+
+    private fun getEffectSymbol(effect: Effect.HpAffectingOverTimeEffect): String {
+        return when(effect) {
+            is Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect -> purple(SYMBOL_POISON)
+            is Effect.HpAffectingOverTimeEffect.HealingOverTimeEffect -> green(SYMBOL_REGENERATION)
         }
     }
 
@@ -159,12 +169,8 @@ object LoggingUtils {
             is Roll.WeaponDamageRoll -> {
                 builder.append(formatMultiplier(roll.actionDamageMultiplier, "actn"))
             }
-            is Roll.DamageOverTimeRoll -> {
-                builder.append(formatEffect(roll.effect))
-            }
-            is Roll.HealOverTimeRoll -> {
-                builder.append(formatEffect(roll.effect))
-            }
+            is Roll.DamageOverTimeRoll -> {}
+            is Roll.HealOverTimeRoll -> {}
             is Roll.HealRoll -> {}
             is Roll.InitiativeRoll -> {}
             is Roll.SpellDamageRoll -> {}
@@ -187,17 +193,37 @@ object LoggingUtils {
         return builder.toString()
     }
 
-    private fun formatEffect(effect: Effect) : String {
+    private fun formatStatuses(statuses: List<Status>) : String {
+        val formated = statuses.fold ("") { display, status -> display + status.name.name }
+        return if (formated.isEmpty()) "" else "<$formated>"
+    }
+
+    private fun formatStatus(status: Status) : String {
         val builder = StringBuilder()
-        builder.append(getEffectSymbol(effect))
-        if (effect is Effect.TimedEffect) {
-            builder.append(" [${effect.roundsLeft} rounds left]")
+        builder.append(status.name.name)
+        builder.append("<")
+        if (status.actionAvailabilityAlteringEffect != null) {
+            builder.append(" ${getEffectSymbol(status.actionAvailabilityAlteringEffect)}")
         }
-        if (effect is Effect.DamageOverTimeEffect) {
-            builder.append(" [${formatDice(effect.damageDice)} damage]")
+        if (status.actionMovementAlteringEffect != null) {
+            builder.append(" ${getEffectSymbol(status.actionMovementAlteringEffect)}")
         }
-        if (effect is Effect.HealOverTimeEffect) {
-            builder.append(" [${formatDice(effect.healDice)} healing]")
+        if (status.targetabilityAlteringEffect != null) {
+            builder.append(" ${getEffectSymbol(status.targetabilityAlteringEffect)}")
+        }
+        if (status.hpAffectingOverTimeEffect != null) {
+            builder.append(" ${getEffectSymbol(status.hpAffectingOverTimeEffect)}")
+        }
+        builder.append(">")
+
+        if (status.duration is Status.Duration.RoundLimited) {
+            builder.append(" [${status.duration.roundsLeft} rounds left]")
+        }
+        if (status.hpAffectingOverTimeEffect is Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect) {
+            builder.append(" [${formatDice(status.hpAffectingOverTimeEffect.damageDice)} damage]")
+        }
+        if (status.hpAffectingOverTimeEffect is Effect.HpAffectingOverTimeEffect.HealingOverTimeEffect) {
+            builder.append(" [${formatDice(status.hpAffectingOverTimeEffect.healDice)} healing]")
         }
 
         return builder.toString()
@@ -209,47 +235,154 @@ object LoggingUtils {
         val position = characterState.positionNodeId
         val health = formatHitPoints(characterState.currentHitPoints(), characterState.character.maxHitPoints())
         val resources = formatResources(characterState.currentResources(), characterState.character.maxResources())
-        val effects = characterState.effects.all().fold ("") { display, effect -> display + getEffectSymbol(effect) }
+        val statuses = formatStatuses(characterState.statuses)
 
-        return "${bold(name)} <$group> @$position [$health | $resources]${if (effects.isNotEmpty()) " ⟪$effects⟫" else ""}"
+        return "${bold(name)} <$group> @$position [$health | $resources] $statuses"
     }
+
+    private fun buildAddStatusResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.AddStatusResult) {
+        when (result) {
+            is CharacterState.Result.AddStatusResult.Added ->
+                builder.appendLine(linePrefix + "Gains status ${formatStatus(result.addedStatus)}")
+            is CharacterState.Result.AddStatusResult.Replaced ->
+                builder.appendLine(linePrefix + "Gains status ${formatStatus(result.addedStatus)} while replacing ${formatStatus(result.replacedStatus)}")
+        }
+    }
+
+    private fun buildBoostResourcesResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.BoostResourcesResult) {
+        when (result) {
+            is CharacterState.Result.BoostResourcesResult.AlreadyFull ->
+                builder.appendLine(linePrefix + "Does not receive resources boost as already full")
+            is CharacterState.Result.BoostResourcesResult.NoResourceBoost ->
+                builder.appendLine(linePrefix + "Does not receive any resources boost")
+            is CharacterState.Result.BoostResourcesResult.ResourcesBoosted -> {
+                builder.appendLine(linePrefix + "${result.amountBoosted} resources boosted")
+                if (result.overBoosted > 0) {
+                    builder.appendLine(linePrefix + "\t Overboost by ${result.overBoosted}")
+                }
+            }
+
+
+        }
+    }
+
+    private fun buildTakeDamageResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.TakeDamageResult) {
+        when (result) {
+            is CharacterState.Result.TakeDamageResult.AlreadyDown ->
+                builder.appendLine(linePrefix + "Does not take any damage as already down")
+            is CharacterState.Result.TakeDamageResult.Downed -> {
+                builder.appendLine(linePrefix + "Takes ${result.takenDamage} damage and goes down")
+                if (result.damagedOver > 0)
+                    builder.appendLine(linePrefix + "\tOverkill by ${result.damagedOver}.")
+                if (result.statusesRemovedOnDamage.isNotEmpty()) {
+                    builder.appendLine(linePrefix + "\tRemoved statuses: ${formatStatuses(result.statusesRemovedOnDamage)}")
+                }
+                if (result.statusOnHit != null) {
+                    builder.appendLine("\tAdded status: ${result.statusOnHit.name.name}")
+                }
+            }
+            is CharacterState.Result.TakeDamageResult.NoDamageTaken ->
+                builder.appendLine(linePrefix + "Does not take any damage")
+            is CharacterState.Result.TakeDamageResult.StillStanding -> {
+                builder.appendLine(linePrefix + "Takes ${result.takenDamage} but is still standing")
+                if (result.statusesRemovedOnDamage.isNotEmpty()) {
+                    builder.appendLine(linePrefix + "\tRemoved statuses: ${formatStatuses(result.statusesRemovedOnDamage)}")
+                }
+                if (result.statusOnHit != null) {
+                    builder.appendLine(linePrefix + "\tAdded status: ${result.statusOnHit.name.name}")
+                }
+            }
+        }
+    }
+
+    private fun buildReceiveHealingResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.ReceiveHealingResult) {
+        when (result) {
+            is CharacterState.Result.ReceiveHealingResult.AlreadyFull ->
+                builder.appendLine(linePrefix + "Does not receive any healing as already full")
+            is CharacterState.Result.ReceiveHealingResult.Healed -> {
+                builder.appendLine(linePrefix + "Healed for ${result.amountHealed}")
+                if (result.overHealed > 0) {
+                    builder.appendLine(linePrefix + "\tOverhealed by ${result.overHealed}")
+                }
+            }
+            is CharacterState.Result.ReceiveHealingResult.NoHeal ->
+                builder.appendLine(linePrefix + "Does not receive any healing")
+        }
+    }
+
+    private fun buildMovementResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.MovementResult) {
+        when (result) {
+            is CharacterState.Result.MovementResult.Movement -> {
+                if (result.statusesRemovedByMovement.isNotEmpty()) {
+                    builder.appendLine(linePrefix + "Moves to ${result.newPositionNodeIde} and loses: ${formatStatuses(result.statusesRemovedByMovement)}")
+                } else {
+                    builder.appendLine(linePrefix + "Moves to ${result.newPositionNodeIde}")
+                }
+            }
+            is CharacterState.Result.MovementResult.NoMovement ->
+                builder.appendLine(linePrefix + "Does not move")
+        }
+    }
+
+    private fun buildRemoveStatusesResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.RemoveStatusesResult) {
+        when (result) {
+            is CharacterState.Result.RemoveStatusesResult.NothingRemoved ->
+                builder.appendLine(linePrefix + "No statuses were removed")
+            is CharacterState.Result.RemoveStatusesResult.Removed ->
+                builder.appendLine(linePrefix + "Removed statuses: ${formatStatuses(result.removedStatuses)}")
+        }
+    }
+
+    private fun buildSpendResourcesResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.SpendResourcesResult) {
+        when (result) {
+            is CharacterState.Result.SpendResourcesResult.InsufficientResources ->
+                builder.appendLine(linePrefix + "Does not have enough resources!")
+            is CharacterState.Result.SpendResourcesResult.NoResourcesSpent ->
+                builder.appendLine(linePrefix + "Does not spend any resources")
+            is CharacterState.Result.SpendResourcesResult.ResourcesSpent ->
+                builder.appendLine(linePrefix + "Spends ${result.spentAmount} resources. ${result.resourcesRemaining} left")
+        }
+    }
+
+    private fun buildTickStatusesResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.TickStatusesResult) {
+        if (result.updatedStatuses.isNotEmpty()) {
+            builder.appendLine(linePrefix + "Tick updated statuses: ${formatStatuses(result.updatedStatuses)}")
+        }
+        if (result.removedStatuses.isNotEmpty()) {
+            builder.appendLine(linePrefix + "Tick removed statuses: ${formatStatuses(result.removedStatuses)}")
+        }
+    }
+
+
 
     private fun formatActionStarted(actionStarted: Event.ActionStarted) : String {
         val builder = StringBuilder()
         builder.appendLine("▶\uFE0F ${formatCharacterState(actionStarted.target)}")
         builder.appendLine("\tExecutes: ${actionStarted.actionName}")
-        if (actionStarted.newPositionNodeId != actionStarted.target.positionNodeId) {
-            builder.appendLine("\tMoves to: ${actionStarted.newPositionNodeId}")
-        }
-        if (actionStarted.resourcesSpent > 0) {
-            builder.appendLine("\tSpends: ${actionStarted.resourcesSpent} resources")
-        }
-        if (actionStarted.effectsRemovedByMovement.isNotEmpty()) {
-            builder.appendLine("\t Effects removed by movement: ")
-            actionStarted.effectsRemovedByMovement.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
-        }
+
+        buildMovementResult(builder,"\t", actionStarted.movementResult)
+        buildSpendResourcesResult(builder,"\t", actionStarted.spendResourcesResult)
+
         return builder.toString()
     }
 
     private fun formatActionEnded(actionEnded: Event.ActionEnded) : String {
         val builder = StringBuilder()
         builder.appendLine("⏳ ${formatCharacterState(actionEnded.updatedTarget)}")
-        if (actionEnded.updatedStatuses.isNotEmpty()) {
-            builder.appendLine("\t Effects updated: ")
-            actionEnded.updatedStatuses.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
-        }
-        if (actionEnded.removedStatuses.isNotEmpty()) {
-            builder.appendLine("\t Effects removed: ")
-            actionEnded.updatedStatuses.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
-        }
+
         if (actionEnded.healOverTimeRolls.isNotEmpty()) {
             builder.appendLine("\t Heal effects: ")
             actionEnded.healOverTimeRolls.forEach { it -> builder.appendLine("\t\t ${formatRoll(it)}") }
+            buildReceiveHealingResult(builder, "", actionEnded.receiveHealingResult)
         }
         if (actionEnded.damageOverTimeRolls.isNotEmpty()) {
             builder.appendLine("\t Damage effects: ")
             actionEnded.damageOverTimeRolls.forEach { it -> builder.appendLine("\t\t ${formatRoll(it)}") }
+            buildTakeDamageResult(builder, "", actionEnded.takeDamageResult)
         }
+
+        buildTickStatusesResult(builder, "",  actionEnded.tickStatusesResult)
+
         return builder.toString()
     }
 
@@ -259,54 +392,40 @@ object LoggingUtils {
 
         when (event) {
             is Event.StatusAdded -> {
-                builder.appendLine("\tEffects added:")
-                event.status.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+                buildAddStatusResult(builder,"\t\t", event.addStatusResult)
             }
             is Event.StatusesRemoved -> {
-                builder.appendLine("\tEffects removed:")
-                event.statuses.forEach { it -> builder.appendLine("\t\t ${formatEffect(it)}") }
+                buildRemoveStatusesResult(builder,"\t\t", event.removeStatusesResult)
             }
-            is Event.Healed ->
-                builder.appendLine("\tHealed: ${formatRoll(event.healRoll)}")
+            is Event.Healed -> {
+                builder.appendLine("\t\tHealed: ${formatRoll(event.healRoll)}")
+                buildReceiveHealingResult(builder,"\t\t", event.receiveHealingResult)
+            }
             is Event.ResourceBoosted ->
-                builder.appendLine("\tResources boosted by: ${event.amount}")
+                buildBoostResourcesResult(builder,"\t\t", event.boostResourcesResult)
             is Event.SpellAttackHit -> {
-                builder.appendLine("\tSpell attack hit:")
-                builder.appendLine("\t\t Spell difficulty class: ${formatDifficultyClass(event.spellAttackDifficultyClass)}")
-                builder.appendLine("\t\t Defense roll: ${formatRoll(event.spellDefenseRoll)}")
-                builder.appendLine("\t\t Damage roll: ${formatRoll(event.spellDamageRoll)}")
-                if (event.statusAddedByDamage.isNotEmpty()) {
-                    builder.appendLine("\t\t Effects added: ")
-                    event.statusAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
-                }
-                if (event.statusesRemovedByDamage.isNotEmpty()) {
-                    builder.appendLine("\t\t Effects removed: ")
-                    event.statusesRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
-                }
+                builder.appendLine("\t\tSpell attack hit:")
+                builder.appendLine("\t\t\tSpell difficulty class: ${formatDifficultyClass(event.spellAttackDifficultyClass)}")
+                builder.appendLine("\t\t\tDefense roll: ${formatRoll(event.spellDefenseRoll)}")
+                builder.appendLine("\t\t\tDamage roll: ${formatRoll(event.spellDamageRoll)}")
+                buildTakeDamageResult(builder,"\t\t\t", event.takeDamageResult)
             }
             is Event.SpellAttackMissed -> {
-                builder.appendLine("\tSpell attack missed:")
-                builder.appendLine("\t\t Spell difficulty class: ${formatDifficultyClass(event.spellAttackDifficultyClass)}")
-                builder.appendLine("\t\t Defense roll: ${formatRoll(event.spellDefenseRoll)}")
+                builder.appendLine("\t\tSpell attack missed:")
+                builder.appendLine("\t\t\tSpell difficulty class: ${formatDifficultyClass(event.spellAttackDifficultyClass)}")
+                builder.appendLine("\t\t\tDefense roll: ${formatRoll(event.spellDefenseRoll)}")
             }
             is Event.WeaponAttackHit -> {
-                builder.appendLine("\tWeapon attack hit:")
-                builder.appendLine("\t\t Attack roll: ${formatRoll(event.weaponAttackRoll)}")
-                builder.appendLine("\t\t Armor class: ${formatDifficultyClass(event.armorClass)}")
-                builder.appendLine("\t\t Damage roll: ${formatRoll(event.weaponDamageRoll)}")
-                if (event.statusAddedByDamage.isNotEmpty()) {
-                    builder.appendLine("\t\t Effects added: ")
-                    event.statusAddedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
-                }
-                if (event.statusesRemovedByDamage.isNotEmpty()) {
-                    builder.appendLine("\t\t Effects removed: ")
-                    event.statusesRemovedByDamage.forEach { it -> builder.appendLine("\t\t\t ${formatEffect(it)}") }
-                }
+                builder.appendLine("\t\tWeapon attack hit:")
+                builder.appendLine("\t\t\tAttack roll: ${formatRoll(event.weaponAttackRoll)}")
+                builder.appendLine("\t\t\tArmor class: ${formatDifficultyClass(event.armorClass)}")
+                builder.appendLine("\t\t\tDamage roll: ${formatRoll(event.weaponDamageRoll)}")
+                buildTakeDamageResult(builder,"\t\t\t", event.takeDamageResult)
             }
             is Event.WeaponAttackMissed -> {
-                builder.appendLine("\tWeapon attack missed:")
-                builder.appendLine("\t\t Attack roll: ${formatRoll(event.weaponAttackRoll)}")
-                builder.appendLine("\t\t Armor class: ${formatDifficultyClass(event.armorClass)}")
+                builder.appendLine("\t\tWeapon attack missed:")
+                builder.appendLine("\t\t\t Attack roll: ${formatRoll(event.weaponAttackRoll)}")
+                builder.appendLine("\t\t\t Armor class: ${formatDifficultyClass(event.armorClass)}")
             }
         }
 

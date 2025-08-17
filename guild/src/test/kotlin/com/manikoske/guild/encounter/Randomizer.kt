@@ -1,9 +1,9 @@
 package com.manikoske.guild.encounter
 
+import com.manikoske.guild.action.Action
 import com.manikoske.guild.character.Bio
 import com.manikoske.guild.character.Character
 import com.manikoske.guild.character.CharacterState
-import com.manikoske.guild.character.Effects
 import com.navercorp.fixturemonkey.FixtureMonkey
 import com.navercorp.fixturemonkey.api.arbitrary.CombinableArbitrary
 import com.navercorp.fixturemonkey.api.introspector.ArbitraryIntrospectorResult
@@ -15,9 +15,9 @@ object Randomizer {
 
     private val randomBuilder = FixtureMonkey.builder()
         .plugin(KotlinPlugin())
-        .pushAssignableTypeArbitraryIntrospector<Effects> {
-            ArbitraryIntrospectorResult(CombinableArbitrary.from(CharacterState.noEffects()))
-        }
+//        .pushAssignableTypeArbitraryIntrospector<Effects> {
+//            ArbitraryIntrospectorResult(CombinableArbitrary.from(CharacterState.noEffects()))
+//        }
 //        .pushAssignableTypeArbitraryIntrospector<Effect.ActionForcingEffect> {
 //            ArbitraryIntrospectorResult(CombinableArbitrary.from(Effect.ActionForcingEffect.Prone))
 //        }
@@ -32,12 +32,13 @@ object Randomizer {
     fun characterState(name: String = "") : CharacterState {
         return randomBuilder.giveMeOne<CharacterState>().copy(
             character = randomBuilder.giveMeOne<Character>().copy(
-                bio = randomBuilder.giveMeOne<Bio>().copy(name = name)
+                bio = randomBuilder.giveMeOne<Bio>().copy(name = name),
+                availableActions = listOf()
             ),
             resourcesSpent = 0,
             damageTaken = 0,
             positionNodeId = 1,
-            effects = CharacterState.noEffects()
+            statuses = listOf()
 
         )
     }

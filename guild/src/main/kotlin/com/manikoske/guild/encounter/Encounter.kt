@@ -23,7 +23,7 @@ class Encounter(
                     allegiance = CharacterState.Allegiance.Attacker,
                     damageTaken = 0,
                     resourcesSpent = 0,
-                    effects = CharacterState.noEffects(),
+                    statuses = listOf(),
                 )
             } +
                     defenders.map {
@@ -33,7 +33,7 @@ class Encounter(
                             allegiance = CharacterState.Allegiance.Defender,
                             damageTaken = 0,
                             resourcesSpent = 0,
-                            effects = CharacterState.noEffects(),
+                            statuses = listOf(),
                         )
                     }
 
