@@ -98,7 +98,7 @@ object LoggingUtils {
 
     private fun getEffectSymbol(effect: Effect.TargetabilityAlteringEffect): String {
         return when(effect) {
-            Effect.TargetabilityAlteringEffect.TargetabilityPreventingEffect -> blue(SYMBOL_INVISIBLE)
+            is Effect.TargetabilityAlteringEffect.TargetabilityPreventingEffect -> blue(SYMBOL_INVISIBLE)
             is Effect.TargetabilityAlteringEffect.TargetabilityRestrictingEffect -> cyan(SYMBOL_HIDDEN)
         }
     }
@@ -112,7 +112,7 @@ object LoggingUtils {
 
     private fun getEffectSymbol(effect: Effect.ActionAvailabilityAlteringEffect): String {
         return when(effect) {
-            Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect -> red(SYMBOL_STUN)
+            is Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect -> red(SYMBOL_STUN)
             is Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect -> yellow(SYMBOL_STUN)
             is Effect.ActionAvailabilityAlteringEffect.ActionsForcingEffect -> yellow(SYMBOL_PRONE)
         }

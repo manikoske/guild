@@ -14,11 +14,11 @@ class PointOfViewTest {
     @Test
     fun testAllVantageNodes() {
 
-        val minsc = Randomizer.characterState("Minsc").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Attacker)
-        val khalid = Randomizer.characterState("Khalid").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Attacker)
-        val jaheira = Randomizer.characterState("Jaheira").copy(positionNodeId = 1, allegiance = CharacterState.Allegiance.Attacker)
-        val tazok = Randomizer.characterState("Tazok").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Defender)
-        val davaeorn = Randomizer.characterState("Davaeorn").copy(positionNodeId = 3, allegiance = CharacterState.Allegiance.Defender)
+        val minsc = Fixture.characterState("Minsc").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Attacker)
+        val khalid = Fixture.characterState("Khalid").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Attacker)
+        val jaheira = Fixture.characterState("Jaheira").copy(positionNodeId = 1, allegiance = CharacterState.Allegiance.Attacker)
+        val tazok = Fixture.characterState("Tazok").copy(positionNodeId = 2, allegiance = CharacterState.Allegiance.Defender)
+        val davaeorn = Fixture.characterState("Davaeorn").copy(positionNodeId = 3, allegiance = CharacterState.Allegiance.Defender)
 
 
         val minscPointOfView = PointOfView(taker = minsc, others = listOf(khalid, jaheira, tazok, davaeorn))
@@ -89,7 +89,7 @@ class PointOfViewTest {
                 listOf(
                     PointOfView.VantageNode(
                         nodeId = 1,
-                        requiredNormalMovement = Int.MAX_VALUE,
+                        requiredNormalMovement = 3, // TODO implemenovat prekazanie cez efekt
                         requiredSpecialMovement = Int.MAX_VALUE,
                         targets = listOf(
                             Target.SingleEnemy(range = 0, targetedCharacterStates = listOf(jaheira)),
@@ -101,7 +101,7 @@ class PointOfViewTest {
                             Target.DoubleEnemy(range = 1, targetedCharacterStates = listOf(khalid, minsc)),
                             Target.NodeAlly(range = 1, targetedCharacterStates = listOf(tazok)),
                             Target.NodeEnemy(range = 1, targetedCharacterStates = listOf(khalid, minsc)),
-                            Target.NodeEveryone(range = 1, targetedCharacterStates = listOf(khalid, tazok, minsc)),
+                            Target.NodeEveryone(range = 1, targetedCharacterStates = listOf(tazok, khalid, minsc)),
                         )
                     ),
                     PointOfView.VantageNode(
@@ -141,11 +141,11 @@ class PointOfViewTest {
 
     @Test
     fun testUpdateWith() {
-        val minsc = Randomizer.characterState("Minsc")
-        val khalid = Randomizer.characterState("Khalid")
-        val jaheira = Randomizer.characterState("Jaheira")
-        val tazok = Randomizer.characterState("Tazok")
-        val davaeorn = Randomizer.characterState("Davaeorn")
+        val minsc = Fixture.characterState("Minsc")
+        val khalid = Fixture.characterState("Khalid")
+        val jaheira = Fixture.characterState("Jaheira")
+        val tazok = Fixture.characterState("Tazok")
+        val davaeorn = Fixture.characterState("Davaeorn")
 
 
         val minscPointOfView = PointOfView(taker = minsc, others = listOf(khalid, jaheira, tazok, davaeorn))

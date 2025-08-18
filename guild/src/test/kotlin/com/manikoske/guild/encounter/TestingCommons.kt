@@ -3,13 +3,6 @@ package com.manikoske.guild.encounter
 import com.manikoske.guild.character.Effect
 import com.manikoske.guild.character.Bio
 import com.manikoske.guild.character.Character
-import com.navercorp.fixturemonkey.FixtureMonkey
-import com.navercorp.fixturemonkey.api.arbitrary.CombinableArbitrary
-import com.navercorp.fixturemonkey.api.instantiator.Instantiator
-import com.navercorp.fixturemonkey.api.introspector.ArbitraryIntrospectorResult
-import com.navercorp.fixturemonkey.kotlin.*
-import com.navercorp.fixturemonkey.kotlin.instantiator.instantiateBy
-import com.navercorp.fixturemonkey.kotlin.introspector.KotlinAndJavaCompositeArbitraryIntrospector
 
 object TestingCommons {
 

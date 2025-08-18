@@ -12,7 +12,6 @@ import com.manikoske.guild.inventory.Weapon
 import com.manikoske.guild.inventory.Weapon.Weapons.spear
 import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Die
-import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -35,7 +34,7 @@ class CharacterTest {
         every { bio.dexterity } returns Attribute(score = attributeScore, type = Attribute.Type.dexterity)
 
         // Prepare the character state
-        val character = Randomizer.randomBuilder().giveMeOne<Character>()
+        val character = Fixture.character()
             .copy(level = level, bio = bio)
 
         // Test the initiative roll with Median method
@@ -64,7 +63,7 @@ class CharacterTest {
         every { bio.intelligence } returns Attribute(score = attributeScore, type = attributeType)
 
         // Prepare the character state
-        val character = Randomizer.randomBuilder().giveMeOne<Character>()
+        val character = Fixture.character()
             .copy(level = level, bio = bio)
 
         // Test the spell attack difficulty class
@@ -103,7 +102,7 @@ class CharacterTest {
 
 
         // Prepare the character state
-        val character = Randomizer.randomBuilder().giveMeOne<Character>()
+        val character = Fixture.character()
             .copy(level = level, bio = bio, inventory = inventory)
 
 
@@ -134,7 +133,7 @@ class CharacterTest {
         every { bio.intelligence } returns Attribute(score = attributeScore, type = attributeType)
 
         // Prepare the character state
-        val characterState = Randomizer.randomBuilder().giveMeOne<Character>()
+        val characterState = Fixture.character()
             .copy(level = level, bio = bio)
 
         // Test spell damage roll with Median method
@@ -167,7 +166,7 @@ class CharacterTest {
         every { bio.wisdom } returns Attribute(score = attributeScore, type = attributeType)
 
         // Prepare the character state
-        val characterState = Randomizer.randomBuilder().giveMeOne<Character>()
+        val characterState = Fixture.character()
             .copy(level = level, bio = bio)
 
         // Test spell defense roll with Median method
@@ -199,7 +198,7 @@ class CharacterTest {
         every { bio.wisdom } returns Attribute(score = attributeScore, type = attributeType)
 
         // Prepare the character state
-        val characterState = Randomizer.randomBuilder().giveMeOne<Character>()
+        val characterState = Fixture.character()
             .copy(level = level, bio = bio)
 
         // Test heal roll with Median method
@@ -242,7 +241,7 @@ class CharacterTest {
 
 
         // Prepare the character state
-        val character = Randomizer.randomBuilder().giveMeOne<Character>()
+        val character = Fixture.character()
             .copy(level = level, bio = bio, inventory = inventory)
 
 
@@ -284,7 +283,7 @@ class CharacterTest {
 
 
         // Prepare the character state
-        val character = Randomizer.randomBuilder().giveMeOne<Character>()
+        val character = Fixture.character()
             .copy(level = level, bio = bio, inventory = inventory)
 
         // Test weapon damage roll with Median method
@@ -310,7 +309,7 @@ class CharacterTest {
         val effect = mockk<Effect.HpAffectingOverTimeEffect.HealingOverTimeEffect>()
         every { effect.healDice } returns healDice
 
-        val character = Randomizer.randomBuilder().giveMeOne<Character>()
+        val character = Fixture.character()
 
         // Test heal over time roll with Median method
         val healOverTimeRoll = character.healOverTimeRoll(
@@ -333,7 +332,7 @@ class CharacterTest {
         val effect = mockk<Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect>()
         every { effect.damageDice } returns damageDice
 
-        val character = Randomizer.randomBuilder().giveMeOne<Character>()
+        val character = Fixture.character()
 
         // Test heal over time roll with Median method
         val healOverTimeRoll = character.damageOverTimeRoll(
