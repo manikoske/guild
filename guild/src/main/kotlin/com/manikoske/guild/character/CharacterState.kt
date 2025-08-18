@@ -40,15 +40,6 @@ data class CharacterState(
         }
     }
 
-
-    fun currentHitPoints(): Int {
-        return character.maxHitPoints() - damageTaken
-    }
-
-    fun currentResources(): Int {
-        return character.maxResources() - resourcesSpent
-    }
-
     sealed interface Result {
         val updatedTarget: CharacterState
 
@@ -313,15 +304,6 @@ data class CharacterState(
         }
     }
 
-
-    private fun addStatuses(statusesToAdd: List<Status>): CharacterState {
-        return this.copy(statuses = (statusesToAdd + statuses).distinctBy { it.name })
-    }
-
-    private fun removeStatuses(statusesToRemove: List<Status>): CharacterState {
-        return this.copy(statuses = statuses - statusesToRemove)
-    }
-
     fun allExecutableActions(): List<Action> {
 
         val forcedNoAction = statuses
@@ -361,5 +343,26 @@ data class CharacterState(
                 updatedMovement
             }
         }
+    }
+
+    //TODO test
+    fun asd() {
+
+    }
+
+    fun currentHitPoints(): Int {
+        return character.maxHitPoints() - damageTaken
+    }
+
+    fun currentResources(): Int {
+        return character.maxResources() - resourcesSpent
+    }
+
+    private fun addStatuses(statusesToAdd: List<Status>): CharacterState {
+        return this.copy(statuses = (statusesToAdd + statuses).distinctBy { it.name })
+    }
+
+    private fun removeStatuses(statusesToRemove: List<Status>): CharacterState {
+        return this.copy(statuses = statuses - statusesToRemove)
     }
 }

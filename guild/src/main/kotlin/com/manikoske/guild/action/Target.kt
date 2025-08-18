@@ -55,6 +55,16 @@ sealed interface Target {
     val targetedCharacterStates: List<CharacterState>
 
 
+    enum class Type {
+        SingleEnemy,
+        SingleAlly,
+        DoubleEnemy,
+        DoubleAlly,
+        NodeAlly,
+        NodeEnemy,
+        NodeEveryone,
+    }
+
     data class SingleEnemy(
         override val range: Int,
         override val targetedCharacterStates: List<CharacterState>
