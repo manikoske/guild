@@ -11,84 +11,88 @@ import kotlin.test.Test
 class CharacterStateTest {
 
     @Test
-    fun `test already down`() {
-        // Arrange
-        val character = mockk<com.manikoske.guild.character.Character> {
-            every { maxHitPoints() } returns 100
-        }
-
-        val state = Fixture.characterState().copy(character = character, damageTaken = 100)
-
-        // Act
-        val result = state.takeDamage(50)
-
-        // Assert
-        assertThat(result).isInstanceOf(CharacterState.Result.TakeDamageResult.AlreadyDown::class.java)
-    }
-
-    @Test
-    fun `test no damage taken`() {
-        // Arrange
-        val character = mockk<com.manikoske.guild.character.Character> {
-            every { maxHitPoints() } returns 100
-        }
-        val state = Fixture.characterState().copy(character = character, damageTaken = 0)
-
-        // Act
-        val result = state.takeDamage(0)
-
-        // Assert
-        assertThat(result).isInstanceOf(CharacterState.Result.TakeDamageResult.NoDamageTaken::class.java)
-    }
-
-
-    @Test
-    fun `test take damage and downed`() {
+    fun `test takeDamage scenarios`() {
         // Arrange
         val character = mockk<com.manikoske.guild.character.Character> {
             every { maxHitPoints() } returns 100
         }
 
         val statusToRemove = Status(name = Status.Name.Entangled, removedOnDamageTaken = true)
-        val state = Fixture.characterState().copy(character = character, damageTaken = 50, statuses = listOf(statusToRemove))
         val statusOnHit = Status(name = Status.Name.Stunned)
 
+        // Test Already Down
+        val alreadyDownState = Fixture.characterState().copy(character = character, damageTaken = 100)
+        val alreadyDownResult = alreadyDownState.takeDamage(50)
+        assertThat(alreadyDownResult).isInstanceOf(CharacterState.Result.TakeDamageResult.AlreadyDown::class.java)
 
-        // Act
-        val result = state.takeDamage(60, statusOnHit)
+        // Test No Damage
+        val noDamageState = Fixture.characterState().copy(character = character, damageTaken = 0)
+        val noDamageResult = noDamageState.takeDamage(0)
+        assertThat(noDamageResult).isInstanceOf(CharacterState.Result.TakeDamageResult.NoDamageTaken::class.java)
 
-        // Assert
-        assertThat(result).isInstanceOf(CharacterState.Result.TakeDamageResult.Downed::class.java)
-        val downedResult = result as CharacterState.Result.TakeDamageResult.Downed
-        assertThat(downedResult.takenDamage).isEqualTo(50)
-        assertThat(downedResult.damagedOver).isEqualTo(10)
-        assertThat(downedResult.updatedTarget.statuses).doesNotContain(statusToRemove)
-        assertThat(downedResult.updatedTarget.statuses).contains(statusOnHit)
-        assertThat(downedResult.updatedTarget.statuses).contains(Status.StatusFactory.down())
-        assertThat(downedResult.updatedTarget.currentHitPoints()).isEqualTo(0)
+        // Test Downed
+        val downedState =
+            Fixture.characterState().copy(character = character, damageTaken = 50, statuses = listOf(statusToRemove))
+        val downedResult = downedState.takeDamage(60, statusOnHit)
+        assertThat(downedResult).isInstanceOf(CharacterState.Result.TakeDamageResult.Downed::class.java)
+        (downedResult as CharacterState.Result.TakeDamageResult.Downed).also {
+            assertThat(it.takenDamage).isEqualTo(50)
+            assertThat(it.damagedOver).isEqualTo(10)
+            assertThat(it.updatedTarget.statuses).doesNotContain(statusToRemove)
+            assertThat(it.updatedTarget.statuses).contains(statusOnHit)
+            assertThat(it.updatedTarget.statuses).contains(Status.StatusFactory.down())
+            assertThat(it.updatedTarget.currentHitPoints()).isEqualTo(0)
+        }
+
+        // Test Status Changes
+        val statusState =
+            Fixture.characterState().copy(character = character, damageTaken = 0, statuses = listOf(statusToRemove))
+        val statusResult = statusState.takeDamage(10, statusOnHit)
+        assertThat(statusResult).isInstanceOf(CharacterState.Result.TakeDamageResult.StillStanding::class.java)
+        (statusResult as CharacterState.Result.TakeDamageResult.StillStanding).also {
+            assertThat(it.statusesRemovedOnDamage).contains(statusToRemove)
+            assertThat(it.statusOnHit).isEqualTo(statusOnHit)
+            assertThat(it.updatedTarget.statuses).doesNotContain(statusToRemove)
+            assertThat(it.updatedTarget.statuses).contains(statusOnHit)
+        }
     }
 
     @Test
-    fun `test statuses removed and added on damage`() {
+    fun `test heal scenarios`() {
         // Arrange
         val character = mockk<com.manikoske.guild.character.Character> {
             every { maxHitPoints() } returns 100
         }
-        val statusToRemove = Status(name = Status.Name.Entangled, removedOnDamageTaken = true)
-        val state = Fixture.characterState().copy(character = character, damageTaken = 0, statuses = listOf(statusToRemove))
 
-        val statusOnHit = Status(name = Status.Name.Stunned)
+        // Test NoHeal
+        val noHealState = Fixture.characterState().copy(character = character, damageTaken = 50)
+        val noHealResult = noHealState.heal(0)
+        assertThat(noHealResult).isInstanceOf(CharacterState.Result.ReceiveHealingResult.NoHeal::class.java)
 
-        // Act
-        val result = state.takeDamage(10, statusOnHit)
+        // Test AlreadyFull
+        val alreadyFullState = Fixture.characterState().copy(character = character, damageTaken = 0)
+        val alreadyFullResult = alreadyFullState.heal(20)
+        assertThat(alreadyFullResult).isInstanceOf(CharacterState.Result.ReceiveHealingResult.AlreadyFull::class.java)
 
-        // Assert
-        assertThat(result).isInstanceOf(CharacterState.Result.TakeDamageResult.StillStanding::class.java)
-        val stillStandingResult = result as CharacterState.Result.TakeDamageResult.StillStanding
-        assertThat(stillStandingResult.statusesRemovedOnDamage).contains(statusToRemove)
-        assertThat(stillStandingResult.statusOnHit).isEqualTo(statusOnHit)
-        assertThat(stillStandingResult.updatedTarget.statuses).doesNotContain(statusToRemove)
-        assertThat(stillStandingResult.updatedTarget.statuses).contains(statusOnHit)
+        // Test Partial Healing
+        val partialHealState = Fixture.characterState().copy(character = character, damageTaken = 70)
+        val partialHealResult = partialHealState.heal(40)
+        assertThat(partialHealResult).isInstanceOf(CharacterState.Result.ReceiveHealingResult.Healed::class.java)
+        (partialHealResult as CharacterState.Result.ReceiveHealingResult.Healed).also {
+            assertThat(it.amountHealed).isEqualTo(40)
+            assertThat(it.overHealed).isEqualTo(0)
+            assertThat(it.updatedTarget.currentHitPoints()).isEqualTo(70)
+        }
+
+        // Test Over-healing
+        val overHealState = Fixture.characterState().copy(character = character, damageTaken = 30)
+        val overHealResult = overHealState.heal(50)
+        assertThat(overHealResult).isInstanceOf(CharacterState.Result.ReceiveHealingResult.Healed::class.java)
+        (overHealResult as CharacterState.Result.ReceiveHealingResult.Healed).also {
+            assertThat(it.amountHealed).isEqualTo(30)
+            assertThat(it.overHealed).isEqualTo(20)
+            assertThat(it.updatedTarget.currentHitPoints()).isEqualTo(100)
+        }
     }
 
 }

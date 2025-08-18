@@ -167,7 +167,6 @@ data class CharacterState(
         }
     }
 
-    // TODO test
     fun takeDamage(damageToTake: Int, statusOnHit: Status? = null): Result.TakeDamageResult {
 
         return if (damageTaken == character.maxHitPoints()) {
@@ -205,7 +204,6 @@ data class CharacterState(
         }
     }
 
-    // TODO test
     fun heal(amountToHeal: Int): Result.ReceiveHealingResult {
         return if (currentHitPoints() == 0 || amountToHeal == 0) {
             Result.ReceiveHealingResult.NoHeal(this)
