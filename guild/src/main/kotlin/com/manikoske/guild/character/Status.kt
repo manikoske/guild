@@ -65,7 +65,7 @@ data class Status(
             name = Name.Haste,
             duration = Duration.RoundLimited(roundsLeft),
             actionMovementAlteringEffect = Effect.ActionMovementAlteringEffect.ActionMovementAmountAlteringEffect {
-                it.let { it.copy(amount = max(it.amount + 1, 0)) }
+                it.let { it.copy(amount = it.amount + 1) }
             }
         )
 
@@ -96,6 +96,12 @@ data class Status(
             name = Name.Poisoned,
             duration = Duration.RoundLimited(roundsLeft),
             hpAffectingOverTimeEffect = Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect(damageDice)
+        )
+
+        fun hidden() = Status(
+            name = Name.Hidden,
+            removedOnMovement = true,
+            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect.TargetabilityRestrictingEffect({ true }), // TODO define predicate
         )
 
     }

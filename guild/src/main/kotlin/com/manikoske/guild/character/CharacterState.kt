@@ -226,7 +226,6 @@ data class CharacterState(
         }
     }
 
-    // TODO test
     fun tickStatuses(): Result.TickStatusesResult {
         val updatedStatuses = statuses.map { it.tick() }.filterIsInstance<Status.TickResult.Update>().map { it.updatedStatus }
         val removedStatuses = statuses.map { it.tick() }.filterIsInstance<Status.TickResult.Remove>().map { it.removedStatus }
@@ -239,7 +238,6 @@ data class CharacterState(
         )
     }
 
-    // TODO test
     fun spendResources(amount: Int): Result.SpendResourcesResult {
         return if (amount == 0) {
             Result.SpendResourcesResult.NoResourcesSpent(updatedTarget = this, resourcesRemaining = currentResources())
@@ -256,7 +254,6 @@ data class CharacterState(
         }
     }
 
-    // TODO test
     fun boostResources(amount: Int): Result.BoostResourcesResult {
         return if (resourcesSpent == 0) {
             Result.BoostResourcesResult.AlreadyFull(this)
@@ -279,7 +276,6 @@ data class CharacterState(
         }
     }
 
-    // TODO test
     fun moveTo(newPositionNodeIde: Int): Result.MovementResult {
         if (newPositionNodeIde == positionNodeId) {
             return Result.MovementResult.NoMovement(updatedTarget = this)
@@ -295,7 +291,6 @@ data class CharacterState(
         }
     }
 
-    // TODO test
     fun addStatus(status: Status): Result.AddStatusResult {
 
         val existingStatus = statuses.find { it.name == status.name }
@@ -309,7 +304,6 @@ data class CharacterState(
 
     }
 
-    // TODO test
     fun removeStatuses(name: Status.Name) : Result.RemoveStatusesResult {
         val statusesToRemove = statuses.filter { it.name == name }
         return if (statusesToRemove.isNotEmpty()) {
@@ -328,7 +322,6 @@ data class CharacterState(
         return this.copy(statuses = statuses - statusesToRemove)
     }
 
-    // TODO test
     fun allExecutableActions(): List<Action> {
 
         val forcedNoAction = statuses
@@ -353,17 +346,16 @@ data class CharacterState(
         return restrictedActions.filter { it.resourceCost <= currentResources() }
     }
 
-    // TODO test
     fun actualMovement(actionMovement: Movement) : Movement {
         val amountAlteredMovement = statuses.fold(actionMovement) { updatedMovement, status ->
-            return if (status.actionMovementAlteringEffect is Effect.ActionMovementAlteringEffect.ActionMovementAmountAlteringEffect) {
+            if (status.actionMovementAlteringEffect is Effect.ActionMovementAlteringEffect.ActionMovementAmountAlteringEffect) {
                 status.actionMovementAlteringEffect.alteration(updatedMovement)
             } else {
                 updatedMovement
             }
         }
         return statuses.fold(amountAlteredMovement) { updatedMovement, status ->
-            return if (status.actionMovementAlteringEffect is Effect.ActionMovementAlteringEffect.ActionMovementRestrictingEffect) {
+            if (status.actionMovementAlteringEffect is Effect.ActionMovementAlteringEffect.ActionMovementRestrictingEffect) {
                 status.actionMovementAlteringEffect.restriction(updatedMovement)
             } else {
                 updatedMovement

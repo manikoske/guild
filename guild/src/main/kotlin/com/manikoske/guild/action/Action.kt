@@ -14,38 +14,39 @@ sealed interface Action {
 
     object Actions {
 
-        val basicActions = listOf(
-            TargetedAction.AttackAction.WeaponAttack.WeaponSingleAttack(
-                name = "Basic Attack",
-                movement = Movement(type = Movement.Type.Normal, amount = 1),
-                resourceCost = 0,
-                resolution = Resolution.AttackResolution.WeaponDamageResolution(
-                    attackRollModifier = 0,
-                    damageRollMultiplier = 1,
-                ),
+        val basicAttack = TargetedAction.AttackAction.WeaponAttack.WeaponSingleAttack(
+            name = "Basic Attack",
+            movement = Movement(type = Movement.Type.Normal, amount = 1),
+            resourceCost = 0,
+            resolution = Resolution.AttackResolution.WeaponDamageResolution(
+                attackRollModifier = 0,
+                damageRollMultiplier = 1,
             ),
-            TargetedAction.AttackAction.SpellAttack.SpellSingleAttack(
-                name = "Cantrip",
-                movement = Movement(type = Movement.Type.Normal, amount = 1),
-                resourceCost = 0,
-                resolution = Resolution.AttackResolution.SpellDamageResolution(
-                    baseDifficultyClass = 8,
-                    executorAttributeType = Attribute.Type.intelligence,
-                    targetAttributeType = Attribute.Type.dexterity,
-                    damage =  Dice.of(Die.d6),
-                ),
-                range = 1
+        )
+
+        val cantrip = TargetedAction.AttackAction.SpellAttack.SpellSingleAttack(
+            name = "Cantrip",
+            movement = Movement(type = Movement.Type.Normal, amount = 1),
+            resourceCost = 0,
+            resolution = Resolution.AttackResolution.SpellDamageResolution(
+                baseDifficultyClass = 8,
+                executorAttributeType = Attribute.Type.intelligence,
+                targetAttributeType = Attribute.Type.dexterity,
+                damage =  Dice.of(Die.d6),
             ),
-            SelfAction(
-                name = "Dash",
-                movement = Movement(type = Movement.Type.Normal, amount = 2),
-                resourceCost = 0,
-            ),
-            SelfAction(
-                name = "Disengage",
-                movement = Movement(type = Movement.Type.Special, amount = 1),
-                resourceCost = 0,
-            ),
+            range = 1
+        )
+
+        val dash = SelfAction(
+            name = "Dash",
+            movement = Movement(type = Movement.Type.Normal, amount = 2),
+            resourceCost = 0,
+        )
+
+        val disengage = SelfAction(
+            name = "Disengage",
+            movement = Movement(type = Movement.Type.Special, amount = 1),
+            resourceCost = 0,
         )
 
         val noAction = SelfAction(
@@ -66,6 +67,15 @@ sealed interface Action {
             resourceCost = 0,
             selfResolution = Resolution.SupportResolution.RemoveStatus(Status.Name.Prone)
         )
+
+        val hide = SelfAction(
+            name = "Hide",
+            movement = Movement(type = Movement.Type.Normal, amount = 1),
+            resourceCost = 0,
+            selfResolution = Resolution.SupportResolution.AddStatus(Status.StatusFactory.hidden())
+        )
+
+        val basicActions = listOf(basicAttack, cantrip, disengage, dash)
     }
 
     val name: String
