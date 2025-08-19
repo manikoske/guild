@@ -307,7 +307,7 @@ class CharacterStateTest {
         // Arrange
         val character = mockk<com.manikoske.guild.character.Character> {
             every { maxResources() } returns 50
-            every { availableActions } returns listOf(Action.Actions.hide)
+            every { availableActions } returns listOf(Action.Actions.hideInShadows)
         }
 
         val restrictingStatuses = listOf(Status.StatusFactory.disarm(1), Status.StatusFactory.silence(1))
@@ -329,7 +329,7 @@ class CharacterStateTest {
             statuses = restrictingStatuses
         )
         assertThat(restrictedActionState.allExecutableActions())
-            .containsExactlyInAnyOrder(Action.Actions.hide, Action.Actions.disengage, Action.Actions.dash)
+            .containsExactlyInAnyOrder(Action.Actions.hideInShadows, Action.Actions.disengage, Action.Actions.dash)
 
         // Test: Eligible Actions
         val eligibleActionState = Fixture.characterState().copy(character = character, resourcesSpent = 20, statuses = emptyList())

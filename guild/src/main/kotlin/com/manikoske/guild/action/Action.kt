@@ -1,9 +1,7 @@
 package com.manikoske.guild.action
 
 import com.manikoske.guild.character.Attribute
-import com.manikoske.guild.encounter.*
 import com.manikoske.guild.character.CharacterState
-import com.manikoske.guild.character.Effect
 import com.manikoske.guild.character.Status
 import com.manikoske.guild.rules.Dice
 import com.manikoske.guild.rules.Die
@@ -62,14 +60,14 @@ sealed interface Action {
         )
 
         val standUp = SelfAction(
-            name = "Stand Up",
+            name = "Stand up",
             movement = Movement(type = Movement.Type.Normal, amount = 0),
             resourceCost = 0,
             selfResolution = Resolution.SupportResolution.RemoveStatus(Status.Name.Prone)
         )
 
-        val hide = SelfAction(
-            name = "Hide",
+        val hideInShadows = SelfAction(
+            name = "Hide in Shadows",
             movement = Movement(type = Movement.Type.Normal, amount = 1),
             resourceCost = 0,
             selfResolution = Resolution.SupportResolution.AddStatus(Status.StatusFactory.hidden())
@@ -173,21 +171,7 @@ sealed interface Action {
                     override val requiredStatus: Status? = null,
                 ) : SpellSupportAction() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.SingleAlly && target.range <= range
-                    }
-                }
-
-                data class DoubleSpellSupport(
-                    override val resolution: Resolution.SupportResolution,
-                    override val range: Int,
-                    override val selfResolution: Resolution.SupportResolution,
-                    override val name: String,
-                    override val movement: Movement,
-                    override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
-                ) : SpellSupportAction() {
-                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.DoubleAlly && target.range <= range
+                        return target.type == Target.Type.SingleAlly && target.range <= range
                     }
                 }
 
@@ -201,7 +185,7 @@ sealed interface Action {
                     override val requiredStatus: Status? = null,
                 ) : SpellSupportAction() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.NodeAlly && target.range <= range
+                        return target.type == Target.Type.NodeAlly && target.range <= range
                     }
                 }
             }
@@ -225,22 +209,7 @@ sealed interface Action {
 
                     // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.SingleEnemy && target.range <= executor.character.arms().range()
-                    }
-                }
-
-                data class WeaponDoubleAttack(
-                    override val resolution: Resolution.AttackResolution.WeaponDamageResolution,
-                    override val selfResolution: Resolution.SupportResolution? = null,
-                    override val name: String,
-                    override val movement: Movement,
-                    override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
-                ) : WeaponAttack() {
-
-                    // TODO when target.range == 0 and arms().range() > 0, then return disadvantage instead of boolean
-                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.DoubleEnemy && target.range <= executor.character.arms().range()
+                        return target.type == Target.Type.SingleEnemy && target.range <= executor.character.arms().range()
                     }
                 }
 
@@ -253,7 +222,7 @@ sealed interface Action {
                     override val requiredStatus: Status? = null,
                 ) : WeaponAttack() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.NodeEveryone &&
+                        return target.type == Target.Type.NodeEveryone &&
                                 ((target.range == 0 && executor.character.arms().range() == 0) ||
                                         target.range > 0 && executor.character.arms().range() > 0)
                     }
@@ -277,23 +246,7 @@ sealed interface Action {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.SingleEnemy && target.range <= range
-                    }
-                }
-
-                data class SpellDoubleAttack(
-                    override val resolution: Resolution.AttackResolution.SpellDamageResolution,
-                    override val range: Int,
-                    override val selfResolution: Resolution.SupportResolution? = null,
-                    override val name: String,
-                    override val movement: Movement,
-                    override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
-                ) : SpellAttack() {
-
-                    // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
-                    override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.DoubleEnemy && target.range <= range
+                        return target.type == Target.Type.SingleEnemy && target.range <= range
                     }
                 }
 
@@ -309,7 +262,7 @@ sealed interface Action {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
-                        return target is Target.NodeEveryone && target.range <= range
+                        return target.type == Target.Type.NodeEveryone && target.range <= range
                     }
                 }
             }

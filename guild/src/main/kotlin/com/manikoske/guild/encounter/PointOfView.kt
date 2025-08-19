@@ -39,6 +39,29 @@ data class PointOfView(
         }
     }
 
+    private fun targetsFrom(lineOfSight: Battleground.LineOfSight) : List<Target> {
+
+        val nodeEnemies = enemies.filter { it.positionNodeId == lineOfSight.toNodeId }
+        val nodeAllies = allies.filter { it.positionNodeId == lineOfSight.toNodeId }
+
+        val singleEnemies = nodeEnemies.filter { it.targetableBy(Target.Type.SingleEnemy) }
+            .map { Target(type = Target.Type.SingleEnemy, range = lineOfSight.range, targetedCharacterStates = listOf(it)) }
+
+        val singleAllies = nodeAllies.filter { it.targetableBy(Target.Type.SingleAlly) }
+            .map { Target(type = Target.Type.SingleAlly, range = lineOfSight.range, targetedCharacterStates = listOf(it)) }
+
+        if (allies.isNotEmpty()) {
+            result.add(NodeAlly(range = range, targetedCharacterStates = allies))
+        }
+        if (enemies.isNotEmpty()) {
+            result.add(NodeEnemy(range = range, targetedCharacterStates = enemies))
+        }
+        if (allies.isNotEmpty() || enemies.isNotEmpty()) {
+            result.add(NodeEveryone(range = range, targetedCharacterStates = allies + enemies))
+        }
+    }
+
+
      data class VantageNode(
         val nodeId: Int,
         val requiredNormalMovement: Int,

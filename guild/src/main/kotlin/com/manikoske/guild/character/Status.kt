@@ -22,7 +22,7 @@ data class Status(
         fun prone() = Status(
             name = Name.Prone,
             actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.ActionsForcingEffect(listOf(Action.Actions.crawl, Action.Actions.standUp)),
-            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect.TargetabilityRestrictingEffect({ true }), // TODO define predicate
+            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf()), // TODO define predicate
         )
 
         fun stun(roundsLeft: Int) = Status(
@@ -34,7 +34,7 @@ data class Status(
         fun down() = Status(
             name = Name.Downed,
             actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect,
-            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect.TargetabilityPreventingEffect
+            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf())
         )
 
         fun silence(roundsLeft: Int) = Status(
@@ -101,7 +101,7 @@ data class Status(
         fun hidden() = Status(
             name = Name.Hidden,
             removedOnMovement = true,
-            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect.TargetabilityRestrictingEffect({ true }), // TODO define predicate
+            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf()), // TODO define predicate
         )
 
     }

@@ -2,6 +2,7 @@ package com.manikoske.guild.character
 
 import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Movement
+import com.manikoske.guild.action.Target
 import com.manikoske.guild.log.LoggingUtils
 
 data class CharacterState(
@@ -346,8 +347,11 @@ data class CharacterState(
     }
 
     //TODO test
-    fun asd() {
-
+    fun targetableBy(targetType: Target.Type) : Boolean {
+        return statuses
+            .mapNotNull { it.targetabilityAlteringEffect }
+            .fold(Target.Type.entries.toSet()) { targetableBy, effect -> targetableBy intersect effect.targetableBy}
+            .contains(targetType)
     }
 
     fun currentHitPoints(): Int {

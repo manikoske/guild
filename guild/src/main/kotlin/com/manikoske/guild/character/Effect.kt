@@ -8,14 +8,7 @@ import com.manikoske.guild.rules.Dice
 sealed interface Effect {
 
 
-    //todo implement usage
-    sealed interface TargetabilityAlteringEffect  {
-
-        object TargetabilityPreventingEffect : TargetabilityAlteringEffect
-
-        data class TargetabilityRestrictingEffect(val predicate: (Target) -> Boolean) : TargetabilityAlteringEffect
-
-    }
+    data class TargetabilityAlteringEffect(val targetableBy: Set<Target.Type>)
 
     sealed interface ActionAvailabilityAlteringEffect {
 

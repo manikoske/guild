@@ -97,10 +97,7 @@ object LoggingUtils {
     }
 
     private fun getEffectSymbol(effect: Effect.TargetabilityAlteringEffect): String {
-        return when(effect) {
-            is Effect.TargetabilityAlteringEffect.TargetabilityPreventingEffect -> blue(SYMBOL_INVISIBLE)
-            is Effect.TargetabilityAlteringEffect.TargetabilityRestrictingEffect -> cyan(SYMBOL_HIDDEN)
-        }
+        return blue(SYMBOL_INVISIBLE)
     }
 
     private fun getEffectSymbol(effect: Effect.ActionMovementAlteringEffect): String {
