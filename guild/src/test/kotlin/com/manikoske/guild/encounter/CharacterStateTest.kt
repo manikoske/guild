@@ -227,6 +227,57 @@ class CharacterStateTest {
     }
 
     @Test
+    fun `test targetableBy scenarios`() {
+        // Arrange
+        val character = mockk<com.manikoske.guild.character.Character>()
+
+        val noEffectStatus = mockk<Status> {
+            every { targetabilityAlteringEffect } returns null
+        }
+
+        val restrictSingleAllyStatus = mockk<Status> {
+            every { targetabilityAlteringEffect } returns mockk {
+                every { targetableBy } returns setOf(com.manikoske.guild.action.Target.Type.SingleAlly)
+            }
+        }
+
+        val restrictSingleEnemyStatus = mockk<Status> {
+            every { targetabilityAlteringEffect } returns mockk {
+                every { targetableBy } returns setOf(com.manikoske.guild.action.Target.Type.SingleEnemy)
+            }
+        }
+
+        val stateWithNoEffect = Fixture.characterState().copy(
+            character = character,
+            statuses = listOf(noEffectStatus)
+        )
+
+        val stateRestrictingSingleAlly = Fixture.characterState().copy(
+            character = character,
+            statuses = listOf(restrictSingleAllyStatus)
+        )
+
+        val stateRestrictingSingleEnemyAndAlly = Fixture.characterState().copy(
+            character = character,
+            statuses = listOf(restrictSingleAllyStatus, restrictSingleEnemyStatus)
+        )
+
+        // Act & Assert
+
+        // Without alteration effects
+        assertThat(stateWithNoEffect.targetableBy(com.manikoske.guild.action.Target.Type.SingleAlly)).isTrue()
+        assertThat(stateWithNoEffect.targetableBy(com.manikoske.guild.action.Target.Type.NodeEnemy)).isTrue()
+
+        // With restriction (Single Ally only)
+        assertThat(stateRestrictingSingleAlly.targetableBy(com.manikoske.guild.action.Target.Type.SingleAlly)).isTrue()
+        assertThat(stateRestrictingSingleAlly.targetableBy(com.manikoske.guild.action.Target.Type.SingleEnemy)).isFalse()
+
+        // With multiple restrictions (intersection of Single Ally and Single Enemy)
+        assertThat(stateRestrictingSingleEnemyAndAlly.targetableBy(com.manikoske.guild.action.Target.Type.SingleAlly)).isFalse()
+        assertThat(stateRestrictingSingleEnemyAndAlly.targetableBy(com.manikoske.guild.action.Target.Type.SingleEnemy)).isFalse()
+    }
+
+    @Test
     fun `test addStatus scenarios`() {
         // Arrange
         val character = mockk<com.manikoske.guild.character.Character>()
@@ -261,6 +312,7 @@ class CharacterStateTest {
             assertThat(it.updatedTarget.statuses).containsExactlyInAnyOrder(freshStun, haste)
         }
     }
+
     @Test
     fun `test removeStatuses scenarios`() {
         // Arrange

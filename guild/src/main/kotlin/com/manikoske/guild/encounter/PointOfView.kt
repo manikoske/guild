@@ -28,41 +28,41 @@ data class PointOfView(
                 nodeId = node.id,
                 requiredNormalMovement = requiredNodeNormalMovements.getValue(node.id),
                 requiredSpecialMovement = requiredNodeSpecialMovements.getOrDefault(node.id, Int.MAX_VALUE),
-                targets = node.lineOfSight.map {
-                    Target.Targets.possibleTargets(
-                        range = it.range,
-                        allies = allies.filter { ally -> ally.positionNodeId == it.toNodeId },
-                        enemies = enemies.filter { enemy -> enemy.positionNodeId == it.toNodeId }
-                    )
-                }.flatten()
+                targets = node.lineOfSight.flatMap { targetsFrom(it)}
             )
         }
     }
 
-    private fun targetsFrom(lineOfSight: Battleground.LineOfSight) : List<Target> {
+    private fun targetsFrom(lineOfSight: Battleground.LineOfSight): List<Target> {
+        val enemiesAtNode = enemies.filter { it.positionNodeId == lineOfSight.toNodeId }
+        val alliesAtNode = allies.filter { it.positionNodeId == lineOfSight.toNodeId }
 
-        val nodeEnemies = enemies.filter { it.positionNodeId == lineOfSight.toNodeId }
-        val nodeAllies = allies.filter { it.positionNodeId == lineOfSight.toNodeId }
+        val singleEnemies = enemiesAtNode.filter { it.targetableBy(Target.Type.SingleEnemy) }
+        val singleAllies = alliesAtNode.filter { it.targetableBy(Target.Type.SingleAlly) }
+        val nodeEnemies = enemiesAtNode.filter { it.targetableBy(Target.Type.NodeEnemy) }
+        val nodeAllies = alliesAtNode.filter { it.targetableBy(Target.Type.NodeAlly) }
+        val nodeEveryone = (enemiesAtNode + alliesAtNode).filter { it.targetableBy(Target.Type.NodeEveryone) }
 
-        val singleEnemies = nodeEnemies.filter { it.targetableBy(Target.Type.SingleEnemy) }
-            .map { Target(type = Target.Type.SingleEnemy, range = lineOfSight.range, targetedCharacterStates = listOf(it)) }
-
-        val singleAllies = nodeAllies.filter { it.targetableBy(Target.Type.SingleAlly) }
-            .map { Target(type = Target.Type.SingleAlly, range = lineOfSight.range, targetedCharacterStates = listOf(it)) }
-
-        if (allies.isNotEmpty()) {
-            result.add(NodeAlly(range = range, targetedCharacterStates = allies))
-        }
-        if (enemies.isNotEmpty()) {
-            result.add(NodeEnemy(range = range, targetedCharacterStates = enemies))
-        }
-        if (allies.isNotEmpty() || enemies.isNotEmpty()) {
-            result.add(NodeEveryone(range = range, targetedCharacterStates = allies + enemies))
+        return buildList {
+            singleEnemies.forEach {
+                add(Target(type = Target.Type.SingleEnemy, range = lineOfSight.range, targetedCharacterStates = listOf(it)))
+            }
+            singleAllies.forEach {
+                add(Target(type = Target.Type.SingleAlly, range = lineOfSight.range, targetedCharacterStates = listOf(it)))
+            }
+            if (nodeEnemies.isNotEmpty()) {
+                add(Target(type = Target.Type.NodeEnemy, range = lineOfSight.range, targetedCharacterStates = nodeEnemies))
+            }
+            if (nodeAllies.isNotEmpty()) {
+                add(Target(type = Target.Type.NodeAlly, range = lineOfSight.range, targetedCharacterStates = nodeAllies))
+            }
+            if (nodeEveryone.isNotEmpty()) {
+                add(Target(type = Target.Type.NodeEveryone, range = lineOfSight.range, targetedCharacterStates = nodeEveryone))
+            }
         }
     }
 
-
-     data class VantageNode(
+    data class VantageNode(
         val nodeId: Int,
         val requiredNormalMovement: Int,
         val requiredSpecialMovement: Int,

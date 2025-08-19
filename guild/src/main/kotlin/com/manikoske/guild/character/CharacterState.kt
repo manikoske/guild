@@ -346,7 +346,6 @@ data class CharacterState(
         }
     }
 
-    //TODO test
     fun targetableBy(targetType: Target.Type) : Boolean {
         return statuses
             .mapNotNull { it.targetabilityAlteringEffect }

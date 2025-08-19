@@ -2,6 +2,7 @@ package com.manikoske.guild.character
 
 import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Movement
+import com.manikoske.guild.action.Target
 import com.manikoske.guild.rules.Dice
 import kotlin.math.max
 
@@ -22,7 +23,6 @@ data class Status(
         fun prone() = Status(
             name = Name.Prone,
             actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.ActionsForcingEffect(listOf(Action.Actions.crawl, Action.Actions.standUp)),
-            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf()), // TODO define predicate
         )
 
         fun stun(roundsLeft: Int) = Status(
@@ -101,7 +101,7 @@ data class Status(
         fun hidden() = Status(
             name = Name.Hidden,
             removedOnMovement = true,
-            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf()), // TODO define predicate
+            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf(Target.Type.NodeEveryone, Target.Type.NodeAlly, Target.Type.NodeEnemy)),
         )
 
     }
