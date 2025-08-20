@@ -3,6 +3,7 @@ package com.manikoske.guild.encounter
 import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.character.CharacterState
+import com.manikoske.guild.character.Effect
 import com.manikoske.guild.character.Status
 import io.mockk.every
 import io.mockk.mockk
@@ -362,7 +363,18 @@ class CharacterStateTest {
             every { availableActions } returns listOf(Action.Actions.hideInShadows)
         }
 
-        val restrictingStatuses = listOf(Status.StatusFactory.disarm(1), Status.StatusFactory.silence(1))
+        val restrictingStatus = mockk<Status> {
+            every { actionAvailabilityAlteringEffect } returns mockk<Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect> {
+                every { predicate } returns { it.name == Action.Actions.hideInShadows.name}
+            }
+        }
+
+        val forcingStatus =  mockk<Status> {
+            every { actionAvailabilityAlteringEffect } returns mockk<Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect> {
+                every { predicate } returns { it.name == Action.Actions.hideInShadows.name}
+            }
+        }
+
         val forcingStatus = Status.StatusFactory.prone()
         val noActionStatus = Status.StatusFactory.down()
 

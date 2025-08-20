@@ -73,6 +73,17 @@ sealed interface Action {
             selfResolution = Resolution.SupportResolution.AddStatus(Status.StatusFactory.hidden())
         )
 
+        val sneakAttack = TargetedAction.AttackAction.WeaponAttack.WeaponSingleAttack(
+            name = "Sneak Attack",
+            movement = Movement(type = Movement.Type.Normal, amount = 1),
+            resourceCost = 0,
+            resolution = Resolution.AttackResolution.WeaponDamageResolution(
+                attackRollModifier = 1,
+                damageRollMultiplier = 2,
+            ),
+            requiredStatus = Status.Name.Hidden
+        )
+
         val basicActions = listOf(basicAttack, cantrip, disengage, dash)
     }
 
@@ -80,7 +91,7 @@ sealed interface Action {
     val movement: Movement
     val resourceCost: Int
     val selfResolution : Resolution.SupportResolution?
-    val requiredStatus : Status?
+    val requiredStatus : Status.Name?
 
     sealed interface Outcome {
         val actionStarted: Event.ActionStarted
@@ -106,7 +117,7 @@ sealed interface Action {
         override val name: String,
         override val movement: Movement,
         override val resourceCost: Int,
-        override val requiredStatus: Status? = null,
+        override val requiredStatus: Status.Name? = null,
     ) : Action {
 
         fun execute(
@@ -168,7 +179,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
+                    override val requiredStatus: Status.Name? = null,
                 ) : SpellSupportAction() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target.type == Target.Type.SingleAlly && target.range <= range
@@ -182,7 +193,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
+                    override val requiredStatus: Status.Name? = null,
                 ) : SpellSupportAction() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target.type == Target.Type.NodeAlly && target.range <= range
@@ -203,7 +214,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
+                    override val requiredStatus: Status.Name? = null,
 
                 ) : WeaponAttack() {
 
@@ -219,7 +230,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
+                    override val requiredStatus: Status.Name? = null,
                 ) : WeaponAttack() {
                     override fun canTarget(executor: CharacterState, target: Target): Boolean {
                         return target.type == Target.Type.NodeEveryone &&
@@ -241,7 +252,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
+                    override val requiredStatus: Status.Name? = null,
                 ) : SpellAttack() {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean
@@ -257,7 +268,7 @@ sealed interface Action {
                     override val name: String,
                     override val movement: Movement,
                     override val resourceCost: Int,
-                    override val requiredStatus: Status? = null,
+                    override val requiredStatus: Status.Name? = null,
                 ) : SpellAttack() {
 
                     // TODO when target.range == 0 and range > 0, then return disadvantage instead of boolean

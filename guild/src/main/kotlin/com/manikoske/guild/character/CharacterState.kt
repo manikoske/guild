@@ -326,7 +326,10 @@ data class CharacterState(
             .filterIsInstance<Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect>()
             .fold(Action.Actions.basicActions + character.availableActions) { filteredActions, status -> filteredActions.filter { status.predicate(it) }}
 
-        return restrictedActions.filter { it.resourceCost <= currentResources() }
+        return restrictedActions.filter { action ->
+            action.resourceCost <= currentResources() &&
+                    action.requiredStatus?.let { statusName -> statuses.any { it.name == statusName } } ?: true
+        }
     }
 
     fun actualMovement(actionMovement: Movement) : Movement {
