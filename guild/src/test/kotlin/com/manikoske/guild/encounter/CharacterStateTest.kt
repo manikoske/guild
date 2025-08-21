@@ -4,6 +4,7 @@ import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.character.CharacterState
 import com.manikoske.guild.character.Effect
+import com.manikoske.guild.character.Effect.ActionAvailabilityAlteringEffect
 import com.manikoske.guild.character.Status
 import io.mockk.every
 import io.mockk.mockk
@@ -360,23 +361,33 @@ class CharacterStateTest {
         // Arrange
         val character = mockk<com.manikoske.guild.character.Character> {
             every { maxResources() } returns 50
-            every { availableActions } returns listOf(Action.Actions.hideInShadows)
+            every { availableActions } returns listOf(Action.Actions.hideInShadows, Action.Actions.sneakAttack)
         }
 
         val restrictingStatus = mockk<Status> {
-            every { actionAvailabilityAlteringEffect } returns mockk<Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect> {
-                every { predicate } returns { it.name == Action.Actions.hideInShadows.name}
+            every { actionAvailabilityAlteringEffect } returns mockk<ActionAvailabilityAlteringEffect.ActionRestrictingEffect> {
+                every { predicate } returns { it.name != Action.Actions.hideInShadows.name }
+                every { name } returns Status.Name.Disarmed
             }
         }
 
-        val forcingStatus =  mockk<Status> {
-            every { actionAvailabilityAlteringEffect } returns mockk<Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect> {
-                every { predicate } returns { it.name == Action.Actions.hideInShadows.name}
+        val forcingStatus = mockk<Status> {
+            every { actionAvailabilityAlteringEffect } returns mockk<ActionAvailabilityAlteringEffect.ActionsForcingEffect> {
+                every { forcedActions } returns listOf(Action.Actions.standUp, Action.Actions.crawl)
+                every { name } returns Status.Name.Prone
             }
         }
 
-        val forcingStatus = Status.StatusFactory.prone()
-        val noActionStatus = Status.StatusFactory.down()
+        val noActionStatus =  mockk<Status> {
+            every { actionAvailabilityAlteringEffect } returns mockk<ActionAvailabilityAlteringEffect.NoActionForcingEffect> {}
+            every { name } returns Status.Name.Downed
+        }
+
+        val sneakAttackEnablingStatus = mockk<Status> {
+            every { actionAvailabilityAlteringEffect } returns null
+            every { name } returns Status.Name.Hidden
+        }
+
 
         // Test: No Action
         val noActionState = Fixture.characterState().copy(statuses = listOf(noActionStatus))
@@ -390,15 +401,15 @@ class CharacterStateTest {
         val restrictedActionState = Fixture.characterState().copy(
             character = character,
             resourcesSpent = 40,
-            statuses = restrictingStatuses
+            statuses = listOf(restrictingStatus)
         )
         assertThat(restrictedActionState.allExecutableActions())
-            .containsExactlyInAnyOrder(Action.Actions.hideInShadows, Action.Actions.disengage, Action.Actions.dash)
+            .containsExactlyInAnyOrder(Action.Actions.basicAttack, Action.Actions.cantrip, Action.Actions.disengage, Action.Actions.dash)
 
         // Test: Eligible Actions
         val eligibleActionState = Fixture.characterState().copy(character = character, resourcesSpent = 20, statuses = emptyList())
         assertThat(eligibleActionState.allExecutableActions()).containsExactlyInAnyOrderElementsOf(
-            Action.Actions.basicActions + character.availableActions
+            Action.Actions.basicActions + Action.Actions.hideInShadows
         )
     }
     @Test
