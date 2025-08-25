@@ -7,6 +7,9 @@ import com.manikoske.guild.rules.Dice
 
 sealed interface Effect {
 
+    // TODO add targeting preference effect - e.g. blind, restrict by range + blind adds penalty to hit
+
+    // TODO add effect for changing allegiance
 
     data class TargetabilityAlteringEffect(val targetableBy: Set<Target.Type>)
 
@@ -17,6 +20,8 @@ sealed interface Effect {
         data class ActionsForcingEffect(val forcedActions: List<Action>) : ActionAvailabilityAlteringEffect
 
         data class ActionRestrictingEffect(val predicate: (Action) -> Boolean) : ActionAvailabilityAlteringEffect
+
+        // TODO add effect for random picking action - confusion
     }
 
     sealed interface ActionMovementAlteringEffect {

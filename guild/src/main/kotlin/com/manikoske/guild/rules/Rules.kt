@@ -37,7 +37,7 @@ object Rules {
             spendResourcesResult = spendResourcesResult
         )
     }
-
+    // TODO when resolving statusOnHite return AddStatusResult
     fun spellAttackBy(
         executor: CharacterState,
         target: CharacterState,
@@ -111,6 +111,7 @@ object Rules {
         )
     }
 
+    // TODO when resolving statusOnHite return AddStatusResult
     fun weaponAttackBy(
         executor: CharacterState,
         target: CharacterState,
