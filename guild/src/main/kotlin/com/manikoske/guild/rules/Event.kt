@@ -67,7 +67,8 @@ sealed interface Event {
         val armorClass: DifficultyClass.ArmorClass,
         val weaponAttackRoll: Roll.WeaponAttackRoll,
         val weaponDamageRoll: Roll.WeaponDamageRoll,
-        val takeDamageResult: CharacterState.Result.TakeDamageResult
+        val takeDamageResult: CharacterState.Result.TakeDamageResult,
+        val addStatusResult: CharacterState.Result.AddStatusResult,
     ) : WeaponAttackEvent
 
     data class WeaponAttackMissed(
@@ -84,7 +85,8 @@ sealed interface Event {
         val spellDefenseRoll: Roll.SpellDefenseRoll,
         val spellAttackDifficultyClass: DifficultyClass.SpellAttackDifficultyClass,
         val spellDamageRoll: Roll.SpellDamageRoll,
-        val takeDamageResult: CharacterState.Result.TakeDamageResult
+        val takeDamageResult: CharacterState.Result.TakeDamageResult,
+        val addStatusResult: CharacterState.Result.AddStatusResult,
 
     ) : SpellAttackEvent
 

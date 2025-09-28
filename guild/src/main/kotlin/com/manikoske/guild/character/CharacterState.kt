@@ -50,7 +50,6 @@ data class CharacterState(
                 override val updatedTarget: CharacterState,
                 val takenDamage: Int,
                 val statusesRemovedOnDamage: List<Status>,
-                val statusOnHit: Status?
             ) : TakeDamageResult
 
             data class Downed(
@@ -58,7 +57,6 @@ data class CharacterState(
                 val takenDamage: Int,
                 val damagedOver: Int,
                 val statusesRemovedOnDamage: List<Status>,
-                val statusOnHit: Status?
             ) : TakeDamageResult
 
             data class AlreadyDown(override val updatedTarget: CharacterState) : TakeDamageResult
@@ -114,18 +112,19 @@ data class CharacterState(
         }
 
         sealed interface AddStatusResult : Result {
-            val addedStatus: Status
 
             data class Added(
                 override val updatedTarget: CharacterState,
-                override val addedStatus: Status
+                val addedStatus: Status
             ) : AddStatusResult
 
             data class Replaced(
                 override val updatedTarget: CharacterState,
-                override val addedStatus: Status,
+                val addedStatus: Status,
                 val replacedStatus: Status
             ) : AddStatusResult
+
+            data class NothingAdded(override val updatedTarget: CharacterState) : AddStatusResult
         }
 
         sealed interface RemoveStatusesResult : Result {
@@ -159,7 +158,7 @@ data class CharacterState(
         }
     }
 
-    fun takeDamage(damageToTake: Int, statusOnHit: Status? = null): Result.TakeDamageResult {
+    fun takeDamage(damageToTake: Int): Result.TakeDamageResult {
 
         return if (damageTaken == character.maxHitPoints()) {
             Result.TakeDamageResult.AlreadyDown(this)
@@ -173,21 +172,18 @@ data class CharacterState(
                         updatedTarget = this
                             .copy(damageTaken = character.maxHitPoints())
                             .removeStatuses(statusesRemovedOnDamage)
-                            .addStatuses(listOfNotNull(statusOnHit) + Status.StatusFactory.down()),
+                            .down(),
                         statusesRemovedOnDamage = statusesRemovedOnDamage,
                         takenDamage = character.maxHitPoints() - damageTaken,
                         damagedOver = damageTaken + damageToTake - character.maxHitPoints(),
-                        statusOnHit = statusOnHit
                     )
                 } else {
                     Result.TakeDamageResult.StillStanding(
                         updatedTarget = this
                             .copy(damageTaken = damageTaken + damageToTake)
-                            .removeStatuses(statusesRemovedOnDamage)
-                            .addStatuses(listOfNotNull(statusOnHit)),
+                            .removeStatuses(statusesRemovedOnDamage),
                         takenDamage = damageToTake,
                         statusesRemovedOnDamage = statusesRemovedOnDamage,
-                        statusOnHit = statusOnHit
                     )
                 }
             } else {
@@ -222,9 +218,7 @@ data class CharacterState(
         val updatedStatuses = statuses.map { it.tick() }.filterIsInstance<Status.TickResult.Update>().map { it.updatedStatus }
         val removedStatuses = statuses.map { it.tick() }.filterIsInstance<Status.TickResult.Remove>().map { it.removedStatus }
         return Result.TickStatusesResult(
-            updatedTarget = this
-                .addStatuses(updatedStatuses)
-                .removeStatuses(removedStatuses),
+            updatedTarget = this.copy(statuses = (updatedStatuses + statuses - removedStatuses).distinctBy { it.name }),
             removedStatuses = removedStatuses,
             updatedStatuses = updatedStatuses
         )
@@ -283,15 +277,23 @@ data class CharacterState(
         }
     }
 
-    fun addStatus(status: Status): Result.AddStatusResult {
+    fun addStatus(status: Status?): Result.AddStatusResult {
+
+        if (status == null) return Result.AddStatusResult.NothingAdded(updatedTarget = this)
 
         val existingStatus = statuses.find { it.name == status.name }
-        val updatedTarget = this.addStatuses(listOf(status))
 
         return if (existingStatus != null) {
-            Result.AddStatusResult.Replaced(updatedTarget = updatedTarget, addedStatus = status, replacedStatus = existingStatus)
+            Result.AddStatusResult.Replaced(
+                updatedTarget = this.copy(statuses = (statuses - existingStatus + status)),
+                addedStatus = status,
+                replacedStatus = existingStatus
+            )
         } else {
-            Result.AddStatusResult.Added(updatedTarget = updatedTarget, addedStatus = status)
+            Result.AddStatusResult.Added(
+                updatedTarget = this.copy(statuses = (statuses + status)),
+                addedStatus = status
+            )
         }
 
     }
@@ -364,8 +366,8 @@ data class CharacterState(
         return character.maxResources() - resourcesSpent
     }
 
-    private fun addStatuses(statusesToAdd: List<Status>): CharacterState {
-        return this.copy(statuses = (statusesToAdd + statuses).distinctBy { it.name })
+    private fun down(): CharacterState {
+        return this.copy(statuses = (statuses + Status.StatusFactory.down()))
     }
 
     private fun removeStatuses(statusesToRemove: List<Status>): CharacterState {

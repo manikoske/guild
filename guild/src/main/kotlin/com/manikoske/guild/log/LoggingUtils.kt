@@ -243,6 +243,7 @@ object LoggingUtils {
                 builder.appendLine(linePrefix + "Gains status ${formatStatus(result.addedStatus)}")
             is CharacterState.Result.AddStatusResult.Replaced ->
                 builder.appendLine(linePrefix + "Gains status ${formatStatus(result.addedStatus)} while replacing ${formatStatus(result.replacedStatus)}")
+            is CharacterState.Result.AddStatusResult.NothingAdded -> Unit
         }
     }
 
@@ -274,9 +275,6 @@ object LoggingUtils {
                 if (result.statusesRemovedOnDamage.isNotEmpty()) {
                     builder.appendLine(linePrefix + "\tRemoved statuses: ${formatStatuses(result.statusesRemovedOnDamage)}")
                 }
-                if (result.statusOnHit != null) {
-                    builder.appendLine("\tAdded status: ${result.statusOnHit.name.name}")
-                }
             }
             is CharacterState.Result.TakeDamageResult.NoDamageTaken ->
                 builder.appendLine(linePrefix + "Does not take any damage")
@@ -284,9 +282,6 @@ object LoggingUtils {
                 builder.appendLine(linePrefix + "Takes ${result.takenDamage} but is still standing")
                 if (result.statusesRemovedOnDamage.isNotEmpty()) {
                     builder.appendLine(linePrefix + "\tRemoved statuses: ${formatStatuses(result.statusesRemovedOnDamage)}")
-                }
-                if (result.statusOnHit != null) {
-                    builder.appendLine(linePrefix + "\tAdded status: ${result.statusOnHit.name.name}")
                 }
             }
         }
@@ -406,6 +401,7 @@ object LoggingUtils {
                 builder.appendLine("\t\t\tDefense roll: ${formatRoll(event.spellDefenseRoll)}")
                 builder.appendLine("\t\t\tDamage roll: ${formatRoll(event.spellDamageRoll)}")
                 buildTakeDamageResult(builder,"\t\t\t", event.takeDamageResult)
+                buildAddStatusResult(builder,"\t\t\t", event.addStatusResult)
             }
             is Event.SpellAttackMissed -> {
                 builder.appendLine("\t\tSpell attack missed:")
@@ -418,6 +414,7 @@ object LoggingUtils {
                 builder.appendLine("\t\t\tArmor class: ${formatDifficultyClass(event.armorClass)}")
                 builder.appendLine("\t\t\tDamage roll: ${formatRoll(event.weaponDamageRoll)}")
                 buildTakeDamageResult(builder,"\t\t\t", event.takeDamageResult)
+                buildAddStatusResult(builder,"\t\t\t", event.addStatusResult)
             }
             is Event.WeaponAttackMissed -> {
                 builder.appendLine("\t\tWeapon attack missed:")

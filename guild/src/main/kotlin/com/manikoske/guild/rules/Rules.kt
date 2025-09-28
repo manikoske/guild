@@ -37,7 +37,6 @@ object Rules {
             spendResourcesResult = spendResourcesResult
         )
     }
-    // TODO when resolving statusOnHite return AddStatusResult
     fun spellAttackBy(
         executor: CharacterState,
         target: CharacterState,
@@ -67,15 +66,17 @@ object Rules {
                 rollMethod = rollMethod
             )
 
-            val damageResult = target.takeDamage(damageToTake = spellDamageRoll.result, statusOnHit = statusOnHit)
+            val takeDamageResult = target.takeDamage(damageToTake = spellDamageRoll.result)
+            val addStatusResult = takeDamageResult.updatedTarget.addStatus(statusOnHit)
 
             return Event.SpellAttackHit(
                 target = target,
-                updatedTarget = damageResult.updatedTarget,
+                updatedTarget = addStatusResult.updatedTarget,
                 spellAttackDifficultyClass = spellAttackDifficultyClass,
                 spellDefenseRoll = spellDefenseRoll,
                 spellDamageRoll = spellDamageRoll,
-                takeDamageResult = damageResult
+                takeDamageResult = takeDamageResult,
+                addStatusResult = addStatusResult
             )
         } else {
             return Event.SpellAttackMissed(
@@ -111,7 +112,6 @@ object Rules {
         )
     }
 
-    // TODO when resolving statusOnHite return AddStatusResult
     fun weaponAttackBy(
         executor: CharacterState,
         target: CharacterState,
@@ -135,15 +135,17 @@ object Rules {
                 rollMethod = rollMethod
             )
 
-            val damageResult = target.takeDamage(damageToTake = weaponDamageRoll.result, statusOnHit = statusOnHit)
+            val takeDamageResult = target.takeDamage(damageToTake = weaponDamageRoll.result)
+            val addStatusResult = takeDamageResult.updatedTarget.addStatus(statusOnHit)
 
             return Event.WeaponAttackHit(
                 target = target,
-                updatedTarget = damageResult.updatedTarget,
+                updatedTarget = addStatusResult.updatedTarget,
                 weaponAttackRoll = weaponAttackRoll,
                 armorClass = armorClass,
                 weaponDamageRoll = weaponDamageRoll,
-                takeDamageResult = damageResult
+                takeDamageResult = takeDamageResult,
+                addStatusResult = addStatusResult
             )
         } else {
             return Event.WeaponAttackMissed(

@@ -22,7 +22,6 @@ class CharacterStateTest {
         }
 
         val statusToRemove = Status(name = Status.Name.Entangled, removedOnDamageTaken = true)
-        val statusOnHit = Status(name = Status.Name.Stunned)
 
         // Test Already Down
         val alreadyDownState = Fixture.characterState().copy(character = character, damageTaken = 100)
@@ -37,27 +36,14 @@ class CharacterStateTest {
         // Test Downed
         val downedState =
             Fixture.characterState().copy(character = character, damageTaken = 50, statuses = listOf(statusToRemove))
-        val downedResult = downedState.takeDamage(60, statusOnHit)
+        val downedResult = downedState.takeDamage(60)
         assertThat(downedResult).isInstanceOf(CharacterState.Result.TakeDamageResult.Downed::class.java)
         (downedResult as CharacterState.Result.TakeDamageResult.Downed).also {
             assertThat(it.takenDamage).isEqualTo(50)
             assertThat(it.damagedOver).isEqualTo(10)
             assertThat(it.updatedTarget.statuses).doesNotContain(statusToRemove)
-            assertThat(it.updatedTarget.statuses).contains(statusOnHit)
             assertThat(it.updatedTarget.statuses).contains(Status.StatusFactory.down())
             assertThat(it.updatedTarget.currentHitPoints()).isEqualTo(0)
-        }
-
-        // Test Status Changes
-        val statusState =
-            Fixture.characterState().copy(character = character, damageTaken = 0, statuses = listOf(statusToRemove))
-        val statusResult = statusState.takeDamage(10, statusOnHit)
-        assertThat(statusResult).isInstanceOf(CharacterState.Result.TakeDamageResult.StillStanding::class.java)
-        (statusResult as CharacterState.Result.TakeDamageResult.StillStanding).also {
-            assertThat(it.statusesRemovedOnDamage).contains(statusToRemove)
-            assertThat(it.statusOnHit).isEqualTo(statusOnHit)
-            assertThat(it.updatedTarget.statuses).doesNotContain(statusToRemove)
-            assertThat(it.updatedTarget.statuses).contains(statusOnHit)
         }
     }
 
@@ -313,6 +299,10 @@ class CharacterStateTest {
             assertThat(it.replacedStatus).isEqualTo(stun)
             assertThat(it.updatedTarget.statuses).containsExactlyInAnyOrder(freshStun, haste)
         }
+
+        // Test Adding No Status
+        val nothingAddedResult = hastedCharacterState.addStatus(null)
+        assertThat(nothingAddedResult).isInstanceOf(CharacterState.Result.AddStatusResult.NothingAdded::class.java)
     }
 
     @Test
