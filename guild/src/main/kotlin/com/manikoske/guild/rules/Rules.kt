@@ -37,6 +37,38 @@ object Rules {
             spendResourcesResult = spendResourcesResult
         )
     }
+
+    fun endAction(
+        target: CharacterState,
+        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
+    ): Event.ActionEnded {
+
+        val healOverTimeRolls = target.statuses
+            .mapNotNull { it.hpAffectingOverTimeEffect }
+            .filterIsInstance<Effect.HpAffectingOverTimeEffect.HealingOverTimeEffect>()
+            .map { target.character.healOverTimeRoll(effect = it, rollMethod = rollMethod) }
+
+        val damageOverTimeRolls =
+            target.statuses
+                .mapNotNull { it.hpAffectingOverTimeEffect }
+                .filterIsInstance<Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect>()
+                .map { target.character.damageOverTimeRoll(effect = it, rollMethod = rollMethod) }
+
+        val healResult = target.heal(healOverTimeRolls.sumOf { it.result })
+        val damageResult = healResult.updatedTarget.takeDamage(damageOverTimeRolls.sumOf { it.result })
+        val statusesTickResult = damageResult.updatedTarget.tickStatuses()
+
+        return Event.ActionEnded(
+            target = target,
+            updatedTarget = statusesTickResult.updatedTarget,
+            damageOverTimeRolls = damageOverTimeRolls,
+            healOverTimeRolls = healOverTimeRolls,
+            receiveHealingResult = healResult,
+            takeDamageResult = damageResult,
+            tickStatusesResult = statusesTickResult
+        )
+    }
+
     fun spellAttackBy(
         executor: CharacterState,
         target: CharacterState,
@@ -155,37 +187,6 @@ object Rules {
                 armorClass = armorClass
             )
         }
-    }
-
-    fun endAction(
-        target: CharacterState,
-        rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
-    ): Event.ActionEnded {
-
-        val healOverTimeRolls = target.statuses
-                .mapNotNull { it.hpAffectingOverTimeEffect }
-                .filterIsInstance<Effect.HpAffectingOverTimeEffect.HealingOverTimeEffect>()
-                .map { target.character.healOverTimeRoll(effect = it, rollMethod = rollMethod) }
-
-        val damageOverTimeRolls =
-            target.statuses
-                .mapNotNull { it.hpAffectingOverTimeEffect }
-                .filterIsInstance<Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect>()
-                .map { target.character.damageOverTimeRoll(effect = it, rollMethod = rollMethod) }
-
-        val healResult = target.heal(healOverTimeRolls.sumOf { it.result })
-        val damageResult = healResult.updatedTarget.takeDamage(damageOverTimeRolls.sumOf { it.result })
-        val statusesTickResult = damageResult.updatedTarget.tickStatuses()
-
-        return Event.ActionEnded(
-            target = target,
-            updatedTarget = statusesTickResult.updatedTarget,
-            damageOverTimeRolls = damageOverTimeRolls,
-            healOverTimeRolls = healOverTimeRolls,
-            receiveHealingResult = healResult,
-            takeDamageResult = damageResult,
-            tickStatusesResult = statusesTickResult
-        )
     }
 
     fun boostResources(

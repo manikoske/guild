@@ -84,7 +84,7 @@ sealed interface Action {
             requiredStatus = Status.Name.Hidden
         )
 
-        val basicActions = listOf(basicAttack, cantrip, disengage, dash)
+        val basicActions = listOf(basicAttack, disengage, dash)
     }
 
     val name: String

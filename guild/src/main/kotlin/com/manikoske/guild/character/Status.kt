@@ -11,7 +11,8 @@ data class Status(
     val duration: Duration = Duration.Permanent,
     val removedOnDamageTaken : Boolean = false,
     val removedOnMovement : Boolean = false,
-    val removedOnDamageDone : Boolean = false, // todo implement
+    val removedOnAttack : Boolean = false, // todo implement
+    val removedOnHealing : Boolean = false, // todo implement
     val targetabilityAlteringEffect: Effect.TargetabilityAlteringEffect? = null,
     val actionAvailabilityAlteringEffect: Effect.ActionAvailabilityAlteringEffect? = null,
     val actionMovementAlteringEffect: Effect.ActionMovementAlteringEffect? = null,
@@ -29,6 +30,13 @@ data class Status(
             name = Name.Stunned,
             duration = Duration.RoundLimited(roundsLeft),
             actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect,
+        )
+
+        fun fear(roundsLeft: Int) = Status(
+            name = Name.Feared,
+            duration = Duration.RoundLimited(roundsLeft),
+            removedOnDamageTaken = true,
+            actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.ActionsForcingEffect(listOf(Action.Actions.dash)),
         )
 
         fun down() = Status(
@@ -98,10 +106,32 @@ data class Status(
             hpAffectingOverTimeEffect = Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect(damageDice)
         )
 
+        fun bleed(roundsLeft: Int, damageDice: Dice) = Status(
+            name = Name.Bleeding,
+            duration = Duration.RoundLimited(roundsLeft),
+            removedOnHealing = true,
+            hpAffectingOverTimeEffect = Effect.HpAffectingOverTimeEffect.DamageOverTimeEffect(damageDice)
+        )
+
         fun hidden() = Status(
             name = Name.Hidden,
             removedOnMovement = true,
+            removedOnAttack = true,
             targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf(Target.Type.NodeEveryone, Target.Type.NodeAlly, Target.Type.NodeEnemy)),
+        )
+
+        fun invisible() = Status(
+            name = Name.Invisible,
+            removedOnAttack = true,
+            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf(Target.Type.NodeEveryone, Target.Type.NodeAlly, Target.Type.NodeEnemy)),
+        )
+
+        fun ethereal(roundsLeft: Int) = Status(
+            name = Name.Ethereal,
+            removedOnAttack = true,
+            duration = Duration.RoundLimited(roundsLeft),
+            actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect,
+            targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf())
         )
 
     }
@@ -127,7 +157,9 @@ data class Status(
         Prone,
         Stunned,
         Downed,
+        Feared,
         Poisoned,
+        Bleeding,
         Regenerating,
         Held,
         Entangled,
@@ -137,7 +169,7 @@ data class Status(
         Haste,
         Hidden,
         Invisible,
-        Sanctuary
+        Ethereal
 
     }
 

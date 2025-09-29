@@ -7,9 +7,9 @@ import com.manikoske.guild.rules.Dice
 
 sealed interface Effect {
 
-    // TODO add targeting preference effect - e.g. blind, restrict by range + blind adds penalty to hit
+    // TODO add targeting preference effect - taunt(id) - restrict by id, random target - disoriented, nearest target - blind (lower speed)
 
-    // TODO add effect for changing allegiance
+    // TODO add effect for changing allegiance - charmed(removed on damage taken), domination
 
     data class TargetabilityAlteringEffect(val targetableBy: Set<Target.Type>)
 
