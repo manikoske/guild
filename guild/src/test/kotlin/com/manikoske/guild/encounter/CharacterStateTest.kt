@@ -3,7 +3,6 @@ package com.manikoske.guild.encounter
 import com.manikoske.guild.action.Action
 import com.manikoske.guild.action.Movement
 import com.manikoske.guild.character.CharacterState
-import com.manikoske.guild.character.Effect
 import com.manikoske.guild.character.Effect.ActionAvailabilityAlteringEffect
 import com.manikoske.guild.character.Status
 import io.mockk.every
@@ -50,26 +49,28 @@ class CharacterStateTest {
     @Test
     fun `test tickStatuses scenarios`() {
         // Arrange
-        val statusToUpdate = Status.StatusFactory.haste(2)
-        val statusToRemove = Status.StatusFactory.stun(1)
-        val statusToRemain = Status.StatusFactory.down()
+        val statusToUpdateByTick = Status.StatusFactory.haste(2)
+        val statusToRemoveByTick = Status.StatusFactory.stun(1)
+        val statusToRemainWhenTicked = Status.StatusFactory.down()
+        val statusToRemoveByTargetedAction = Status.StatusFactory.invisible(3)
 
         val character = mockk<com.manikoske.guild.character.Character> {
             every { maxHitPoints() } returns 100
         }
         val initialCharacterState = Fixture.characterState().copy(
             character = character,
-            statuses = listOf(statusToUpdate, statusToRemove, statusToRemain)
+            statuses = listOf(statusToUpdateByTick, statusToRemoveByTick, statusToRemainWhenTicked, statusToRemoveByTargetedAction)
         )
 
         // Act
-        val result = initialCharacterState.tickStatuses()
-        val updatedStatus = statusToUpdate.copy(duration = Status.Duration.RoundLimited(1))
+        val result = initialCharacterState.tickStatuses(targetedActionTaken = true)
+        val updatedStatus = statusToUpdateByTick.copy(duration = Status.Duration.RoundLimited(1))
 
         // Assert
-        assertThat(result.removedStatuses).containsExactly(statusToRemove)
-        assertThat(result.updatedStatuses).containsExactly(updatedStatus)
-        assertThat(result.updatedTarget.statuses).containsExactly(updatedStatus, statusToRemain)
+        assertThat(result.tickRemovedStatuses).containsExactly(statusToRemoveByTick)
+        assertThat(result.tickUpdatedStatuses).containsExactlyInAnyOrder(updatedStatus)
+        assertThat(result.targetedActionRemovedStatuses).containsExactly(statusToRemoveByTargetedAction)
+        assertThat(result.updatedTarget.statuses).containsExactly(updatedStatus, statusToRemainWhenTicked)
     }
 
     @Test
@@ -120,24 +121,26 @@ class CharacterStateTest {
         val alreadyFullResult = alreadyFullState.heal(20)
         assertThat(alreadyFullResult).isInstanceOf(CharacterState.Result.ReceiveHealingResult.AlreadyFull::class.java)
 
-        // Test Partial Healing
+        // Test Healing
         val partialHealState = Fixture.characterState().copy(character = character, damageTaken = 70)
         val partialHealResult = partialHealState.heal(40)
         assertThat(partialHealResult).isInstanceOf(CharacterState.Result.ReceiveHealingResult.Healed::class.java)
         (partialHealResult as CharacterState.Result.ReceiveHealingResult.Healed).also {
             assertThat(it.amountHealed).isEqualTo(40)
-            assertThat(it.overHealed).isEqualTo(0)
             assertThat(it.updatedTarget.currentHitPoints()).isEqualTo(70)
         }
 
         // Test Over-healing
-        val overHealState = Fixture.characterState().copy(character = character, damageTaken = 30)
+        val statusToRemove = Status(name = Status.Name.Bleeding, removedOnHealing = true)
+        val overHealState = Fixture.characterState().copy(character = character, damageTaken = 30, statuses = listOf(statusToRemove))
         val overHealResult = overHealState.heal(50)
-        assertThat(overHealResult).isInstanceOf(CharacterState.Result.ReceiveHealingResult.Healed::class.java)
-        (overHealResult as CharacterState.Result.ReceiveHealingResult.Healed).also {
+        assertThat(overHealResult).isInstanceOf(CharacterState.Result.ReceiveHealingResult.HealedToFull::class.java)
+        (overHealResult as CharacterState.Result.ReceiveHealingResult.HealedToFull).also {
             assertThat(it.amountHealed).isEqualTo(30)
             assertThat(it.overHealed).isEqualTo(20)
+            assertThat(it.statusesRemovedByHealing).containsExactly(statusToRemove)
             assertThat(it.updatedTarget.currentHitPoints()).isEqualTo(100)
+            assertThat(it.updatedTarget.statuses).doesNotContain(statusToRemove)
         }
     }
 
@@ -356,7 +359,7 @@ class CharacterStateTest {
 
         val restrictingStatus = mockk<Status> {
             every { actionAvailabilityAlteringEffect } returns mockk<ActionAvailabilityAlteringEffect.ActionRestrictingEffect> {
-                every { predicate } returns { it.name != Action.Actions.hideInShadows.name }
+                every { predicate } returns { it !is Action.TargetedAction }
                 every { name } returns Status.Name.Disarmed
             }
         }
@@ -378,10 +381,18 @@ class CharacterStateTest {
             every { name } returns Status.Name.Hidden
         }
 
+        val randomActionForcingStatus = mockk<Status> {
+            every { actionAvailabilityAlteringEffect } returns mockk<ActionAvailabilityAlteringEffect.RandomActionForcingEffect> {
+                every { randomActionsCount } returns 1
+                every { name } returns Status.Name.Deranged
+            }
+
+        }
+
 
         // Test: No Action
         val noActionState = Fixture.characterState().copy(statuses = listOf(noActionStatus))
-        assertThat(noActionState.allExecutableActions()).containsExactly(Action.Actions.noAction)
+        assertThat(noActionState.allExecutableActions()).isEmpty()
 
         // Test: Forced Actions
         val forcedActionState = Fixture.characterState().copy(statuses = listOf(forcingStatus))
@@ -394,13 +405,23 @@ class CharacterStateTest {
             statuses = listOf(restrictingStatus)
         )
         assertThat(restrictedActionState.allExecutableActions())
-            .containsExactlyInAnyOrder(Action.Actions.basicAttack, Action.Actions.cantrip, Action.Actions.disengage, Action.Actions.dash)
+            .containsExactlyInAnyOrder(Action.Actions.disengage, Action.Actions.dash, Action.Actions.hideInShadows)
 
         // Test: Eligible Actions
-        val eligibleActionState = Fixture.characterState().copy(character = character, resourcesSpent = 20, statuses = emptyList())
-        assertThat(eligibleActionState.allExecutableActions()).containsExactlyInAnyOrderElementsOf(
+        val sneakAttackRestrictingState = Fixture.characterState().copy(character = character, statuses = emptyList())
+        assertThat(sneakAttackRestrictingState.allExecutableActions()).containsExactlyInAnyOrderElementsOf(
             Action.Actions.basicActions + Action.Actions.hideInShadows
         )
+
+        val sneakAttackEnablingState = Fixture.characterState().copy(character = character, statuses = listOf(sneakAttackEnablingStatus))
+        assertThat(sneakAttackEnablingState.allExecutableActions()).containsExactlyInAnyOrderElementsOf(
+            Action.Actions.basicActions + Action.Actions.hideInShadows + Action.Actions.sneakAttack
+        )
+
+        // Test: Random Actions
+        val randomActionState = Fixture.characterState().copy(character = character, statuses = listOf(randomActionForcingStatus))
+        assertThat(randomActionState.allExecutableActions()).hasSize(1)
+
     }
     @Test
     fun `test actualMovement scenarios`() {

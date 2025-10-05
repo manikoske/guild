@@ -48,6 +48,7 @@ data class Turn(
                 }
         }
 
+        if (possibleOutcomes.isEmpty()) possibleOutcomes.add { Action.NoChangeOutcome(executor = taker) }
         val best = possibleOutcomes.maxBy { pointOfView.updateWith(it.invoke()).utility() }.invoke()
 
         return State(

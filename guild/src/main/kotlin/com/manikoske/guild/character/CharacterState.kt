@@ -68,7 +68,13 @@ data class CharacterState(
             data class Healed(
                 override val updatedTarget: CharacterState,
                 val amountHealed: Int,
+                val statusesRemovedByHealing: List<Status>
+            ) : ReceiveHealingResult
+            data class HealedToFull(
+                override val updatedTarget: CharacterState,
+                val amountHealed: Int,
                 val overHealed: Int,
+                val statusesRemovedByHealing: List<Status>
             ) : ReceiveHealingResult
             data class NoHeal(
                 override val updatedTarget: CharacterState,
@@ -80,8 +86,9 @@ data class CharacterState(
 
         data class TickStatusesResult (
             override val updatedTarget: CharacterState,
-            val removedStatuses: List<Status>,
-            val updatedStatuses: List<Status>
+            val tickRemovedStatuses: List<Status>,
+            val tickUpdatedStatuses: List<Status>,
+            val targetedActionRemovedStatuses: List<Status>,
         ) : Result
 
         sealed interface SpendResourcesResult : Result {
@@ -198,29 +205,45 @@ data class CharacterState(
         } else if (damageTaken == 0) {
             Result.ReceiveHealingResult.AlreadyFull(this)
         } else {
+            val statusesRemovedByHealing = statuses.filter { it.removedOnHealing }
+
             if (damageTaken < amountToHeal) {
-                Result.ReceiveHealingResult.Healed(
-                    updatedTarget = this.copy(damageTaken = 0),
+                Result.ReceiveHealingResult.HealedToFull(
+                    updatedTarget = this
+                        .copy(damageTaken = 0)
+                        .removeStatuses(statusesRemovedByHealing),
                     overHealed = amountToHeal - damageTaken,
                     amountHealed = damageTaken,
+                    statusesRemovedByHealing = statusesRemovedByHealing
+
                 )
             } else {
                 Result.ReceiveHealingResult.Healed(
-                    updatedTarget = this.copy(damageTaken = damageTaken - amountToHeal),
-                    overHealed = 0,
+                    updatedTarget = this
+                        .copy(damageTaken = damageTaken - amountToHeal)
+                        .removeStatuses(statusesRemovedByHealing),
                     amountHealed = amountToHeal,
+                    statusesRemovedByHealing = statusesRemovedByHealing
                 )
             }
         }
     }
 
-    fun tickStatuses(): Result.TickStatusesResult {
-        val updatedStatuses = statuses.map { it.tick() }.filterIsInstance<Status.TickResult.Update>().map { it.updatedStatus }
-        val removedStatuses = statuses.map { it.tick() }.filterIsInstance<Status.TickResult.Remove>().map { it.removedStatus }
+    fun tickStatuses(targetedActionTaken: Boolean): Result.TickStatusesResult {
+
+        val targetedActionRemovedStatuses = statuses.filter { targetedActionTaken && it.removedOnTargetedAction }
+        val updatedStatuses = statuses - targetedActionRemovedStatuses
+
+        val tickUpdatedStatuses = updatedStatuses.map { it.tick() }.filterIsInstance<Status.TickResult.Update>().map { it.updatedStatus }
+        val tickRemovedStatuses = updatedStatuses.map { it.tick() }.filterIsInstance<Status.TickResult.Remove>().map { it.removedStatus }
+
         return Result.TickStatusesResult(
-            updatedTarget = this.copy(statuses = (updatedStatuses + statuses - removedStatuses).distinctBy { it.name }),
-            removedStatuses = removedStatuses,
-            updatedStatuses = updatedStatuses
+            updatedTarget = this.copy(
+                statuses = (tickUpdatedStatuses + updatedStatuses - tickRemovedStatuses).distinctBy { it.name }
+            ),
+            tickRemovedStatuses = tickRemovedStatuses,
+            tickUpdatedStatuses = tickUpdatedStatuses,
+            targetedActionRemovedStatuses = targetedActionRemovedStatuses,
         )
     }
 
@@ -314,7 +337,7 @@ data class CharacterState(
             .filterIsInstance<Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect>()
             .any()
 
-        if (forcedNoAction) return listOf(Action.Actions.noAction)
+        if (forcedNoAction) return listOf()
 
         val forcedActions = statuses
             .mapNotNull { it.actionAvailabilityAlteringEffect }
@@ -323,14 +346,26 @@ data class CharacterState(
 
         if (forcedActions.isNotEmpty()) return forcedActions
 
-        val restrictedActions = statuses
+        val statusRestrictedActions = statuses
             .mapNotNull { it.actionAvailabilityAlteringEffect }
             .filterIsInstance<Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect>()
             .fold(Action.Actions.basicActions + character.availableActions) { filteredActions, status -> filteredActions.filter { status.predicate(it) }}
 
-        return restrictedActions.filter { action ->
-            action.resourceCost <= currentResources() &&
-                    action.requiredStatus?.let { statusName -> statuses.any { it.name == statusName } } ?: true
+        val resourceRestrictedActions =
+            statusRestrictedActions.filter { action -> action.resourceCost <= currentResources() }
+
+        val requiredStatusRestrictedActions =
+            resourceRestrictedActions.filter { action -> action.requiredStatus?.let { statusName -> statuses.any { it.name == statusName } } ?: true }
+
+        val forcedRandomAction = statuses
+            .mapNotNull { it.actionAvailabilityAlteringEffect }
+            .filterIsInstance<Effect.ActionAvailabilityAlteringEffect.RandomActionForcingEffect>()
+            .minOfOrNull { it.randomActionsCount } ?: 0
+
+        return if (forcedRandomAction > 0) {
+            requiredStatusRestrictedActions.shuffled().take(forcedRandomAction)
+        } else {
+            requiredStatusRestrictedActions
         }
     }
 

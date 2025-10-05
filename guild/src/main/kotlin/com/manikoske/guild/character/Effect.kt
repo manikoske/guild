@@ -21,7 +21,7 @@ sealed interface Effect {
 
         data class ActionRestrictingEffect(val predicate: (Action) -> Boolean) : ActionAvailabilityAlteringEffect
 
-        // TODO add effect for random picking action - confusion
+        data class RandomActionForcingEffect(val randomActionsCount: Int) : ActionAvailabilityAlteringEffect
     }
 
     sealed interface ActionMovementAlteringEffect {

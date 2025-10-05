@@ -11,8 +11,8 @@ data class Status(
     val duration: Duration = Duration.Permanent,
     val removedOnDamageTaken : Boolean = false,
     val removedOnMovement : Boolean = false,
-    val removedOnAttack : Boolean = false, // todo implement
-    val removedOnHealing : Boolean = false, // todo implement
+    val removedOnTargetedAction : Boolean = false,
+    val removedOnHealing : Boolean = false,
     val targetabilityAlteringEffect: Effect.TargetabilityAlteringEffect? = null,
     val actionAvailabilityAlteringEffect: Effect.ActionAvailabilityAlteringEffect? = null,
     val actionMovementAlteringEffect: Effect.ActionMovementAlteringEffect? = null,
@@ -62,7 +62,7 @@ data class Status(
         )
 
         fun slow(roundsLeft: Int) = Status(
-            name = Name.Slow,
+            name = Name.Slowed,
             duration = Duration.RoundLimited(roundsLeft),
             actionMovementAlteringEffect = Effect.ActionMovementAlteringEffect.ActionMovementAmountAlteringEffect {
                 it.let { it.copy(amount = max(it.amount - 1, 0)) }
@@ -70,7 +70,7 @@ data class Status(
         )
 
         fun haste(roundsLeft: Int) = Status(
-            name = Name.Haste,
+            name = Name.Hastened,
             duration = Duration.RoundLimited(roundsLeft),
             actionMovementAlteringEffect = Effect.ActionMovementAlteringEffect.ActionMovementAmountAlteringEffect {
                 it.let { it.copy(amount = it.amount + 1) }
@@ -116,22 +116,36 @@ data class Status(
         fun hidden() = Status(
             name = Name.Hidden,
             removedOnMovement = true,
-            removedOnAttack = true,
+            removedOnTargetedAction = true,
             targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf(Target.Type.NodeEveryone, Target.Type.NodeAlly, Target.Type.NodeEnemy)),
         )
 
-        fun invisible() = Status(
+        fun invisible(roundsLeft: Int) = Status(
             name = Name.Invisible,
-            removedOnAttack = true,
+            removedOnTargetedAction = true,
+            duration = Duration.RoundLimited(roundsLeft),
             targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf(Target.Type.NodeEveryone, Target.Type.NodeAlly, Target.Type.NodeEnemy)),
         )
 
         fun ethereal(roundsLeft: Int) = Status(
             name = Name.Ethereal,
-            removedOnAttack = true,
+            removedOnTargetedAction = true,
             duration = Duration.RoundLimited(roundsLeft),
             actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect,
             targetabilityAlteringEffect = Effect.TargetabilityAlteringEffect(setOf())
+        )
+
+        fun confused(roundsLeft: Int) = Status(
+            name = Name.Confused,
+            removedOnDamageTaken = true,
+            duration = Duration.RoundLimited(roundsLeft),
+            actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.RandomActionForcingEffect(randomActionsCount = 3),
+        )
+
+        fun deranged(roundsLeft: Int) = Status(
+            name = Name.Deranged,
+            duration = Duration.RoundLimited(roundsLeft),
+            actionAvailabilityAlteringEffect = Effect.ActionAvailabilityAlteringEffect.RandomActionForcingEffect(randomActionsCount = 1),
         )
 
     }
@@ -165,11 +179,13 @@ data class Status(
         Entangled,
         Silenced,
         Disarmed,
-        Slow,
-        Haste,
+        Slowed,
+        Hastened,
         Hidden,
         Invisible,
-        Ethereal
+        Ethereal,
+        Confused,
+        Deranged
 
     }
 

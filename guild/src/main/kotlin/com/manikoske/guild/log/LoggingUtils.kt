@@ -110,8 +110,9 @@ object LoggingUtils {
     private fun getEffectSymbol(effect: Effect.ActionAvailabilityAlteringEffect): String {
         return when(effect) {
             is Effect.ActionAvailabilityAlteringEffect.NoActionForcingEffect -> red(SYMBOL_STUN)
-            is Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect -> yellow(SYMBOL_STUN)
+            is Effect.ActionAvailabilityAlteringEffect.ActionRestrictingEffect -> yellow(SYMBOL_PRONE)
             is Effect.ActionAvailabilityAlteringEffect.ActionsForcingEffect -> yellow(SYMBOL_PRONE)
+            is Effect.ActionAvailabilityAlteringEffect.RandomActionForcingEffect -> yellow(SYMBOL_PRONE)
         }
     }
 
@@ -293,12 +294,21 @@ object LoggingUtils {
                 builder.appendLine(linePrefix + "Does not receive any healing as already full")
             is CharacterState.Result.ReceiveHealingResult.Healed -> {
                 builder.appendLine(linePrefix + "Healed for ${result.amountHealed}")
-                if (result.overHealed > 0) {
-                    builder.appendLine(linePrefix + "\tOverhealed by ${result.overHealed}")
+                if (result.statusesRemovedByHealing.isNotEmpty()) {
+                    builder.appendLine(linePrefix + "Statuses cleansed: ${formatStatuses(result.statusesRemovedByHealing)}")
                 }
             }
             is CharacterState.Result.ReceiveHealingResult.NoHeal ->
                 builder.appendLine(linePrefix + "Does not receive any healing")
+
+            is CharacterState.Result.ReceiveHealingResult.HealedToFull -> {
+
+                builder.appendLine(linePrefix + "Healed for ${result.amountHealed} to full")
+                builder.appendLine(linePrefix + "\tOverhealed by ${result.overHealed}")
+                if (result.statusesRemovedByHealing.isNotEmpty()) {
+                    builder.appendLine(linePrefix + "Statuses cleansed: ${formatStatuses(result.statusesRemovedByHealing)}")
+                }
+            }
         }
     }
 
@@ -337,11 +347,14 @@ object LoggingUtils {
     }
 
     private fun buildTickStatusesResult(builder: StringBuilder, linePrefix: String, result: CharacterState.Result.TickStatusesResult) {
-        if (result.updatedStatuses.isNotEmpty()) {
-            builder.appendLine(linePrefix + "Tick updated statuses: ${formatStatuses(result.updatedStatuses)}")
+        if (result.tickUpdatedStatuses.isNotEmpty()) {
+            builder.appendLine(linePrefix + "Tick updated statuses: ${formatStatuses(result.tickUpdatedStatuses)}")
         }
-        if (result.removedStatuses.isNotEmpty()) {
-            builder.appendLine(linePrefix + "Tick removed statuses: ${formatStatuses(result.removedStatuses)}")
+        if (result.tickRemovedStatuses.isNotEmpty()) {
+            builder.appendLine(linePrefix + "Tick removed statuses: ${formatStatuses(result.tickRemovedStatuses)}")
+        }
+        if (result.targetedActionRemovedStatuses.isNotEmpty()) {
+            builder.appendLine(linePrefix + "Targeted action removed statuses: ${formatStatuses(result.targetedActionRemovedStatuses)}")
         }
     }
 

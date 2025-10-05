@@ -47,12 +47,6 @@ sealed interface Action {
             resourceCost = 0,
         )
 
-        val noAction = SelfAction(
-            name = "No Action",
-            movement = Movement(type = Movement.Type.Normal, amount = 0),
-            resourceCost = 0,
-        )
-
         val crawl = SelfAction(
             name = "Crawl",
             movement = Movement(type = Movement.Type.Normal, amount = 1),
@@ -99,6 +93,28 @@ sealed interface Action {
         val actionEnded: Event.ActionEnded
     }
 
+    data class NoChangeOutcome(
+        val executor: CharacterState,
+    ) : Outcome {
+
+        override val actionStarted: Event.ActionStarted
+            get() = Rules.startAction(
+                target = executor,
+                actionName = "No Action",
+                newPositionNodeId = executor.positionNodeId,
+                resourcesSpent = 0
+            )
+
+        override val selfResolutionEvent: Event.ResolutionEvent?
+            get() = null
+
+        override val actionEnded: Event.ActionEnded
+            get() = Rules.endAction(
+                target = executor,
+                targetedActionTaken = false,
+            )
+    }
+
     data class TargetedActionOutcome(
         override val actionStarted: Event.ActionStarted,
         override val selfResolutionEvent: Event.ResolutionEvent?,
@@ -125,10 +141,20 @@ sealed interface Action {
             newPositionNodeId: Int
         ) : SelfActionOutcome {
 
-            val actionStarted = Rules.startAction(target = executor, actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
-            val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
-            val actionEnded = Rules.endAction(target = selfResolutionEvent?.updatedTarget ?: actionStarted.updatedTarget)
-
+            val actionStarted = Rules.startAction(
+                target = executor,
+                actionName = this.name,
+                newPositionNodeId = newPositionNodeId,
+                resourcesSpent = resourceCost
+            )
+            val selfResolutionEvent = selfResolution?.resolve(
+                executor = actionStarted.updatedTarget,
+                target = actionStarted.updatedTarget
+            )
+            val actionEnded = Rules.endAction(
+                target = selfResolutionEvent?.updatedTarget ?: actionStarted.updatedTarget,
+                targetedActionTaken = false
+            )
             return SelfActionOutcome(
                 actionStarted = actionStarted,
                 selfResolutionEvent = selfResolutionEvent,
@@ -150,12 +176,19 @@ sealed interface Action {
             newPositionNodeId: Int
         ) : TargetedActionOutcome {
 
-
-            val actionStarted = Rules.startAction(target = executor, actionName = this.name, newPositionNodeId = newPositionNodeId, resourcesSpent = resourceCost)
-            val selfResolutionEvent = selfResolution?.resolve(executor = actionStarted.updatedTarget, target = actionStarted.updatedTarget)
+            val actionStarted = Rules.startAction(
+                target = executor,
+                actionName = this.name,
+                newPositionNodeId = newPositionNodeId,
+                resourcesSpent = resourceCost
+            )
+            val selfResolutionEvent = selfResolution?.resolve(
+                executor = actionStarted.updatedTarget,
+                target = actionStarted.updatedTarget
+            )
             val updatedExecutor = selfResolutionEvent?.updatedTarget ?: actionStarted.updatedTarget
             val targetEvents = target.targetedCharacterStates.map { resolution.resolve(executor = updatedExecutor, target = it) }
-            val actionEnded = Rules.endAction(target = updatedExecutor)
+            val actionEnded = Rules.endAction(target = updatedExecutor, targetedActionTaken = true)
 
             return TargetedActionOutcome(
                 actionStarted = actionStarted,

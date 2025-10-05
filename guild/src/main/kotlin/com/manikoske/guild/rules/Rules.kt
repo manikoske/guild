@@ -40,6 +40,7 @@ object Rules {
 
     fun endAction(
         target: CharacterState,
+        targetedActionTaken: Boolean,
         rollMethod: Dice.RollMethod = Dice.RollMethod.Normal
     ): Event.ActionEnded {
 
@@ -56,7 +57,7 @@ object Rules {
 
         val healResult = target.heal(healOverTimeRolls.sumOf { it.result })
         val damageResult = healResult.updatedTarget.takeDamage(damageOverTimeRolls.sumOf { it.result })
-        val statusesTickResult = damageResult.updatedTarget.tickStatuses()
+        val statusesTickResult = damageResult.updatedTarget.tickStatuses(targetedActionTaken = targetedActionTaken)
 
         return Event.ActionEnded(
             target = target,

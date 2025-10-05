@@ -147,7 +147,7 @@ class PointOfViewTest {
 
         val minscPointOfView = PointOfView(taker = minsc, others = listOf(khalid, jaheira, tazok, davaeorn))
 
-        val minscEndAction = Rules.endAction(minsc)
+        val minscEndAction = Rules.endAction(target = minsc, targetedActionTaken = false)
         val khalidTargetEvent = Rules.boostResources(target = khalid, amount = 1)
         val jaheiraTargetEvent = Rules.boostResources(target = jaheira, amount = 2)
         val tazokTargetEvent = Rules.weaponAttackBy(executor = minsc, target = tazok, 0, 1, null)
